@@ -10,7 +10,7 @@ import "core:math/linalg"
 //:Primitives
 /////////////////////////////
 
-MAX_2D_PRIMITIVES_PER_BATCH :: 100000
+MAX_2D_PRIMITIVES_PER_BATCH :: 3000
 VERTICES_PER_2D_PRIMITIVE   :: 4
 INDICES_PER_2D_PRIMITIVE    :: 6
 MAX_TEXTURE_SLOTS           :: 32

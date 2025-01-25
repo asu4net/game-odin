@@ -4,8 +4,9 @@ import "core:mem"
 import "core:fmt"
 
 GameState :: struct {
-    renderer_2d : engine.Renderer2D,
-    goblin_tex  : engine.Texture2D,
+    renderer_2d     : engine.Renderer2D,
+    goblin_tex      : engine.Texture2D,
+    entity_registry : Entity_Registry,
 }
 
 gs : GameState
@@ -35,9 +36,10 @@ main :: proc() {
 		}
 	}
 
+    entity_registry_set_instance(&entity_registry)
     renderer_set_instance(&renderer_2d)
     
-    window_init(title = "My window")
+    window_init(title = "Game")
     defer window_finish()
     
     renderer_init()
@@ -45,6 +47,9 @@ main :: proc() {
 
     texture_init(&goblin_tex, "assets/goblin.png")
     defer texture_finish(&goblin_tex)
+
+    entity_registry_init()
+    defer entity_registry_finish()
 
     for !window_should_close() {
 
