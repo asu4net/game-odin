@@ -1,0 +1,1 @@
+odin build ./game -debug -out:game/bin/game.exe

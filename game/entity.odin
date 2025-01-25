@@ -1,0 +1,9 @@
+package game
+
+/////////////////////////////
+//:EntityRegistry
+/////////////////////////////
+
+Entity_Registry :: struct {
+    
+}
