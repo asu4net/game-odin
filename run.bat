@@ -1,3 +1,5 @@
+@echo off
+
 cd game/bin
 
 IF NOT EXIST "game.exe" (
@@ -5,5 +7,6 @@ IF NOT EXIST "game.exe" (
     call build.bat
 )
 
-cd game/bin
+@echo running...
 game.exe
+@echo terminated!
