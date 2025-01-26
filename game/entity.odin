@@ -1,6 +1,4 @@
 package game
-
-import "engine"
 import "core:strings"
 
 ENTITY_ID    :: u32
@@ -27,13 +25,13 @@ EntityCommon :: struct {
     flags          : Entity_Flag_Set,
     id             : ENTITY_ID,
     name           : string,
-    tint           : engine.v4,
+    tint           : v4,
 }
 
 DEFAULT_ENTITY_COMMON : EntityCommon : {
     flags = { .ENABLED, .VISIBLE },
     id    = NIL_ENTITY_ID,
-    tint  = engine.V4_COLOR_WHITE
+    tint  = V4_COLOR_WHITE
 }
 
 /////////////////////////////
@@ -41,13 +39,13 @@ DEFAULT_ENTITY_COMMON : EntityCommon : {
 /////////////////////////////
 
 Transform :: struct {
-    position : engine.v3,
-    rotation : engine.v3,
-    scale    : engine.v3
+    position : v3,
+    rotation : v3,
+    scale    : v3
 }
 
 DEFAULT_TRANSFORM : Transform : {
-    engine.V3_ZERO, engine.V3_ZERO, engine.V3_ONE
+    V3_ZERO, V3_ZERO, V3_ONE
 }
 
 /////////////////////////////
@@ -55,16 +53,16 @@ DEFAULT_TRANSFORM : Transform : {
 /////////////////////////////
 
 Sprite :: struct {
-    texture   : ^engine.Texture2D ,
-    tiling    : engine.v2         ,
-    flip_x    : bool              ,
-    flip_y    : bool              ,
-    autosize  : bool              ,
+    texture   : ^Texture2D ,
+    tiling    : v2         ,
+    flip_x    : bool       ,
+    flip_y    : bool       ,
+    autosize  : bool       ,
 }
 
 DEFAULT_SPRITE : Sprite : {
     texture   = nil,
-    tiling    = engine.V2_ONE,
+    tiling    = V2_ONE,
     flip_x    = false,
     flip_y    = false,
     autosize  = true,
@@ -80,7 +78,7 @@ Entity :: struct {
     using sprite   : Sprite
 }
 
-NIL_ENTITY_ID :: engine.SPARSE_SET_INVALID
+NIL_ENTITY_ID :: SPARSE_SET_INVALID
 
 DEFAULT_ENTITY : Entity : {
     common    = DEFAULT_ENTITY_COMMON,
@@ -98,8 +96,8 @@ Entity_Handle :: struct {
 
 Entity_Registry :: struct {
     entities     : [] Entity,
-    sparse_set   : engine.Sparse_Set,
-    entity_ids   : engine.Queue,
+    sparse_set   : Sparse_Set,
+    entity_ids   : Queue,
     entity_count : u32
 }
 
@@ -125,7 +123,7 @@ entity_registry_initialized :: proc() -> bool {
 }
 
 entity_registry_init :: proc() {
-    using entity_registry, engine
+    using entity_registry
     assert(!entity_registry_initialized())
     entities = make([]Entity, MAX_ENTITIES)
     sparse_init(&sparse_set, MAX_ENTITIES)
@@ -136,7 +134,7 @@ entity_registry_init :: proc() {
 }
 
 entity_registry_finish :: proc() {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized())
     delete(entities)
     sparse_finish(&sparse_set)
@@ -145,13 +143,13 @@ entity_registry_finish :: proc() {
 }
 
 entity_valid :: proc(entity : Entity_Handle) -> bool {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized())
     return sparse_test(&sparse_set, entity.id)
 }
 
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle) {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
     entity = { queue_front(&entity_ids) }
     queue_pop(&entity_ids)
@@ -176,14 +174,14 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
 }
 
 entity_data :: proc(entity : Entity_Handle) -> ^Entity {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized() && entity_valid(entity))
     index := sparse_search(&sparse_set, entity.id)
     return &entities[index]
 }
 
 entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^Entity {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized() && entity_valid(entity))
     data := entity_data(entity)
     data.flags += flags
@@ -191,7 +189,7 @@ entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^En
 }
 
 entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^Entity {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized() && entity_valid(entity))
     data := entity_data(entity)
     data.flags -= flags
@@ -199,7 +197,7 @@ entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> 
 }
 
 entity_destroy :: proc(entity : Entity_Handle) {
-    using entity_registry, engine
+    using entity_registry
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
     deleted, last := sparse_remove(&sparse_set, entity.id)
     entities[deleted] = entities[last]

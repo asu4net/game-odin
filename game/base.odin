@@ -1,4 +1,4 @@
-package engine
+package game
 
 import "core:math"
 import "core:math/linalg"

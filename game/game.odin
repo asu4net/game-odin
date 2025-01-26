@@ -1,18 +1,17 @@
 package game
-import "engine"
 import "core:mem"
 import "core:fmt"
 
 GameState :: struct {
-    renderer_2d     : engine.Renderer2D,
-    goblin_tex      : engine.Texture2D,
+    renderer_2d     : Renderer2D,
+    goblin_tex      : Texture2D,
     entity_registry : Entity_Registry,
 }
 
 gs : GameState
 
 main :: proc() {
-    using gs, engine
+    using gs
 
     when ODIN_DEBUG {
 		track: mem.Tracking_Allocator

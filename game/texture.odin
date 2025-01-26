@@ -1,4 +1,4 @@
-package engine
+package game
 
 import "core:strings"
 import gl "vendor:OpenGL"

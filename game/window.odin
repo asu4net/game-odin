@@ -1,4 +1,4 @@
-package engine
+package game
 
 import "core:fmt"
 import "core:c"
