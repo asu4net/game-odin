@@ -13,11 +13,7 @@ Entity_Flag :: enum {
 Entity_Flag_Set :: bit_set[Entity_Flag]
 
 /////////////////////////////
-//:EntityData
-/////////////////////////////
-
-/////////////////////////////
-//:Common
+//:Entity
 /////////////////////////////
 
 EntityCommon :: struct {
@@ -33,44 +29,6 @@ DEFAULT_ENTITY_COMMON : EntityCommon : {
     id    = NIL_ENTITY_ID,
     tint  = V4_COLOR_WHITE
 }
-
-/////////////////////////////
-//:Transform
-/////////////////////////////
-
-Transform :: struct {
-    position : v3,
-    rotation : v3,
-    scale    : v3
-}
-
-DEFAULT_TRANSFORM : Transform : {
-    V3_ZERO, V3_ZERO, V3_ONE
-}
-
-/////////////////////////////
-//:Sprite
-/////////////////////////////
-
-Sprite :: struct {
-    texture   : ^Texture2D ,
-    tiling    : v2         ,
-    flip_x    : bool       ,
-    flip_y    : bool       ,
-    autosize  : bool       ,
-}
-
-DEFAULT_SPRITE : Sprite : {
-    texture   = nil,
-    tiling    = V2_ONE,
-    flip_x    = false,
-    flip_y    = false,
-    autosize  = true,
-}
-
-/////////////////////////////
-//:Entity
-/////////////////////////////
 
 Entity :: struct {
     using common   : EntityCommon,

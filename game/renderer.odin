@@ -334,23 +334,46 @@ scene_2d_end :: proc() {
     flush()
 }
 
-//#TODO_asuarez add subtextures
-draw_quad :: proc(
-    position  : v3         = V3_ZERO,
-    rotation  : v3         = V3_ZERO,
-    scale     : v3         = V3_ONE,
-    tint      : v4         = V4_COLOR_WHITE,
-    texture   : ^Texture2D = nil,
-    tiling    : v2         = V2_ONE,
-    flip_x    : bool       = false,
-    flip_y    : bool       = false,
-    autosize  : bool       = true,
-    entity_id : i32        = 0
-)
-{
-    assert(renderer_2d != nil)
-    using renderer_2d
+/////////////////////////////
+//:Transform
+/////////////////////////////
 
+Transform :: struct {
+    position : v3,
+    rotation : v3,
+    scale    : v3
+}
+
+DEFAULT_TRANSFORM : Transform : {
+    V3_ZERO, V3_ZERO, V3_ONE
+}
+
+/////////////////////////////
+//:Sprite
+/////////////////////////////
+
+Sprite :: struct {
+    texture   : ^Texture2D ,
+    tiling    : v2         ,
+    flip_x    : bool       ,
+    flip_y    : bool       ,
+    autosize  : bool       ,
+}
+
+DEFAULT_SPRITE : Sprite : {
+    texture   = nil,
+    tiling    = V2_ONE,
+    flip_x    = false,
+    flip_y    = false,
+    autosize  = true,
+}
+
+//#TODO_asuarez add subtextures
+draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+{
+    assert(renderer_2d != nil && transform != nil && sprite != nil)
+    using renderer_2d, transform, sprite
+    
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
 
     if quad_count == MAX_2D_PRIMITIVES_PER_BATCH {
@@ -376,7 +399,7 @@ draw_quad :: proc(
 
     for i in 0..<VERTICES_PER_2D_PRIMITIVE {
         quad_batch[i + int(quad_count) * VERTICES_PER_2D_PRIMITIVE] = {
-            vertex_positions[i], vertex_colors[i], vertex_uvs[i], slot, entity_id
+            vertex_positions[i], vertex_colors[i], vertex_uvs[i], slot, i32(entity_id)
         }
     }    
     
