@@ -250,7 +250,7 @@ queue_push :: proc(queue : ^Queue, num : u32) {
 queue_pop :: proc(queue : ^Queue) {
     using queue
     assert(queue_initialized(queue))
-    for i in 0..<capacity {
+    for i in 1..<capacity {
         data[i - 1] = data[i]
     }
     count -=1

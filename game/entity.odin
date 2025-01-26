@@ -1,10 +1,7 @@
 package game
 
 import "engine"
-
-/////////////////////////////
-//:EntityRegistry
-/////////////////////////////
+import "core:strings"
 
 ENTITY_ID    :: u32
 MAX_ENTITIES :: 3000
@@ -17,6 +14,32 @@ Entity_Flag :: enum {
 
 Entity_Flag_Set :: bit_set[Entity_Flag]
 
+/////////////////////////////
+//:EntityData
+/////////////////////////////
+
+/////////////////////////////
+//:Common
+/////////////////////////////
+
+EntityCommon :: struct {
+    //TODO: some uuid
+    flags          : Entity_Flag_Set,
+    id             : ENTITY_ID,
+    name           : string,
+    tint           : engine.v4,
+}
+
+DEFAULT_ENTITY_COMMON : EntityCommon : {
+    flags = { .ENABLED, .VISIBLE },
+    id    = NIL_ENTITY_ID,
+    tint  = engine.V4_COLOR_WHITE
+}
+
+/////////////////////////////
+//:Transform
+/////////////////////////////
+
 Transform :: struct {
     position : engine.v3,
     rotation : engine.v3,
@@ -27,25 +50,51 @@ DEFAULT_TRANSFORM : Transform : {
     engine.V3_ZERO, engine.V3_ZERO, engine.V3_ONE
 }
 
+/////////////////////////////
+//:Sprite
+/////////////////////////////
+
+Sprite :: struct {
+    texture   : ^engine.Texture2D ,
+    tiling    : engine.v2         ,
+    flip_x    : bool              ,
+    flip_y    : bool              ,
+    autosize  : bool              ,
+}
+
+DEFAULT_SPRITE : Sprite : {
+    texture   = nil,
+    tiling    = engine.V2_ONE,
+    flip_x    = false,
+    flip_y    = false,
+    autosize  = true,
+}
+
+/////////////////////////////
+//:Entity
+/////////////////////////////
+
 Entity :: struct {
-    //TODO: some uuid
-    flags          : Entity_Flag_Set,
-    id             : ENTITY_ID,
-    name           : string,
-    using tranform : Transform
+    using common   : EntityCommon,
+    using tranform : Transform,
+    using sprite   : Sprite
 }
 
 NIL_ENTITY_ID :: engine.SPARSE_SET_INVALID
 
 DEFAULT_ENTITY : Entity : {
-    flags     = { .ENABLED, .VISIBLE },
-    id        = NIL_ENTITY_ID,
-    tranform  = DEFAULT_TRANSFORM
+    common    = DEFAULT_ENTITY_COMMON,
+    tranform  = DEFAULT_TRANSFORM,
+    sprite    = DEFAULT_SPRITE
 }
 
 Entity_Handle :: struct {
     id : ENTITY_ID    
 }
+
+/////////////////////////////
+//:Entity Registry
+/////////////////////////////
 
 Entity_Registry :: struct {
     entities     : [] Entity,
@@ -101,13 +150,27 @@ entity_valid :: proc(entity : Entity_Handle) -> bool {
     return sparse_test(&sparse_set, entity.id)
 }
 
-entity_create :: proc() -> (entity : Entity_Handle) {
+entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle) {
     using entity_registry, engine
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
     entity = { queue_front(&entity_ids) }
     queue_pop(&entity_ids)
     index := sparse_insert(&sparse_set, entity.id)
-    entities[index] = DEFAULT_ENTITY
+    data := &entities[index]
+    data^ = DEFAULT_ENTITY
+    data.id = entity.id
+    data.flags += flags
+    data.name = name
+    
+    if len(data.name) == 0 {
+        builder : ^strings.Builder
+        strings.builder_init(builder)
+        defer strings.builder_destroy(builder)
+        strings.write_string(builder, "Entity ")
+        strings.write_uint(builder, uint(entity.id))
+        data.name = strings.to_string(builder^)    
+    }
+
     entity_count += 1
     return    
 }
@@ -117,6 +180,22 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     assert(entity_registry_initialized() && entity_valid(entity))
     index := sparse_search(&sparse_set, entity.id)
     return &entities[index]
+}
+
+entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^Entity {
+    using entity_registry, engine
+    assert(entity_registry_initialized() && entity_valid(entity))
+    data := entity_data(entity)
+    data.flags += flags
+    return data
+}
+
+entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^Entity {
+    using entity_registry, engine
+    assert(entity_registry_initialized() && entity_valid(entity))
+    data := entity_data(entity)
+    data.flags -= flags
+    return data
 }
 
 entity_destroy :: proc(entity : Entity_Handle) {

@@ -45,11 +45,18 @@ main :: proc() {
     renderer_init()
     defer renderer_finish()
 
-    texture_init(&goblin_tex, "assets/goblin.png")
-    defer texture_finish(&goblin_tex)
-
     entity_registry_init()
     defer entity_registry_finish()
+
+    // Goblin
+    texture_init(&goblin_tex, "assets/goblin.png")
+    defer texture_finish(&goblin_tex)    
+    
+    {
+        handle := entity_create("Goblin", { .SPRITE })
+        entity := entity_data(handle)
+        entity.texture = &goblin_tex
+    }
 
     for !window_should_close() {
 
@@ -57,7 +64,6 @@ main :: proc() {
         clear_color()
 
         width, height := window_get_size()
-        
         scene : Scene2D = {
             camera = DEFAULT_CAMERA,
             window_width = f32(width),
@@ -65,12 +71,25 @@ main :: proc() {
         }
         
         scene_2d_begin(scene)
+
+        // Entity iteration
         {
-            draw_quad(rotation = { 0,  0,  15 }, scale = { 0.3, 0.8, 1 })
-            draw_quad(position = { 1,  0,  0 }, tint = V4_COLOR_LIGHT_GREEN)
-            draw_quad(position = { 0,  1,  0 }, tint = V4_COLOR_LIGHT_BLUE)
-            draw_quad(position = { 0, -1,  0 }, texture = &goblin_tex)
+            using entity_registry
+            for i in 0..<entity_count {
+
+                entity := &entities[i]
+
+                if Entity_Flag.ENABLED not_in entity.flags {
+                    continue
+                }
+                
+                if Entity_Flag.SPRITE in entity.flags {
+                    using entity.tranform, entity.sprite, entity.common
+                    draw_quad(position, rotation, scale, tint, texture, tiling, flip_x, flip_y, autosize, i32(id))
+                }
+            }
         }
+
         scene_2d_end()
         
         window_update()
