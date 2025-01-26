@@ -7,7 +7,7 @@ import "core:math"
 import "core:math/linalg"
 
 /////////////////////////////
-//:Primitives
+//:Primitives2D
 /////////////////////////////
 
 MAX_2D_PRIMITIVES_PER_BATCH :: 3000
@@ -177,7 +177,7 @@ assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
     return
 }
 
-renderer_set_instance :: proc(renderer : ^Renderer2D) {
+renderer_2d_set_instance :: proc(renderer : ^Renderer2D) {
     if (renderer_2d != nil) {
         assert(false)
         return
@@ -189,14 +189,14 @@ renderer_get_instance :: proc() -> ^Renderer2D {
     return renderer_2d
 }
 
-renderer_init :: proc() {
+renderer_2d_init :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
 
     quad_batch = make([]Quad_Vertex, MAX_2D_PRIMITIVES_PER_BATCH * VERTICES_PER_2D_PRIMITIVE)
 
     projection_view = M4_IDENTITY
-    texture_init_as_white(&white_texture)
+    texture_2d_init_as_white(&white_texture)
     
     textures_to_bind[0] = &white_texture
     last_texture_slot = 1
@@ -250,7 +250,7 @@ renderer_finish :: proc() {
     assert(renderer_2d != nil)
     delete(quad_batch)
     vertex_buffer_finish(&quad_vbo)
-    texture_finish(&white_texture)
+    texture_2d_finish(&white_texture)
     shader_finish(&quad_shader)
     renderer_2d^ = {}
 }
@@ -269,7 +269,7 @@ flush :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
     for i in 0..<last_texture_slot {
-        texture_bind(textures_to_bind[i], u32(i))
+        texture_2d_bind(textures_to_bind[i], u32(i))
     }
     shader_bind(&quad_shader)
     shader_set_constant_sampler2D(&quad_shader, "u_Textures[0]", cast([^]i32) &texture_slots, MAX_TEXTURE_SLOTS)
@@ -283,6 +283,10 @@ next_batch :: proc() {
     flush()
     start_batch()
 }
+
+/////////////////////////////
+//:Scene2D
+/////////////////////////////
 
 Camera :: struct {
     aspect : f32,
@@ -373,7 +377,7 @@ draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint :
 {
     assert(renderer_2d != nil && transform != nil && sprite != nil)
     using renderer_2d, transform, sprite
-    
+
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
 
     if quad_count == MAX_2D_PRIMITIVES_PER_BATCH {

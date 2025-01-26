@@ -52,11 +52,15 @@ Entity_Handle :: struct {
 //:Entity Registry
 /////////////////////////////
 
+Entity_Group :: [dynamic]Entity_Handle
+Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
+
 Entity_Registry :: struct {
-    entities     : [] Entity,
-    sparse_set   : Sparse_Set,
-    entity_ids   : Queue,
-    entity_count : u32
+    entities      : [] Entity,
+    sparse_set    : Sparse_Set,
+    entity_ids    : Queue,
+    entity_count  : u32,
+    entity_groups : Entity_Group_Map 
 }
 
 @(private = "file")
@@ -95,6 +99,10 @@ entity_registry_finish :: proc() {
     using entity_registry
     assert(entity_registry_initialized())
     delete(entities)
+    for _, group in entity_groups {
+        delete(group)
+    }
+    delete(entity_groups)
     sparse_finish(&sparse_set)
     queue_finish(&entity_ids)
     entity_registry^ = {}
@@ -106,16 +114,15 @@ entity_valid :: proc(entity : Entity_Handle) -> bool {
     return sparse_test(&sparse_set, entity.id)
 }
 
-entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle) {
+entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle, data : ^Entity) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
     entity = { queue_front(&entity_ids) }
     queue_pop(&entity_ids)
     index := sparse_insert(&sparse_set, entity.id)
-    data := &entities[index]
+    data = &entities[index]
     data^ = DEFAULT_ENTITY
     data.id = entity.id
-    data.flags += flags
     data.name = name
     
     if len(data.name) == 0 {
@@ -127,6 +134,7 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
         data.name = strings.to_string(builder^)    
     }
 
+    entity_add_flags(entity, flags)
     entity_count += 1
     return    
 }
@@ -138,27 +146,79 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     return &entities[index]
 }
 
-entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^Entity {
+@(private = "file")
+Entity_Group_Op :: enum { ADD, REMOVE }
+
+@(private = "file")
+entity_group_op :: proc(data : ^Entity, op : Entity_Group_Op) {
     using entity_registry
-    assert(entity_registry_initialized() && entity_valid(entity))
-    data := entity_data(entity)
-    data.flags += flags
-    return data
+    assert(entity_registry_initialized() && data != nil)    
+    for group_flags, &group in entity_groups {
+        if data.flags & group_flags != nil {
+            if op == .ADD {
+                // add the element to the group
+                entity : Entity_Handle = { data.id }
+                append_elem(&group, entity)
+            } else {
+                rm_idx := -1
+                // find the entity and remove it from the group
+                for i in 0..<len(group) {
+                    entity := group[i]
+                    if entity.id == data.id {
+                        rm_idx = i
+                        break
+                    }
+                }
+                assert(rm_idx >= 0)
+                unordered_remove(&group, rm_idx)
+            }
+        }
+    }
 }
 
-entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> ^Entity {
+entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
     using entity_registry
     assert(entity_registry_initialized() && entity_valid(entity))
-    data := entity_data(entity)
+    data = entity_data(entity)
+    data.flags += flags
+    entity_group_op(data, .ADD)
+    return
+}
+
+entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
+    using entity_registry
+    assert(entity_registry_initialized() && entity_valid(entity))
+    data = entity_data(entity)
+    entity_group_op(data, .REMOVE)
     data.flags -= flags
-    return data
+    return
 }
 
 entity_destroy :: proc(entity : Entity_Handle) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
+    data := entity_data(entity) 
+    data.flags = {}
+    entity_group_op(data, .REMOVE)
     deleted, last := sparse_remove(&sparse_set, entity.id)
     entities[deleted] = entities[last]
     queue_push(&entity_ids, entity.id)
     entity_count -= 1
+}
+
+entity_get_group :: proc(flags : Entity_Flag_Set) -> Entity_Group {
+    using entity_registry
+    assert(entity_registry_initialized() && flags in entity_groups)
+    return entity_groups[flags];
+}
+
+entity_create_group :: proc(flags : Entity_Flag_Set) -> (group : Entity_Group) {
+    using entity_registry
+    assert(entity_registry_initialized() && entity_count == 0)
+    if flags in entity_groups {
+        return entity_get_group(flags)
+    }
+    group = make(Entity_Group)
+    entity_groups[flags] = group
+    return
 }

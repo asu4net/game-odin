@@ -41,6 +41,7 @@ Texture2D :: struct {
     image_path : string
 }
 
+@(private = "file")
 set_mag_filter :: proc(texture_id : u32, mag_filter : Mag_Filter) {
     switch mag_filter {
         case .LINEAR:  gl.TextureParameteri(texture_id, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -48,6 +49,7 @@ set_mag_filter :: proc(texture_id : u32, mag_filter : Mag_Filter) {
     }
 }
 
+@(private = "file")
 set_min_filter :: proc(texture_id : u32, min_filter : Min_Filter) {
     switch min_filter {
         case .LINEAR:  gl.TextureParameteri(texture_id, gl.TEXTURE_MAG_FILTER, gl.LINEAR)
@@ -55,6 +57,7 @@ set_min_filter :: proc(texture_id : u32, min_filter : Min_Filter) {
     }
 }
 
+@(private = "file")
 set_wrap_mode :: proc(texture_id : u32, texture_coordinate : Texture_Coordinate, wrap_mode : Wrap_Mode) {
     coord : gl.GL_Enum = texture_coordinate == .U ? .TEXTURE_WRAP_S : .TEXTURE_WRAP_T
     switch wrap_mode {
@@ -96,7 +99,7 @@ texture_upload_to_gpu :: proc(texture : ^Texture2D) {
     gl.TextureSubImage2D(id, 0, 0, 0, cast(i32) width, cast(i32) height, data_format, gl.UNSIGNED_BYTE, raw_data(pixel_data))
 }
 
-texture_init_as_white :: proc(texture : ^Texture2D) {
+texture_2d_init_as_white :: proc(texture : ^Texture2D) {
     using texture
     width = 1
     height = 1
@@ -109,7 +112,7 @@ texture_init_as_white :: proc(texture : ^Texture2D) {
     texture_upload_to_gpu(texture)
 }
 
-texture_init_form_path :: proc(
+texture_2d_init_form_path :: proc(
     texture  : ^Texture2D, 
     path     : string, 
     mag      : Mag_Filter = .NEAREST,
@@ -150,7 +153,7 @@ texture_init_form_path :: proc(
     texture_upload_to_gpu(texture)
 }
 
-texture_finish :: proc(texture : ^Texture2D) {
+texture_2d_finish :: proc(texture : ^Texture2D) {
     using texture
     assert(id != 0)
     gl.DeleteTextures(1, &id)
@@ -163,10 +166,10 @@ texture_finish :: proc(texture : ^Texture2D) {
     texture^ = {}
 }
 
-texture_bind :: proc(texture : ^Texture2D, slot : u32 = 0) {
+texture_2d_bind :: proc(texture : ^Texture2D, slot : u32 = 0) {
     using texture
     assert(id != 0)
     gl.BindTextureUnit(slot, id)
 }
 
-texture_init :: proc{ texture_init_form_path, texture_init_as_white }
+texture_2d_init :: proc{ texture_2d_init_form_path, texture_2d_init_as_white }
