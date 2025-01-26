@@ -154,6 +154,6 @@ winodw_get_cursor_position :: proc() -> (x, y : f32) {
     return
 }
 
-winodw_get_time :: proc() -> f64 {
+window_get_time :: proc() -> f64 {
     return glfw.GetTime()
 }

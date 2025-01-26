@@ -5,8 +5,11 @@ cd game/bin
 IF NOT EXIST "game.exe" (
     cd ../../
     call build.bat
+    cd game/bin
+    goto RunGame
 )
 
-@echo running...
+:RunGame
+@echo Running game...
 game.exe
-@echo terminated!
+@echo Terminated!

@@ -120,7 +120,7 @@ m4_rotate :: proc(mat: m4, rotation : v3) -> m4 {
 m4_transform :: proc(position, rotation, scale : v3) -> m4 {
     identity := M4_IDENTITY
     scale_matrix := m4_scale(identity, scale)
-    rotation_matrix := rotation != V3_ZERO ? m4_rotate(scale_matrix, math.RAD_PER_DEG * rotation) : identity
+    rotation_matrix := rotation != V3_ZERO ? m4_rotate(scale_matrix, math.RAD_PER_DEG * rotation) : scale_matrix
     translation_matrix := m4_translate(rotation_matrix, position)
     return translation_matrix
 }

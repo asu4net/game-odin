@@ -25,7 +25,7 @@ main :: proc() {
 			mem.tracking_allocator_destroy(&track)
 		}
 	}
-    
+
     window_init(title = "Game")
     defer window_finish()
 
