@@ -29,13 +29,22 @@ main :: proc() {
     window_init(title = "Game")
     defer window_finish()
 
+	time_init()
+
     game_init()
     defer game_finish()
 
     for !window_should_close() {
 
         window_poll_events()
-        clear_color()
+        time_step()
+
+		for time.fixed_update_calls > 0 {
+			game_fixed_update()
+			time.fixed_update_calls-=1
+		}
+
+		clear_color()
         game_update()
         window_update()
     }

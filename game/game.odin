@@ -18,7 +18,7 @@ game_init :: proc() {
     
     renderer_2d_init()
     entity_registry_init()
-    
+
     enities_2d_init()
 
     // Test goblin
@@ -37,6 +37,10 @@ game_finish :: proc() {
 }
 
 game_update :: proc() {
-    using gs      
+    using gs
     entities_2d_draw(&entity_registry)        
+}
+
+game_fixed_update :: proc() {
+    
 }
