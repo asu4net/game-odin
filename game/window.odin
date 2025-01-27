@@ -83,7 +83,7 @@ window_should_close :: proc() -> b32 {
     return glfw.WindowShouldClose(window_handle)
 }
 
-window_poll_events :: proc() {
+window_poll_input_events :: proc() {
     if window_handle == nil {
         return
     }

@@ -110,7 +110,7 @@ set_clear_color_v4 :: proc(v: v4) {
 
 set_clear_color :: proc{set_clear_color_scalar, set_clear_color_v4}
 
-clear_color :: proc() {
+clear_screen :: proc() {
     OpenGL.Clear(OpenGL.COLOR_BUFFER_BIT | OpenGL.DEPTH_BUFFER_BIT)
 }
 

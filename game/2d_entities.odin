@@ -8,7 +8,7 @@ enities_2d_init :: proc() {
     entity_create_group(ENTITIES_2D_FLAGS)
 }
 
-entities_2d_draw :: proc(reg : ^Entity_Registry) {
+draw_2d_entities :: proc(reg : ^Entity_Registry) {
     assert(reg != nil)
     using reg
 

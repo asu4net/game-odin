@@ -112,7 +112,7 @@ main :: proc() {
 
     for !window_should_close() {
 
-        window_poll_events()
+        window_poll_input_events()
         time_step()
 
 		for time.fixed_update_calls > 0 {
@@ -121,8 +121,8 @@ main :: proc() {
 		}
 
         game_update()
-		clear_color()
-        entities_2d_draw(&entity_registry)
+		clear_screen()
+        draw_2d_entities(&entity_registry)
         window_update()
     }
 }
