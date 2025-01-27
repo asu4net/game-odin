@@ -245,7 +245,7 @@ renderer_2d_init :: proc() {
     }
 }
 
-renderer_finish :: proc() {
+renderer_2d_finish :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
     delete(quad_batch)
