@@ -5,9 +5,15 @@ ENTITY_ID    :: u32
 MAX_ENTITIES :: 3000
 
 Entity_Flag :: enum {
+    // Engine stuff
     ENABLED,
     VISIBLE,
-    SPRITE
+    SPRITE,
+    
+    // Gameplay stuff
+    PLAYER,
+    ENEMY,
+    SAW
 }
 
 Entity_Flag_Set :: bit_set[Entity_Flag]

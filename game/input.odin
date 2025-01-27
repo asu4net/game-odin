@@ -28,17 +28,17 @@ input_is_mouse_button_repeated :: proc(button : i32) -> i32 {
     return glfw.GetMouseButton(window_handle, button) == glfw.REPEAT
 }
 
-input_is_key_pressed :: proc(button : i32) -> i32 {
+input_is_key_pressed :: proc(button : i32) -> bool {
     assert(window_handle != nil)
     return glfw.GetKey(window_handle, button) == glfw.PRESS
 }
 
-input_is_key_released :: proc(button : i32) -> i32 {
+input_is_key_released :: proc(button : i32) -> bool {
     assert(window_handle != nil)
     return glfw.GetKey(window_handle, button) == glfw.RELEASE
 }
 
-input_is_key_repeated :: proc(button : i32) -> i32 {
+input_is_key_repeated :: proc(button : i32) -> bool {
     assert(window_handle != nil)
     return glfw.GetKey(window_handle, button) == glfw.REPEAT
 }

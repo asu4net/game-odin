@@ -10,18 +10,33 @@ Game :: struct {
     renderer_2d     : Renderer2D,
     entity_registry : Entity_Registry,
     player          : Player,
+    
+    // Test
+    saw_enemy       : Entity_Handle,
+    saw_tex         : Texture2D
 }
 
 game : Game
 
 game_init :: proc() {
     using game
+
+    // Test
+    {
+        texture_2d_init(&saw_tex, "assets/enemy_saw.png")
+        handle, entity := entity_create("Saw Enemy", { .ENEMY, .SAW, .SPRITE })
+        entity.position.xy = V2_UP
+        entity.sprite.texture = &saw_tex
+        saw_enemy = handle
+    }
+
     player_init(&player)
 }
 
 game_finish :: proc() {
     using game
-    player_finish(&player)    
+    player_finish(&player)
+    texture_2d_finish(&saw_tex)    
 }
 
 game_update :: proc() {

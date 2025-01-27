@@ -300,7 +300,7 @@ DEFAULT_CAMERA : Camera : {
     fov    = 100,
     near   = 0.1,
     far    = 1000,
-    size   = 1
+    size   = 3
 }
 
 Scene2D :: struct {

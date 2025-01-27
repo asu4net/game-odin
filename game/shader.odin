@@ -47,7 +47,7 @@ SHADER_FRAG_QUAD :: `
 
     void main()
     {
-        o_Color    = texture(u_Textures[v_Texture], v_UV) * v_Tint;
+        o_Color = texture(u_Textures[v_Texture], v_UV) * v_Tint;
         o_EntityID = v_EntityID;
     }
 `
