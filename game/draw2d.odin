@@ -1,9 +1,5 @@
 package game
 
-ENTITIES_2D_FLAGS : Entity_Flag_Set : {
-    .SPRITE
-} 
-
 enities_2d_init :: proc() {
     entity_create_group(ENTITIES_2D_FLAGS)
 }

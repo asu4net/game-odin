@@ -1,6 +1,51 @@
 package game
 
-/*** Constants ***/
+/////////////////////////////
+//:Numbers
+/////////////////////////////
+
+WINDOW_WIDTH  :: 720
+WINDOW_HEIGHT :: 1280
+PLAYER_SPEED  :: 5
+
+/////////////////////////////
+//:Entity flags
+/////////////////////////////
+
+PLAYER_FLAGS : Entity_Flag_Set : {
+    .PLAYER,
+    .SPRITE,
+}
+
+ENEMY_SAW_FLAGS : Entity_Flag_Set : {
+    .ENEMY,
+    .SAW,
+    .SPRITE,
+}
+
+ENTITIES_2D_FLAGS : Entity_Flag_Set : {
+    .SPRITE
+} 
+
+/////////////////////////////
+//:Names
+/////////////////////////////
+
+PLAYER_NAME    :: "Player"
+ENEMY_SAW_NAME :: "Enemy Saw"
+
+/////////////////////////////
+//:Paths
+/////////////////////////////
+
+PLAYER_TEXTURE_PATH    :: "assets/player.png"
+ENEMY_SAW_TEXTURE_PATH :: "assets/enemy_saw.png"
+
+/////////////////////////////
+//:Keys
+/////////////////////////////
+
+//-------------------------------------------------------------------------------------------------------
 
 /* Button/Key states */
 RELEASE :: 0

@@ -12,8 +12,9 @@ Entity_Flag :: enum {
     
     // Gameplay stuff
     PLAYER,
+    PROJECTILE,
     ENEMY,
-    SAW
+    SAW,
 }
 
 Entity_Flag_Set :: bit_set[Entity_Flag]
