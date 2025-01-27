@@ -25,11 +25,8 @@ player_initialized :: proc(player : ^Player) -> bool {
 player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
-    texture_2d_init(&player.texture, "assets/player.png")
-    entity, data := entity_create("Player", {
-        .PLAYER,
-        .SPRITE
-    })
+    texture_2d_init(&player.texture, PLAYER_TEXTURE_PATH)
+    entity, data := entity_create(PLAYER_NAME, PLAYER_FLAGS)
     player.handle  = entity
     data.texture = &player.texture
     speed = PLAYER_SPEED 

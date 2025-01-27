@@ -23,8 +23,8 @@ game_init :: proc() {
 
     // Test
     {
-        texture_2d_init(&saw_tex, "assets/enemy_saw.png")
-        handle, entity := entity_create("Saw Enemy", { .ENEMY, .SAW, .SPRITE })
+        texture_2d_init(&saw_tex, ENEMY_SAW_TEXTURE_PATH)
+        handle, entity := entity_create(ENEMY_SAW_NAME, ENEMY_SAW_FLAGS)
         entity.position.xy = V2_UP
         entity.sprite.texture = &saw_tex
         saw_enemy = handle
