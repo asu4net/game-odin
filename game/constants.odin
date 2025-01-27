@@ -1,12 +1,25 @@
 package game
 
+GAME_TITLE :: "Blessed Bullets"
+
 /////////////////////////////
 //:Numbers
 /////////////////////////////
 
-WINDOW_WIDTH  :: 720
-WINDOW_HEIGHT :: 1280
-PLAYER_SPEED  :: 5
+// Window
+WINDOW_WIDTH                :: 720
+WINDOW_HEIGHT               :: 1280
+
+// Player
+PLAYER_SPEED                :: 5.0
+CAMERA_SIZE                 :: 3.0
+
+// Render 2D
+MAX_2D_PRIMITIVES_PER_BATCH :: 3000
+MAX_TEXTURE_SLOTS           :: 32
+
+// Entity
+MAX_ENTITIES                :: 3000
 
 /////////////////////////////
 //:Entity flags

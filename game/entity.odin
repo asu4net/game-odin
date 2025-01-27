@@ -2,7 +2,6 @@ package game
 import "core:strings"
 
 ENTITY_ID    :: u32
-MAX_ENTITIES :: 3000
 
 Entity_Flag :: enum {
     // Engine stuff

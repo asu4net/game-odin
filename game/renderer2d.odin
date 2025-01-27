@@ -10,10 +10,8 @@ import "core:math/linalg"
 //:Primitives2D
 /////////////////////////////
 
-MAX_2D_PRIMITIVES_PER_BATCH :: 3000
 VERTICES_PER_2D_PRIMITIVE   :: 4
 INDICES_PER_2D_PRIMITIVE    :: 6
-MAX_TEXTURE_SLOTS           :: 32
 
 V4Verts2D :: [VERTICES_PER_2D_PRIMITIVE] v4
 V2Verts2D :: [VERTICES_PER_2D_PRIMITIVE] v2
@@ -290,17 +288,15 @@ next_batch :: proc() {
 
 Camera :: struct {
     aspect : f32,
-    fov    : f32,
     near   : f32,
     far    : f32,
     size   : f32      
 }
 
 DEFAULT_CAMERA : Camera : {
-    fov    = 100,
     near   = 0.1,
     far    = 1000,
-    size   = 3
+    size   = CAMERA_SIZE
 }
 
 Scene2D :: struct {
@@ -311,8 +307,8 @@ Scene2D :: struct {
 
 DEFAULT_SCENE_2D : Scene2D : {
     camera = DEFAULT_CAMERA,
-    window_width = 1920,
-    window_height = 1080
+    window_width = WINDOW_WIDTH,
+    window_height = WINDOW_HEIGHT
 }
 
 scene_2d_begin :: proc(scene : Scene2D = DEFAULT_SCENE_2D) {
