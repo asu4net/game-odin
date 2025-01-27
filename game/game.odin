@@ -73,7 +73,7 @@ main :: proc() {
     //:Init & Finish
     /////////////////////////////
 
-    window_init(title = "Game")
+    window_init(title = "Game", width = 720, height = 1280)
     defer window_finish()
     
     renderer_2d_init()
