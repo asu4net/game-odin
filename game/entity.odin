@@ -1,6 +1,7 @@
 package game
 import "core:strings"
 import "core:fmt"
+import "core:container/queue"
 
 ENTITY_ID    :: u32
 
@@ -73,7 +74,7 @@ Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
 Entity_Registry :: struct {
     entities      : [] Entity,
     sparse_set    : Sparse_Set,
-    entity_ids    : Queue,
+    entity_ids    : queue.Queue(u32),
     entity_count  : u32,
     entity_groups : Entity_Group_Map, 
     initialized   : bool,
@@ -104,9 +105,9 @@ entity_registry_init :: proc() {
     assert(!entity_registry_initialized())
     entities = make([]Entity, MAX_ENTITIES)
     sparse_init(&sparse_set, MAX_ENTITIES)
-    queue_init(&entity_ids, MAX_ENTITIES)
+    queue.init(&entity_ids, MAX_ENTITIES)
     for i in 0..<MAX_ENTITIES {
-        queue_push(&entity_ids, u32(i)) 
+        queue.push_back(&entity_ids, u32(i))
     }
     initialized = true
 }
@@ -120,7 +121,7 @@ entity_registry_finish :: proc() {
     }
     delete(entity_groups)
     sparse_finish(&sparse_set)
-    queue_finish(&entity_ids)
+    queue.destroy(&entity_ids)
     entity_registry^ = {}
 }
 
@@ -133,8 +134,8 @@ entity_valid :: proc(entity : Entity_Handle) -> bool {
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle, data : ^Entity) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
-    entity = { queue_front(&entity_ids) }
-    queue_pop(&entity_ids)
+    entity = { queue.front(&entity_ids) }
+    queue.pop_front(&entity_ids)
     index := sparse_insert(&sparse_set, entity.id)
     data = &entities[index]
     data^ = DEFAULT_ENTITY
@@ -231,7 +232,7 @@ entity_destroy :: proc(entity : Entity_Handle) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
     data := entity_data(entity)
-    queue_push(&entity_ids, entity.id)
+    queue.push(&entity_ids, entity.id)
 
     if (DEBUG_PRINT_DESTROYED_ENTITIES) {
         fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
