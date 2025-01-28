@@ -199,7 +199,10 @@ entity_group_op :: proc(data : ^Entity, op : Entity_Group_Op) {
                         break
                     }
                 }
-                assert(rm_idx >= 0)
+                if (rm_idx < 0) {
+                    fmt.println(entity_groups)    
+                    assert(false)
+                }
                 unordered_remove(&group, rm_idx)
             }
         }
@@ -229,7 +232,7 @@ entity_destroy :: proc(entity : Entity_Handle) {
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
     data := entity_data(entity)
     queue_push(&entity_ids, entity.id)
-    
+
     if (DEBUG_PRINT_DESTROYED_ENTITIES) {
         fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
     }

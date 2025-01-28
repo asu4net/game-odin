@@ -154,6 +154,9 @@ sparse_init :: proc(sparse_set : ^Sparse_Set, cap : u32) {
     for &n in dense {
         n = SPARSE_SET_INVALID
     }
+    for &n in sparse {
+        n = SPARSE_SET_INVALID
+    }
 }
 
 sparse_finish :: proc(sparse_set : ^Sparse_Set) {
@@ -167,12 +170,13 @@ sparse_finish :: proc(sparse_set : ^Sparse_Set) {
 sparse_test :: proc(sparse_set : ^Sparse_Set, element : u32) -> bool {
     using sparse_set
     assert(sparse_initialized(sparse_set))
-    return element < capacity && sparse[element] != SPARSE_SET_INVALID
+    return element < capacity && sparse[element] < count && sparse[element] != SPARSE_SET_INVALID
 }
 
 sparse_search :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
     using sparse_set
-    assert(sparse_initialized(sparse_set) || element != SPARSE_SET_INVALID)
+    assert(sparse_initialized(sparse_set) && element != SPARSE_SET_INVALID)
+    assert(sparse_test(sparse_set, element))
     dense_index := sparse[element]
     return dense_index
 }
@@ -187,7 +191,7 @@ sparse_is_full :: proc(sparse_set : ^Sparse_Set) -> bool {
 sparse_insert :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
     using sparse_set
     assert(sparse_initialized(sparse_set))
-    assert(element == SPARSE_SET_INVALID || sparse_test(sparse_set, element))
+    assert(element < capacity && !sparse_test(sparse_set, element))
     assert(!sparse_is_full(sparse_set))
     next_slot := count
     sparse[element] = next_slot
@@ -204,9 +208,6 @@ sparse_remove :: proc(sparse_set : ^Sparse_Set, element : u32) -> (deleted, last
     last = count - 1
     sparse[element] = SPARSE_SET_INVALID
     count -= 1
-    if deleted == last {
-        return
-    }
     last_element := dense[last]
     sparse[last_element] = deleted
     return
@@ -244,22 +245,20 @@ queue_finish :: proc(queue : ^Queue) {
 
 queue_push :: proc(queue : ^Queue, num : u32) {
     using queue
-    assert(queue_initialized(queue) && count <= capacity)
-    data[front + count] = num
-    count +=1
+    assert(queue_initialized(queue) && count < capacity)
+    data[(front + count) % capacity] = num
+    count += 1
 }
 
 queue_pop :: proc(queue : ^Queue) {
     using queue
-    assert(queue_initialized(queue))
-    for i in 1..<capacity {
-        data[i - 1] = data[i]
-    }
-    count -=1
+    assert(queue_initialized(queue) && count > 0)
+    front = (front + 1) % capacity
+    count -= 1
 }
 
 queue_front :: proc(queue : ^Queue) -> u32 {
     using queue
-    assert(queue_initialized(queue) && count != 0)
+    assert(queue_initialized(queue) && count > 0)
     return data[front]
 }
