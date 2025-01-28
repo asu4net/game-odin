@@ -228,16 +228,15 @@ entity_destroy :: proc(entity : Entity_Handle) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
     data := entity_data(entity)
-
+    queue_push(&entity_ids, entity.id)
+    
     if (DEBUG_PRINT_DESTROYED_ENTITIES) {
         fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
     }
-
+    
     entity_group_op(data, .REMOVE)
-    data.flags = {}
     deleted, last := sparse_remove(&sparse_set, entity.id)
     entities[deleted] = entities[last]
-    queue_push(&entity_ids, entity.id)
     entity_count -= 1
 }
 
