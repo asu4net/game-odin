@@ -139,16 +139,15 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
     data = &entities[index]
     data^ = DEFAULT_ENTITY
     data.id = entity.id
-    data.name = name
-    
-    if len(data.name) == 0 {
+    data.name = "Entity"
+    /*if len(data.name) == 0 {
         builder : strings.Builder
         strings.builder_init(&builder)
         defer strings.builder_destroy(&builder)
         strings.write_string(&builder, "Entity ")
         strings.write_uint(&builder, uint(entity.id))
-        data.name = strings.to_string(builder)    
-    }
+        data.name = strings.clone(strings.to_string(builder)) // this makes an allocation    
+    }*/
 
     entity_add_flags(entity, flags)
     entity_count += 1
