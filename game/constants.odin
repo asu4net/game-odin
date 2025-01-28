@@ -12,6 +12,9 @@ WINDOW_HEIGHT               :: 1280
 
 // Player
 PLAYER_SPEED                :: 5.0
+PLAYER_FIRERATE             :: 0.3
+
+// Camera
 CAMERA_SIZE                 :: 3.0
 
 // Render 2D
@@ -25,6 +28,10 @@ MAX_ENTITIES                :: 3000
 //:Entity flags
 /////////////////////////////
 
+PROJECTILE_GROUP_FLAGS : Entity_Flag_Set : {
+    .PROJECTILE
+}
+
 PLAYER_FLAGS : Entity_Flag_Set : {
     .PLAYER,
     .SPRITE,
@@ -34,11 +41,21 @@ ENEMY_SAW_FLAGS : Entity_Flag_Set : {
     .ENEMY,
     .SAW,
     .SPRITE,
+    .CIRCLE
 }
 
-ENTITIES_2D_FLAGS : Entity_Flag_Set : {
+SPRITE_GROUP_FLAGS : Entity_Flag_Set : {
     .SPRITE
-} 
+}
+
+CIRCLE_GROUP_FLAGS : Entity_Flag_Set : {
+    .CIRCLE
+}
+
+COLLIDER_GROUP_FLAGS : Entity_Flag_Set : {
+
+}
+
 
 /////////////////////////////
 //:Names
@@ -53,6 +70,13 @@ ENEMY_SAW_NAME :: "Enemy Saw"
 
 PLAYER_TEXTURE_PATH    :: "assets/player.png"
 ENEMY_SAW_TEXTURE_PATH :: "assets/enemy_saw.png"
+
+/////////////////////////////
+//:Debug
+/////////////////////////////
+
+DEBUG_PRINT_CREATED_ENTITIES   :: true
+DEBUG_PRINT_DESTROYED_ENTITIES :: true
 
 /////////////////////////////
 //:Keys

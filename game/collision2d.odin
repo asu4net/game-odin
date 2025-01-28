@@ -1,14 +1,29 @@
 package game
 
-enities_2d_init :: proc() {
-    entity_create_group(SPRITE_GROUP_FLAGS)
-    entity_create_group(CIRCLE_GROUP_FLAGS)
+CollisionShape :: enum {
+
 }
 
-draw_2d_entities :: proc(reg : ^Entity_Registry) {
-    assert(reg != nil)
+CollisionFlags :: enum {
+
+}
+
+Collider :: struct {
+
+}
+
+DEFAULT_COLLIDER : Collider : {
+
+}
+
+collision_2d_init :: proc() {
+    entity_create_group(COLLIDER_GROUP_FLAGS)
+}
+
+collision_2d_query :: proc(reg : ^Entity_Registry) {
+    /*assert(reg != nil)
     using reg
-    
+
     width, height := window_get_size()
     
     scene : Scene2D = {
@@ -35,5 +50,5 @@ draw_2d_entities :: proc(reg : ^Entity_Registry) {
         draw_circle(&entity.tranform, &entity.circle, entity.tint, entity.id)
     }
     
-    scene_2d_end()
+    scene_2d_end()*/
 }

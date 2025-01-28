@@ -21,6 +21,8 @@ game : Game
 game_init :: proc() {
     using game
 
+    projectile_init() // No need to finish
+    
     // Test
     {
         texture_2d_init(&saw_tex, ENEMY_SAW_TEXTURE_PATH)
@@ -41,7 +43,22 @@ game_finish :: proc() {
 
 game_update :: proc() {
     using game
+
+    //#NOTE_asuarez Just a test, delete later
+    if input_is_key_pressed(KEY_R) && entity_valid(saw_enemy) {
+        
+        data := entity_data(saw_enemy)
+        SPEED :: 1
+
+        if input_is_key_pressed(KEY_UP) {
+            data.radius += SPEED * delta_seconds()
+        } else if input_is_key_pressed(KEY_DOWN) {
+            data.radius -= SPEED * delta_seconds()
+        }
+    }
+    
     player_update(&player)
+    projectile_update(&entity_registry)
 }
 
 game_fixed_update :: proc() {
@@ -87,7 +104,7 @@ main :: proc() {
     /////////////////////////////
     //:Init & Finish
     /////////////////////////////
-    
+
     window_init(title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
     defer window_finish()
     
@@ -116,7 +133,8 @@ main :: proc() {
         time_step()
 
 		for time.fixed_update_calls > 0 {
-			game_fixed_update()
+			collision_2d_query(&entity_registry)
+            game_fixed_update()
 			time.fixed_update_calls-=1
 		}
 

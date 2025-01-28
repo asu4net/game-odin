@@ -53,6 +53,16 @@ fill_quad_vertex_positions :: proc(vertex_positions : ^V4Verts2D, size : v2) {
     vertex_positions[3] = { -pos.x,  pos.y, 0.0, 1.0 };
 }
 
+fill_circle_vertex_positions :: proc(vertex_positions : ^V4Verts2D, radius : f32) {
+    
+    radius := radius * 2.0
+    scale_mat := m4_scale(M4_IDENTITY, { radius, radius, 1.0 })
+    vertex_positions[0] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[0]
+    vertex_positions[1] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[1]
+    vertex_positions[2] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[2]
+    vertex_positions[3] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[3]
+}
+
 flip_quad_vertex_uv :: proc(vertex_uvs : ^V2Verts2D, flip_x : bool, flip_y : bool) {
     uv := vertex_uvs
     if flip_x && flip_y {
@@ -131,19 +141,46 @@ Quad_Vertex :: struct {
     entity   : i32
 }
 
+Circle_Vertex :: struct {
+    position       : v4,
+    local_position : v4,
+    tint           : v4,
+    thickness      : f32,
+    fade           : f32,
+    entity         : i32
+}
+
+Primitive_Type :: enum {
+    nil,
+    QUAD,
+    CIRCLE
+}
+
 Renderer2D :: struct {
-    white_texture     : Texture2D,
-    texture_slots     : [MAX_TEXTURE_SLOTS] i32,
-    textures_to_bind  : [MAX_TEXTURE_SLOTS]^Texture2D,
-    last_texture_slot : i32,
-    projection_view   : m4,
-    quad_ibo          : Index_Buffer,
-    quad_vao          : Vertex_Array,
-    quad_vbo          : Vertex_Buffer,
-    quad_batch        : [] Quad_Vertex,
-    quad_count        : u32,
-    quad_index_count  : u32,
-    quad_shader       : Shader,
+    white_texture      : Texture2D,
+    texture_slots      : [MAX_TEXTURE_SLOTS] i32,
+    textures_to_bind   : [MAX_TEXTURE_SLOTS]^Texture2D,
+    last_texture_slot  : i32,
+    projection_view    : m4,
+    
+    curr_primitive     : Primitive_Type,
+
+    // Quad
+    quad_ibo           : Index_Buffer,
+    quad_vao           : Vertex_Array,
+    quad_vbo           : Vertex_Buffer,
+    quad_batch         : [] Quad_Vertex,
+    quad_count         : u32,
+    quad_index_count   : u32,
+    quad_shader        : Shader,
+    
+    // Circle
+    circle_vao         : Vertex_Array,
+    circle_vbo         : Vertex_Buffer,
+    circle_batch       : [] Circle_Vertex,
+    circle_count       : u32,
+    circle_index_count : u32,
+    circle_shader      : Shader,
 }
 
 // Should access this through your provided instance
@@ -191,8 +228,6 @@ renderer_2d_init :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
 
-    quad_batch = make([]Quad_Vertex, MAX_2D_PRIMITIVES_PER_BATCH * VERTICES_PER_2D_PRIMITIVE)
-
     projection_view = M4_IDENTITY
     texture_2d_init_as_white(&white_texture)
     
@@ -204,6 +239,7 @@ renderer_2d_init :: proc() {
     }
 
     shader_init(&quad_shader, .QUAD)
+    shader_init(&circle_shader, .CIRCLE)
 
     {
         INDEX_COUNT :: MAX_2D_PRIMITIVES_PER_BATCH * INDICES_PER_2D_PRIMITIVE
@@ -227,9 +263,12 @@ renderer_2d_init :: proc() {
         }
 
         index_buffer_init(&quad_ibo, raw_data(indices), INDEX_COUNT)
-
+        
+        VERTICES :: MAX_2D_PRIMITIVES_PER_BATCH * VERTICES_PER_2D_PRIMITIVE
+        
+        // Quad
         {
-            VERTICES :: MAX_2D_PRIMITIVES_PER_BATCH * VERTICES_PER_2D_PRIMITIVE
+            quad_batch = make([]Quad_Vertex, VERTICES)
             vertex_array_init(&quad_vao)
             vertex_buffer_init(&quad_vbo, VERTICES * size_of(Quad_Vertex))
             vertex_buffer_add_layout(&quad_vbo, type = .Float4, name = "a_Position")
@@ -240,16 +279,37 @@ renderer_2d_init :: proc() {
             add_vertex_buffer(&quad_vao, &quad_vbo)
             add_index_buffer(&quad_vao, &quad_ibo)
         }
+
+        // Circle
+        {
+            circle_batch = make([]Circle_Vertex, VERTICES)
+            vertex_array_init(&circle_vao)
+            vertex_buffer_init(&circle_vbo, VERTICES * size_of(Circle_Vertex))
+            vertex_buffer_add_layout(&circle_vbo, type = .Float4, name = "a_Position")
+            vertex_buffer_add_layout(&circle_vbo, type = .Float4, name = "a_LocalPosition")
+            vertex_buffer_add_layout(&circle_vbo, type = .Float4, name = "a_Tint")
+            vertex_buffer_add_layout(&circle_vbo, type = .Float,  name = "a_Thickness")
+            vertex_buffer_add_layout(&circle_vbo, type = .Float,  name = "a_Fade")
+            vertex_buffer_add_layout(&circle_vbo, type = .Int,    name = "a_EntityID")
+            add_vertex_buffer(&circle_vao, &circle_vbo)
+            add_index_buffer(&circle_vao, &quad_ibo)
+        }
     }
 }
 
 renderer_2d_finish :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
+    texture_2d_finish(&white_texture)
+
     delete(quad_batch)
     vertex_buffer_finish(&quad_vbo)
-    texture_2d_finish(&white_texture)
     shader_finish(&quad_shader)
+    
+    delete(circle_batch)
+    vertex_buffer_finish(&circle_vbo)
+    shader_finish(&circle_shader)
+    
     renderer_2d^ = {}
 }
 
@@ -257,23 +317,44 @@ renderer_2d_finish :: proc() {
 start_batch :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
-    quad_count = 0
+    
     last_texture_slot = 1
+    
+    quad_count = 0
     quad_index_count = 0
+    
+    circle_count = 0
+    circle_index_count = 0
 }
 
 @(private = "file")
 flush :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
-    for i in 0..<last_texture_slot {
-        texture_2d_bind(textures_to_bind[i], u32(i))
+    
+    switch curr_primitive {
+        
+        case .nil: assert(false)
+        
+        case .QUAD: {
+            for i in 0..<last_texture_slot {
+                texture_2d_bind(textures_to_bind[i], u32(i))
+            }
+            shader_bind(&quad_shader)
+            shader_set_constant_sampler2D(&quad_shader, "u_Textures[0]", cast([^]i32) &texture_slots, MAX_TEXTURE_SLOTS)
+            shader_set_constant_m4(&quad_shader, "u_ProjectionView", projection_view)
+            vertex_buffer_set_data(&quad_vbo, &quad_batch[0], u64(size_of(Quad_Vertex) * VERTICES_PER_2D_PRIMITIVE * quad_count))
+            draw_elements(&quad_vao, quad_index_count)
+        }
+        case .CIRCLE: {
+            shader_bind(&circle_shader)
+            shader_set_constant_m4(&circle_shader, "u_ProjectionView", projection_view)
+            vertex_buffer_set_data(&circle_vbo, &circle_batch[0], u64(size_of(Circle_Vertex) * VERTICES_PER_2D_PRIMITIVE * circle_count))
+            draw_elements(&circle_vao, circle_index_count)
+        }
     }
-    shader_bind(&quad_shader)
-    shader_set_constant_sampler2D(&quad_shader, "u_Textures[0]", cast([^]i32) &texture_slots, MAX_TEXTURE_SLOTS)
-    shader_set_constant_m4(&quad_shader, "u_ProjectionView", projection_view)
-    vertex_buffer_set_data(&quad_vbo, &quad_batch[0], u64(size_of(Quad_Vertex) * VERTICES_PER_2D_PRIMITIVE * quad_count))
-    draw_elements(&quad_vao, quad_index_count)
+
+    curr_primitive = nil
 }
 
 @(private = "file")
@@ -375,6 +456,12 @@ draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint :
     using renderer_2d, transform, sprite
 
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
+    
+    if curr_primitive != .nil && curr_primitive != .QUAD {
+        next_batch()
+    }
+
+    curr_primitive = .QUAD
 
     if quad_count == MAX_2D_PRIMITIVES_PER_BATCH {
         next_batch()
@@ -405,4 +492,60 @@ draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint :
     
     quad_index_count += INDICES_PER_2D_PRIMITIVE
     quad_count += 1
+}
+
+Circle :: struct {
+    radius    : f32,
+    thickness : f32,
+    fade      : f32,
+}
+
+DEFAULT_CIRCLE : Circle : {
+    radius    = 0.5,
+    thickness = 0.05,
+    fade      = 0.01,
+}
+
+draw_circle :: proc(transform : ^Transform = nil, circle : ^Circle = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+{
+    assert(renderer_2d != nil && transform != nil && circle != nil)
+    using renderer_2d, transform, circle
+
+    if curr_primitive != .nil && curr_primitive != .CIRCLE {
+        next_batch()
+    }
+
+    curr_primitive = .CIRCLE
+
+    assert(circle_count <= MAX_2D_PRIMITIVES_PER_BATCH)
+
+    if circle_count == MAX_2D_PRIMITIVES_PER_BATCH {
+        next_batch()
+    }
+
+    vertex_positions : V4Verts2D = ---
+    fill_circle_vertex_positions(&vertex_positions, radius)
+    final_thickness := thickness / (radius * 2)
+
+    vertex_colors    : V4Verts2D = ---
+    fill_vertex_colors(&vertex_colors, tint)
+
+    transform_vertex_positions(&vertex_positions, m4_transform(position, rotation, scale))
+    
+    default_vertex_positions := DEFAULT_VERTEX_POSITIONS_2D 
+    
+    for i in 0..<VERTICES_PER_2D_PRIMITIVE {
+
+        vert := &circle_batch[i + int(circle_count) * VERTICES_PER_2D_PRIMITIVE]
+        
+        vert.local_position = default_vertex_positions[i]
+        vert.position       = vertex_positions[i]
+        vert.tint           = vertex_colors[i]
+        vert.thickness      = final_thickness
+        vert.fade           = fade
+        vert.entity         = i32(entity_id)
+    }    
+    
+    circle_index_count += INDICES_PER_2D_PRIMITIVE
+    circle_count += 1
 }

@@ -1,5 +1,6 @@
 package game
 import "core:strings"
+import "core:fmt"
 
 ENTITY_ID    :: u32
 
@@ -8,10 +9,12 @@ Entity_Flag :: enum {
     ENABLED,
     VISIBLE,
     SPRITE,
-    
+    CIRCLE,
+    COLLIDER,
+
     // Gameplay stuff
-    PLAYER,
     PROJECTILE,
+    PLAYER,
     ENEMY,
     SAW,
 }
@@ -37,17 +40,23 @@ DEFAULT_ENTITY_COMMON : EntityCommon : {
 }
 
 Entity :: struct {
-    using common   : EntityCommon,
-    using tranform : Transform,
-    using sprite   : Sprite
+    using common     : EntityCommon,
+    using tranform   : Transform,
+    using sprite     : Sprite,
+    using circle     : Circle,
+    using collider   : Collider,
+    using projectile : Projectile,
 }
 
 NIL_ENTITY_ID :: SPARSE_SET_INVALID
 
 DEFAULT_ENTITY : Entity : {
-    common    = DEFAULT_ENTITY_COMMON,
-    tranform  = DEFAULT_TRANSFORM,
-    sprite    = DEFAULT_SPRITE
+    common      = DEFAULT_ENTITY_COMMON,
+    tranform    = DEFAULT_TRANSFORM,
+    sprite      = DEFAULT_SPRITE,
+    circle      = DEFAULT_CIRCLE,
+    collider    = DEFAULT_COLLIDER,
+    projectile  = DEFAULT_PROJECTILE,
 }
 
 Entity_Handle :: struct {
@@ -66,7 +75,8 @@ Entity_Registry :: struct {
     sparse_set    : Sparse_Set,
     entity_ids    : Queue,
     entity_count  : u32,
-    entity_groups : Entity_Group_Map 
+    entity_groups : Entity_Group_Map, 
+    initialized   : bool,
 }
 
 @(private = "file")
@@ -86,8 +96,7 @@ entity_registry_get_instance :: proc() -> ^Entity_Registry {
 
 entity_registry_initialized :: proc() -> bool {
     using entity_registry
-    assert(entity_registry != nil)
-    return entities != nil
+    return initialized
 }
 
 entity_registry_init :: proc() {
@@ -99,6 +108,7 @@ entity_registry_init :: proc() {
     for i in 0..<MAX_ENTITIES {
         queue_push(&entity_ids, u32(i)) 
     }
+    initialized = true
 }
 
 entity_registry_finish :: proc() {
@@ -132,22 +142,37 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
     data.name = name
     
     if len(data.name) == 0 {
-        builder : ^strings.Builder
-        strings.builder_init(builder)
-        defer strings.builder_destroy(builder)
-        strings.write_string(builder, "Entity ")
-        strings.write_uint(builder, uint(entity.id))
-        data.name = strings.to_string(builder^)    
+        builder : strings.Builder
+        strings.builder_init(&builder)
+        defer strings.builder_destroy(&builder)
+        strings.write_string(&builder, "Entity ")
+        strings.write_uint(&builder, uint(entity.id))
+        data.name = strings.to_string(builder)    
     }
 
     entity_add_flags(entity, flags)
     entity_count += 1
+
+    if (DEBUG_PRINT_CREATED_ENTITIES) {
+        fmt.printf("Created entity. Name[%v], Id[%v] \n", data.name, data.id)
+    }
+
     return    
 }
 
 entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     using entity_registry
-    assert(entity_registry_initialized() && entity_valid(entity))
+    
+    assert(entity_registry_initialized())
+
+    if (!entity_valid(entity)) {
+        fmt.printf("Trying to access invalid entity id[%v] \n", entity)
+        for elem in entity_groups[{.CIRCLE}] {
+            fmt.printf("%v \n", elem)    
+        }
+        assert(false)
+    }
+
     index := sparse_search(&sparse_set, entity.id)
     return &entities[index]
 }
@@ -203,9 +228,14 @@ entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> 
 entity_destroy :: proc(entity : Entity_Handle) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
-    data := entity_data(entity) 
-    data.flags = {}
+    data := entity_data(entity)
+
+    if (DEBUG_PRINT_DESTROYED_ENTITIES) {
+        fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
+    }
+
     entity_group_op(data, .REMOVE)
+    data.flags = {}
     deleted, last := sparse_remove(&sparse_set, entity.id)
     entities[deleted] = entities[last]
     queue_push(&entity_ids, entity.id)
@@ -225,6 +255,6 @@ entity_create_group :: proc(flags : Entity_Flag_Set) -> (group : Entity_Group) {
         return entity_get_group(flags)
     }
     group = make(Entity_Group)
-    entity_groups[flags] = group
+    entity_registry.entity_groups[flags] = group
     return
 }

@@ -52,8 +52,65 @@ SHADER_FRAG_QUAD :: `
     }
 `
 
+SHADER_VERT_CIRCLE :: `
+    #version 420 core
+            
+    layout(location = 0) in vec4  a_Position;
+    layout(location = 1) in vec4  a_LocalPosition;
+    layout(location = 2) in vec4  a_Tint;
+    layout(location = 3) in float a_Thickness;
+    layout(location = 4) in float a_Fade;
+    layout(location = 5) in int   a_EntityID;
+    
+    uniform mat4 u_ProjectionView;
+    
+     // Vertex output
+    out vec4     v_LocalPosition;
+    out vec4     v_Tint;
+    out float    v_Thickness;
+    out float    v_Fade;
+    flat out int v_EntityID;
+    
+    void main()
+    {
+        gl_Position     = u_ProjectionView * a_Position;
+        v_LocalPosition = a_LocalPosition;
+        v_Tint          = a_Tint;
+        v_Thickness     = a_Thickness;
+        v_Fade          = a_Fade;
+        v_EntityID      = a_EntityID;
+    }
+
+`
+
+SHADER_FRAG_CIRCLE :: `
+    #version 420 core
+
+    layout(location = 0) out vec4 o_Color;
+    layout(location = 1) out int  o_EntityID;
+
+    // Vertex input
+    in vec4     v_LocalPosition;
+    in vec4     v_Tint;
+    in float    v_Thickness;
+    in float    v_Fade;
+    flat in int v_EntityID;
+
+    void main()
+    {
+        vec2 localPos = vec2(v_LocalPosition.x * 2, v_LocalPosition.y * 2);
+        float d = 1.0 - length(localPos);
+        float alpha = smoothstep(0.0, v_Fade, d);
+        alpha *= smoothstep(v_Thickness + v_Fade, v_Thickness, d);
+        o_Color = vec4(v_Tint.rgb, alpha);
+        o_EntityID = v_EntityID;    
+    }
+
+`
+
 Shader_Default :: enum {
-    QUAD
+    QUAD,
+    CIRCLE
 }
 
 Shader :: struct {
@@ -78,6 +135,7 @@ shader_init_from_source :: proc(shader : ^Shader, vertex_source : string, fragme
 shader_init_from_default :: proc(shader : ^Shader, def : Shader_Default) {
     switch def {
         case .QUAD : shader_init_from_source(shader, SHADER_VERT_QUAD, SHADER_FRAG_QUAD)
+        case .CIRCLE : shader_init_from_source(shader, SHADER_VERT_CIRCLE, SHADER_FRAG_CIRCLE)
     }
 }
 
