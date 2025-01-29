@@ -17,11 +17,11 @@ DEFAULT_PROJECTILE : Projectile : {
 }
 
 projectile_init :: proc() {
-    entity_create_group(PROJECTILE_GROUP_FLAGS)
+    
 }
 
 projectile_update :: proc(reg : ^Entity_Registry) {
-    for handle in entity_get_group(PROJECTILE_GROUP_FLAGS) {
+    for handle in entity_get_group({.PROJECTILE}) {
         entity := entity_data(handle)
         if Entity_Flag.ENABLED not_in entity.flags {
             continue

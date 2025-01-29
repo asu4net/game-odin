@@ -17,7 +17,8 @@ Entity_Flag :: enum {
     PROJECTILE,
     PLAYER,
     ENEMY,
-    SAW,
+    KAMIKAZE,
+    KAMIKAZE_SAW,
 }
 
 Entity_Flag_Set :: bit_set[Entity_Flag]
@@ -41,12 +42,14 @@ DEFAULT_ENTITY_COMMON : EntityCommon : {
 }
 
 Entity :: struct {
-    using common     : EntityCommon,
-    using tranform   : Transform,
-    using sprite     : Sprite,
-    using circle     : Circle,
-    using collider   : Collider2D,
-    using projectile : Projectile,
+    using common       : EntityCommon,
+    using tranform     : Transform,
+    using sprite       : Sprite,
+    using circle       : Circle,
+    using collider     : Collider2D,
+    using projectile   : Projectile,
+    using kamikaze     : KamikazeSkull,
+    using kamikaze_saw : KamikazeSaw,
 }
 
 NIL_ENTITY_ID :: SPARSE_SET_INVALID
@@ -58,6 +61,7 @@ DEFAULT_ENTITY : Entity : {
     circle      = DEFAULT_CIRCLE,
     collider    = DEFAULT_COLLIDER_2D,
     projectile  = DEFAULT_PROJECTILE,
+    kamikaze    = DEFAULT_KAMIKAZE_SKULL,
 }
 
 Entity_Handle :: struct {
@@ -140,7 +144,7 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
     data = &entities[index]
     data^ = DEFAULT_ENTITY
     data.id = entity.id
-    data.name = "Entity"
+    data.name = len(name) == 0 ? "Entity" : name
 
     /*if len(data.name) == 0 {
         builder : strings.Builder

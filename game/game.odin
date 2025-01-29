@@ -7,13 +7,10 @@ import "core:fmt"
 /////////////////////////////
 
 Game :: struct {
-    renderer_2d     : Renderer2D,
-    entity_registry : Entity_Registry,
-    player          : Player,
-    
-    // Test
-    saw_enemy       : Entity_Handle,
-    saw_tex         : Texture2D
+    renderer_2d      : Renderer2D,
+    entity_registry  : Entity_Registry,
+    player           : Player,    
+    kamikaze_manager : KamikazeManager,
 }
 
 game : Game
@@ -21,44 +18,26 @@ game : Game
 game_init :: proc() {
     using game
 
-    projectile_init() // No need to finish
-    
-    // Test
-    {
-        texture_2d_init(&saw_tex, ENEMY_SAW_TEXTURE_PATH)
-        handle, entity := entity_create(ENEMY_SAW_NAME, ENEMY_SAW_FLAGS)
-        entity.position.xy = V2_UP
-        entity.sprite.texture = &saw_tex
-        saw_enemy = handle
-    }
+    entity_create_group({.PROJECTILE})
+    entity_create_group({.KAMIKAZE})
+    entity_create_group({.KAMIKAZE_SAW})
 
+    projectile_init() // No need to finish    
     player_init(&player)
+    kamikaze_manager_init(&kamikaze_manager)
 }
 
 game_finish :: proc() {
     using game
     player_finish(&player)
-    texture_2d_finish(&saw_tex)    
+    kamikaze_manager_finish(&kamikaze_manager)
 }
 
 game_update :: proc() {
     using game
-
-    //#NOTE_asuarez Just a test, delete later
-    if input_is_key_pressed(KEY_R) && entity_valid(saw_enemy) {
-        
-        data := entity_data(saw_enemy)
-        SPEED :: 1
-
-        if input_is_key_pressed(KEY_UP) {
-            data.radius += SPEED * delta_seconds()
-        } else if input_is_key_pressed(KEY_DOWN) {
-            data.radius -= SPEED * delta_seconds()
-        }
-    }
-    
     player_update(&player)
     projectile_update(&entity_registry)
+    kamikaze_manager_update(&kamikaze_manager)
 }
 
 game_fixed_update :: proc() {
