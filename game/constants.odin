@@ -75,8 +75,8 @@ ENEMY_SAW_TEXTURE_PATH :: "assets/enemy_saw.png"
 //:Debug
 /////////////////////////////
 
-DEBUG_PRINT_CREATED_ENTITIES   :: true
-DEBUG_PRINT_DESTROYED_ENTITIES :: true
+DEBUG_PRINT_CREATED_ENTITIES   :: false
+DEBUG_PRINT_DESTROYED_ENTITIES :: false
 
 /////////////////////////////
 //:Keys

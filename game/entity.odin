@@ -141,6 +141,7 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
     data^ = DEFAULT_ENTITY
     data.id = entity.id
     data.name = "Entity"
+
     /*if len(data.name) == 0 {
         builder : strings.Builder
         strings.builder_init(&builder)
@@ -152,9 +153,11 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
 
     entity_add_flags(entity, flags)
     entity_count += 1
-
-    if (DEBUG_PRINT_CREATED_ENTITIES) {
-        fmt.printf("Created entity. Name[%v], Id[%v] \n", data.name, data.id)
+    
+    when ODIN_DEBUG { 
+        if (DEBUG_PRINT_CREATED_ENTITIES) {
+            fmt.printf("Created entity. Name[%v], Id[%v] \n", data.name, data.id)
+        }
     }
 
     return    
@@ -166,9 +169,8 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     assert(entity_registry_initialized())
 
     if (!entity_valid(entity)) {
-        fmt.printf("Trying to access invalid entity id[%v] \n", entity)
-        for elem in entity_groups[{.CIRCLE}] {
-            fmt.printf("%v \n", elem)    
+        when ODIN_DEBUG {
+            fmt.printf("Trying to access invalid entity id[%v] \n", entity)
         }
         assert(false)
     }
@@ -200,10 +202,7 @@ entity_group_op :: proc(data : ^Entity, op : Entity_Group_Op) {
                         break
                     }
                 }
-                if (rm_idx < 0) {
-                    fmt.println(entity_groups)    
-                    assert(false)
-                }
+                assert(rm_idx >= 0)
                 unordered_remove(&group, rm_idx)
             }
         }
@@ -234,8 +233,10 @@ entity_destroy :: proc(entity : Entity_Handle) {
     data := entity_data(entity)
     queue.push(&entity_ids, entity.id)
 
-    if (DEBUG_PRINT_DESTROYED_ENTITIES) {
-        fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
+    when ODIN_DEBUG {
+        if (DEBUG_PRINT_DESTROYED_ENTITIES) {
+            fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
+        }
     }
     
     entity_group_op(data, .REMOVE)
