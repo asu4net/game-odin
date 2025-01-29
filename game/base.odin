@@ -203,12 +203,19 @@ sparse_insert :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
 sparse_remove :: proc(sparse_set : ^Sparse_Set, element : u32) -> (deleted, last : u32) {
     using sparse_set
     assert(sparse_initialized(sparse_set))
-    assert(element == SPARSE_SET_INVALID || sparse_test(sparse_set, element))
+    assert(element < capacity && sparse_test(sparse_set, element))
+    
     deleted = sparse[element]
     last = count - 1
+
     sparse[element] = SPARSE_SET_INVALID
     count -= 1
-    last_element := dense[last]
-    sparse[last_element] = deleted
+
+    if deleted != last {
+        last_element := dense[last]
+        dense[deleted] = last_element
+        sparse[last_element] = deleted
+    }
+    
     return
 }

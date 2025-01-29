@@ -240,11 +240,14 @@ entity_destroy :: proc(entity : Entity_Handle) {
     
     entity_group_op(data, .REMOVE)
     deleted, last := sparse_remove(&sparse_set, entity.id)
-    entities[deleted] = entities[last]
     entity_count -= 1
-}
 
+    if deleted != last {
+        entities[deleted] = entities[last]
+    }
+}
 entity_get_group :: proc(flags : Entity_Flag_Set) -> Entity_Group {
+
     using entity_registry
     assert(entity_registry_initialized() && flags in entity_groups)
     return entity_groups[flags];
