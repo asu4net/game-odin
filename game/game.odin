@@ -120,6 +120,8 @@ main :: proc() {
     enities_2d_init()
     //#NOTE_asuarez no need to finish
 
+    collision_2d_init();
+
     game_init()
     defer game_finish()
 
@@ -141,6 +143,7 @@ main :: proc() {
         game_update()
 		clear_screen()
         draw_2d_entities(&entity_registry)
+        collision_2d_draw(&entity_registry)
         window_update()
     }
 }

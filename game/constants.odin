@@ -35,6 +35,7 @@ PROJECTILE_GROUP_FLAGS : Entity_Flag_Set : {
 PLAYER_FLAGS : Entity_Flag_Set : {
     .PLAYER,
     .SPRITE,
+    .CIRCLE_COLLIDER,
 }
 
 ENEMY_SAW_FLAGS : Entity_Flag_Set : {
@@ -52,8 +53,8 @@ CIRCLE_GROUP_FLAGS : Entity_Flag_Set : {
     .CIRCLE
 }
 
-COLLIDER_GROUP_FLAGS : Entity_Flag_Set : {
-
+CIRCLE_COLLIDER_GROUP_FLAGS : Entity_Flag_Set : {
+    .CIRCLE_COLLIDER
 }
 
 

@@ -11,7 +11,7 @@ Entity_Flag :: enum {
     VISIBLE,
     SPRITE,
     CIRCLE,
-    COLLIDER,
+    CIRCLE_COLLIDER,
 
     // Gameplay stuff
     PROJECTILE,
@@ -45,7 +45,7 @@ Entity :: struct {
     using tranform   : Transform,
     using sprite     : Sprite,
     using circle     : Circle,
-    using collider   : Collider,
+    using collider   : Collider2D,
     using projectile : Projectile,
 }
 
@@ -56,7 +56,7 @@ DEFAULT_ENTITY : Entity : {
     tranform    = DEFAULT_TRANSFORM,
     sprite      = DEFAULT_SPRITE,
     circle      = DEFAULT_CIRCLE,
-    collider    = DEFAULT_COLLIDER,
+    collider    = DEFAULT_COLLIDER_2D,
     projectile  = DEFAULT_PROJECTILE,
 }
 

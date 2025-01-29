@@ -334,7 +334,7 @@ flush :: proc() {
     
     switch curr_primitive {
         
-        case .nil: assert(false)
+        case .nil: return
         
         case .QUAD: {
             for i in 0..<last_texture_slot {

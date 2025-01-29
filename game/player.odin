@@ -109,7 +109,7 @@ projectiles := 0
 fire_projectile :: proc(player : ^Player) {
     // placeholder projectile
 
-    handle, data := entity_create(flags = { .CIRCLE, .PROJECTILE, .COLLIDER, })
+    handle, data := entity_create(flags = { .CIRCLE, .PROJECTILE, .CIRCLE_COLLIDER, })
     player_entity := entity_data(player.entity)
     data.position = player_entity.position
     data.radius = 0.1
