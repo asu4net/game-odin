@@ -135,8 +135,7 @@ entity_registry_finish :: proc() {
 entity_valid :: proc(entity : Entity_Handle) -> bool {
     using entity_registry
     assert(entity_registry_initialized())
-    data := entity_data(entity)
-    return sparse_test(&sparse_set, entity.id) && (.PENDING_DESTROY not_in data.flags)
+    return sparse_test(&sparse_set, entity.id)
 }
 
 entity_iterable :: proc(entity : Entity_Handle) -> bool {
@@ -268,7 +267,7 @@ entity_clean_destroyed_entities :: proc(entity_registry : ^Entity_Registry) {
         delete(data.collision_enter);
         delete(data.collision_exit);
         delete(data.colliding_with);
-
+        
         queue.push(&entity_ids, data.id)
 
         when ODIN_DEBUG {
