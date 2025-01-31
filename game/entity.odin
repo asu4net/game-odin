@@ -8,6 +8,7 @@ ENTITY_ID    :: u32
 Entity_Flag :: enum {
     // Engine stuff
     ENABLED,
+    PENDING_DESTROY,
     VISIBLE,
     SPRITE,
     CIRCLE,
@@ -47,9 +48,9 @@ Entity :: struct {
     using sprite       : Sprite,
     using circle       : Circle,
     using collider     : Collider2D,
-    using projectile   : Projectile,
-    using kamikaze     : KamikazeSkull,
-    using kamikaze_saw : KamikazeSaw,
+    projectile   : Projectile,
+    kamikaze     : KamikazeSkull,
+    kamikaze_saw : KamikazeSaw,
 }
 
 NIL_ENTITY_ID :: SPARSE_SET_INVALID
@@ -76,12 +77,13 @@ Entity_Group :: [dynamic]Entity_Handle
 Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
 
 Entity_Registry :: struct {
-    entities      : [] Entity,
-    sparse_set    : Sparse_Set,
-    entity_ids    : queue.Queue(u32),
-    entity_count  : u32,
-    entity_groups : Entity_Group_Map, 
-    initialized   : bool,
+    entities        : [] Entity,
+    sparse_set      : Sparse_Set,
+    entity_ids      : queue.Queue(u32),
+    entity_count    : u32,
+    entity_groups   : Entity_Group_Map, 
+    initialized     : bool,
+    pending_destroy : map[Entity_Handle]struct{},
 }
 
 @(private = "file")
@@ -124,6 +126,7 @@ entity_registry_finish :: proc() {
         delete(group)
     }
     delete(entity_groups)
+    delete_map(pending_destroy)
     sparse_finish(&sparse_set)
     queue.destroy(&entity_ids)
     entity_registry^ = {}
@@ -132,7 +135,15 @@ entity_registry_finish :: proc() {
 entity_valid :: proc(entity : Entity_Handle) -> bool {
     using entity_registry
     assert(entity_registry_initialized())
-    return sparse_test(&sparse_set, entity.id)
+    data := entity_data(entity)
+    return sparse_test(&sparse_set, entity.id) && (.PENDING_DESTROY not_in data.flags)
+}
+
+entity_iterable :: proc(entity : Entity_Handle) -> bool {
+    using entity_registry
+    assert(entity_registry_initialized())
+    data := entity_data(entity)
+    return entity_valid(entity) && (.PENDING_DESTROY not_in data.flags || .ENABLED in data.flags)  
 }
 
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle, data : ^Entity) {
@@ -235,22 +246,49 @@ entity_destroy :: proc(entity : Entity_Handle) {
     using entity_registry
     assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
     data := entity_data(entity)
-    queue.push(&entity_ids, entity.id)
+    data.flags += { .PENDING_DESTROY }
+    pending_destroy[entity] = {}
 
-    when ODIN_DEBUG {
-        if (DEBUG_PRINT_DESTROYED_ENTITIES) {
-            fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
-        }
-    }
-    
-    entity_group_op(data, .REMOVE)
-    deleted, last := sparse_remove(&sparse_set, entity.id)
-    entity_count -= 1
-
-    if deleted != last {
-        entities[deleted] = entities[last]
+    // jjjjjjjjjjjjjjjjjjjjjjjjjjjjj
+    for other, value in data.colliding_with {
+        other_data := entity_data(other);
+        // What remains is to pray that this doesnt get cleared when detecting collision
+        append_elem(&other_data.collision_exit, CollisionEventExit{ other, entity });
+        delete_key(&other_data.colliding_with, entity);
     }
 }
+
+entity_clean_destroyed_entities :: proc(entity_registry : ^Entity_Registry) {
+    using entity_registry
+    assert(entity_registry_initialized())
+    
+    for handle, _ in pending_destroy {
+        data := entity_data(handle)
+        
+        delete(data.collision_enter);
+        delete(data.collision_exit);
+        delete(data.colliding_with);
+
+        queue.push(&entity_ids, data.id)
+
+        when ODIN_DEBUG {
+            if (DEBUG_PRINT_DESTROYED_ENTITIES) {
+                fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
+            }
+        }
+
+        entity_group_op(data, .REMOVE)
+        deleted, last := sparse_remove(&sparse_set, data.id)
+        entity_count -= 1
+
+        if deleted != last {
+            entities[deleted] = entities[last]
+        }
+    }
+
+    clear(&pending_destroy)
+}
+
 entity_get_group :: proc(flags : Entity_Flag_Set) -> Entity_Group {
 
     using entity_registry

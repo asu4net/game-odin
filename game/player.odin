@@ -40,6 +40,10 @@ player_init :: proc(player : ^Player) {
     data.texture = &texture
     speed = PLAYER_SPEED 
     firerate = PLAYER_FIRERATE
+    
+    data.collision_flag = CollisionFlag.player;
+    data.collides_with = { .enemy, .enemy_bullet };
+
     initialized = true
 }
 
@@ -52,8 +56,10 @@ player_finish :: proc(player : ^Player) {
 player_update :: proc(player : ^Player) {
     assert(player_initialized(player))
     input_update(player)
+    collision_update(player);
     movement_update(player)
     weapons_update(player)
+
 }
 
 @(private = "file")
@@ -82,6 +88,14 @@ input_update :: proc(player : ^Player) {
     }
 
     fire = input_is_key_pressed(KEY_SPACE)
+}
+
+@(private = "file")
+collision_update :: proc(player : ^Player) {
+    entity := entity_data(player.entity);
+    for collision_enter_event in entity.collision_enter {
+        game.exit = true;
+    }
 }
 
 @(private = "file")
@@ -115,4 +129,6 @@ fire_projectile :: proc(player : ^Player) {
     data.radius = 0.1
     data.thickness = 1
     data.tint = V4_COLOR_RED
+    data.collision_flag = CollisionFlag.player_bullet;
+    data.collides_with = { .enemy };
 }

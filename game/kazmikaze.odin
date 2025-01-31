@@ -49,7 +49,10 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         manager.skull_prefab = handle
         data.sprite.texture = &manager.skull_tex
         data.position = pos
-        data.kamikaze_cd = cd
+        data.kamikaze.kamikaze_cd = cd
+
+        data.collision_flag = CollisionFlag.enemy;
+        data.collides_with = { .player, .player_bullet };
     }
 
     // Saw
@@ -58,9 +61,9 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         manager.saw_prefab = handle
         data.tranform.position = V3_UP
         data.sprite.texture = &manager.saw_tex
-        data.kamikaze_skull = skull
+        data.kamikaze_saw.kamikaze_skull = skull
         data.position = pos
-        data.kamikaze_cd = cd
+        data.kamikaze.kamikaze_cd = cd
     }
 }
 
@@ -79,46 +82,58 @@ kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
     
     // Saw follows skull
     for handle in entity_get_group({.KAMIKAZE_SAW}) {
-        entity := entity_data(handle)
-        if Entity_Flag.ENABLED not_in entity.flags {
+        if !entity_iterable(handle) {
             continue
         }
+        entity := entity_data(handle)
+
+        if !entity_valid(entity.kamikaze_saw.kamikaze_skull) || .PENDING_DESTROY in entity_data(entity.kamikaze_saw.kamikaze_skull).flags {
+            entity_destroy(handle)
+            continue
+        }
+        
         entity.rotation.z -= KAMIKAZE_SAW_SPEED * delta_seconds()
-        entity.tranform.position = entity_data(entity.kamikaze_skull).tranform.position
+        entity.tranform.position = entity_data(entity.kamikaze_saw.kamikaze_skull).tranform.position
     }
 
     // Skull //TODO: Interpolate speed
     for handle in entity_get_group({.KAMIKAZE}) {
-        
-        entity := entity_data(handle)
-        
-        if Entity_Flag.ENABLED not_in entity.flags {
+        if !entity_iterable(handle) {
             continue
         }
+        entity := entity_data(handle)
+        
+        for collision_enter_event in entity.collision_enter {
+            other_data := entity_data(collision_enter_event.other);
+            if(other_data.collision_flag == CollisionFlag.player_bullet){
 
-        switch entity.kamikaze_state {
+                entity_destroy(handle)
+            }
+        }
+
+        switch entity.kamikaze.kamikaze_state {
             
             case .IDLE: {
-                entity.kamikaze_idle_time += delta_seconds()
-                if entity.kamikaze_idle_time >= entity.kamikaze_cd {
-                    entity.kamikaze_idle_time = 0
-                    entity.kamikaze_attack_target = entity_data(game.player.entity).position
-                    entity.kamikaze_state = .ATTACK
+                entity.kamikaze.kamikaze_idle_time += delta_seconds()
+                if entity.kamikaze.kamikaze_idle_time >= entity.kamikaze.kamikaze_cd {
+                    entity.kamikaze.kamikaze_idle_time = 0
+                    entity.kamikaze.kamikaze_attack_target = entity_data(game.player.entity).position
+                    entity.kamikaze.kamikaze_state = .ATTACK
                 }
             }
             case .ATTACK: {
-                delta_speed := entity.kamikaze_speed * delta_seconds()
-                distance := linalg.distance(entity.kamikaze_attack_target, entity.position)
+                delta_speed := entity.kamikaze.kamikaze_speed * delta_seconds()
+                distance := linalg.distance(entity.kamikaze.kamikaze_attack_target, entity.position)
                 
                 if delta_speed >= distance {
-                    entity.position = entity.kamikaze_attack_target
+                    entity.position = entity.kamikaze.kamikaze_attack_target
                 } else {
-                    dir := linalg.normalize(entity.kamikaze_attack_target - entity.position)
+                    dir := linalg.normalize(entity.kamikaze.kamikaze_attack_target - entity.position)
                     entity.position += dir * delta_speed
                 }
 
-                if entity.position == entity.kamikaze_attack_target {
-                    entity.kamikaze_state = .IDLE
+                if entity.position == entity.kamikaze.kamikaze_attack_target {
+                    entity.kamikaze.kamikaze_state = .IDLE
                 }
             }
         }

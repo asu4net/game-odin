@@ -11,9 +11,11 @@ Game :: struct {
     entity_registry  : Entity_Registry,
     player           : Player,    
     kamikaze_manager : KamikazeManager,
+    exit             : bool,
 }
 
 game : Game
+
 
 game_init :: proc() {
     using game
@@ -100,6 +102,7 @@ main :: proc() {
     //#NOTE_asuarez no need to finish
 
     collision_2d_init();
+    defer collision_2d_finish();
 
     game_init()
     defer game_finish()
@@ -108,7 +111,7 @@ main :: proc() {
     //:Main Loop
     /////////////////////////////
 
-    for !window_should_close() {
+    for !window_should_close() && !game.exit {
 
         window_poll_input_events()
         time_step()
@@ -123,6 +126,8 @@ main :: proc() {
 		clear_screen()
         draw_2d_entities(&entity_registry)
         collision_2d_draw(&entity_registry)
+        entity_clean_destroyed_entities(&entity_registry)
         window_update()
     }
+
 }

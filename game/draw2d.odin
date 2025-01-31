@@ -20,18 +20,31 @@ draw_2d_entities :: proc(reg : ^Entity_Registry) {
     scene_2d_begin(scene)
 
     for handle in entity_get_group(SPRITE_GROUP_FLAGS) {
-        entity := entity_data(handle)
-        if Entity_Flag.ENABLED not_in entity.flags || Entity_Flag.VISIBLE not_in entity.flags {
+        
+        if !entity_iterable(handle) {
             continue
         }
+        entity := entity_data(handle)
+        
+        if .VISIBLE not_in entity.flags {
+            continue
+        }
+        
         draw_sprite(&entity.tranform, &entity.sprite, entity.tint, entity.id)
     }
-
+    
     for handle in entity_get_group(CIRCLE_GROUP_FLAGS) {
-        entity := entity_data(handle)
-        if Entity_Flag.ENABLED not_in entity.flags || Entity_Flag.VISIBLE not_in entity.flags {
+        
+        if !entity_iterable(handle) {
             continue
         }
+        
+        entity := entity_data(handle)
+        
+        if .VISIBLE not_in entity.flags {
+            continue
+        }
+
         draw_circle(&entity.tranform, &entity.circle, entity.tint, entity.id)
     }
     
