@@ -8,11 +8,11 @@ KamikazeState :: enum {
 }
 
 KamikazeSkull :: struct {
-    kamikaze_speed         : f32,
-    kamikaze_state         : KamikazeState,
-    kamikaze_idle_time     : f32,
-    kamikaze_attack_target : v3, 
-    kamikaze_cd            : f32 
+    speed         : f32,
+    state         : KamikazeState,
+    idle_time     : f32,
+    attack_target : v3, 
+    attack_cd     : f32 
 }
 
 KamikazeSaw :: struct {
@@ -20,8 +20,8 @@ KamikazeSaw :: struct {
 }
 
 DEFAULT_KAMIKAZE_SKULL : KamikazeSkull : {
-    kamikaze_speed = KAMIKAZE_SPEED,
-    kamikaze_cd    = KAMIKAZE_ATTACK_CD
+    speed     = KAMIKAZE_SPEED,
+    attack_cd = KAMIKAZE_ATTACK_CD
 }
 
 KamikazeManager :: struct {
@@ -50,7 +50,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         manager.skull_prefab = handle
         data.sprite.texture = &manager.skull_tex
         data.position = pos
-        data.kamikaze.kamikaze_cd = cd
+        data.kamikaze.attack_cd = cd
 
         data.collision_flag = CollisionFlag.enemy;
         data.collides_with = { .player, .player_bullet };
@@ -64,7 +64,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         data.sprite.texture = &manager.saw_tex
         data.kamikaze_saw.kamikaze_skull = skull
         data.position = pos
-        data.kamikaze.kamikaze_cd = cd
+        data.kamikaze.attack_cd = cd
     }
 }
 
@@ -99,7 +99,7 @@ kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
     for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE) {
         
         entity := entity_data(handle)
-        
+
         for collision_enter_event in entity.collision_enter {
             other_data := entity_data(collision_enter_event.other);
             if(other_data.collision_flag == CollisionFlag.player_bullet){
@@ -107,29 +107,29 @@ kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
             }
         }
 
-        switch entity.kamikaze.kamikaze_state {
+        switch entity.kamikaze.state {
             
             case .IDLE: {
-                entity.kamikaze.kamikaze_idle_time += delta_seconds()
-                if entity.kamikaze.kamikaze_idle_time >= entity.kamikaze.kamikaze_cd {
-                    entity.kamikaze.kamikaze_idle_time = 0
-                    entity.kamikaze.kamikaze_attack_target = entity_data(game.player.entity).position
-                    entity.kamikaze.kamikaze_state = .ATTACK
+                entity.kamikaze.idle_time += delta_seconds()
+                if entity.kamikaze.idle_time >= entity.kamikaze.attack_cd {
+                    entity.kamikaze.idle_time = 0
+                    entity.kamikaze.attack_target = entity_data(game.player.entity).position
+                    entity.kamikaze.state = .ATTACK
                 }
             }
             case .ATTACK: {
-                delta_speed := entity.kamikaze.kamikaze_speed * delta_seconds()
-                distance := linalg.distance(entity.kamikaze.kamikaze_attack_target, entity.position)
+                delta_speed := entity.kamikaze.speed * delta_seconds()
+                distance := linalg.distance(entity.kamikaze.attack_target, entity.position)
                 
                 if delta_speed >= distance {
-                    entity.position = entity.kamikaze.kamikaze_attack_target
+                    entity.position = entity.kamikaze.attack_target
                 } else {
-                    dir := linalg.normalize(entity.kamikaze.kamikaze_attack_target - entity.position)
+                    dir := linalg.normalize(entity.kamikaze.attack_target - entity.position)
                     entity.position += dir * delta_speed
                 }
 
-                if entity.position == entity.kamikaze.kamikaze_attack_target {
-                    entity.kamikaze.kamikaze_state = .IDLE
+                if entity.position == entity.kamikaze.attack_target {
+                    entity.kamikaze.state = .IDLE
                 }
             }
         }

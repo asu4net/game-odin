@@ -127,6 +127,7 @@ fire_projectile :: proc(player : ^Player) {
     player_entity := entity_data(player.entity)
     data.position = player_entity.position
     data.radius = 0.1
+    data.collision_radius = 0.15
     data.thickness = 1
     data.tint = V4_COLOR_RED
     data.collision_flag = CollisionFlag.player_bullet;
