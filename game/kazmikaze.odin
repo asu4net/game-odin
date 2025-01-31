@@ -45,7 +45,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
     skull : Entity_Handle
     {
         flags := GROUP_FLAGS_KAMIKAZE
-        handle, data := entity_create("KamikazeSkullPrefab", flags)
+        handle, data := entity_create(NAME_KAMIKAZE, flags)
         skull = handle
         manager.skull_prefab = handle
         data.sprite.texture = &manager.skull_tex
@@ -58,7 +58,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
 
     // Saw
     {
-        handle, data := entity_create("KamikazeSawPrefab", GROUP_FLAGS_KAMIKAZE_SAW)
+        handle, data := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         manager.saw_prefab = handle
         data.tranform.position = V3_UP
         data.sprite.texture = &manager.saw_tex
@@ -70,8 +70,8 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
 
 kamikaze_manager_init :: proc(manager : ^KamikazeManager) {
     manager := manager
-    texture_2d_init(&manager.saw_tex,   "assets/kazmikaze_saw.png")
-    texture_2d_init(&manager.skull_tex, "assets/kamikaze_skull.png")
+    texture_2d_init(&manager.saw_tex,   TEXTURE_PATH_KAMIKAZE_SAW)
+    texture_2d_init(&manager.skull_tex, TEXTURE_PATH_KAMIKAZE)
 
     // placeholder as fuck
     spawn_kamikaze(manager, V3_UP * 3)

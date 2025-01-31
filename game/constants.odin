@@ -36,14 +36,17 @@ KAMIKAZE_SAW_SPEED     :: 360 * 2 // degrees per sec
 //:Names
 /////////////////////////////
 
-PLAYER_NAME    :: "Player"
-ENEMY_SAW_NAME :: "Enemy Saw"
+NAME_PLAYER        :: "Player"
+NAME_KAMIKAZE      :: "KamikazePrefab"
+NAME_KAMIKAZE_SAW  :: "KamikazeSawPrefab"
 
 /////////////////////////////
 //:Paths
 /////////////////////////////
 
-PLAYER_TEXTURE_PATH    :: "assets/player.png"
+TEXTURE_PATH_PLAYER       :: "assets/player.png" 
+TEXTURE_PATH_KAMIKAZE     :: "assets/kamikaze_skull.png"
+TEXTURE_PATH_KAMIKAZE_SAW :: "assets/kazmikaze_saw.png"
 
 /////////////////////////////
 //:Debug
