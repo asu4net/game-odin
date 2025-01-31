@@ -37,40 +37,48 @@ KAMIKAZE_SAW_SPEED :: 360 * 2 // degrees per sec
 //:Entity flags
 /////////////////////////////
 
-PROJECTILE_GROUP_FLAGS : Entity_Flag_Set : {
-    .PROJECTILE
-}
-
-PLAYER_FLAGS : Entity_Flag_Set : {
-    .PLAYER,
+GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .VISIBLE,
     .SPRITE,
-    .CIRCLE_COLLIDER,
 }
 
-KAMIKAZE_FLAGS : Entity_Flag_Set : {
-    .ENEMY,
+GROUP_FLAGS_CIRCLE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .VISIBLE,
+    .CIRCLE,
+}
+
+GROUP_FLAGS_COLLIDER_2D : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .VISIBLE,
+    .COLLIDER_2D,
+}
+
+GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .SPRITE,
+    .COLLIDER_2D,
     .KAMIKAZE,
+}
+
+GROUP_FLAGS_KAMIKAZE_SAW : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
     .SPRITE,
-    .CIRCLE_COLLIDER
+    .KAMIKAZE_SAW,
 }
 
-KAMIKAZE_SAW_FLAGS : Entity_Flag_Set : { 
-    .SPRITE, 
-    .KAMIKAZE_SAW 
+GROUP_FLAGS_PROJECTILE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .COLLIDER_2D,
+    .PROJECTILE,
 }
-
-SPRITE_GROUP_FLAGS : Entity_Flag_Set : {
-    .SPRITE
-}
-
-CIRCLE_GROUP_FLAGS : Entity_Flag_Set : {
-    .CIRCLE
-}
-
-CIRCLE_COLLIDER_GROUP_FLAGS : Entity_Flag_Set : {
-    .CIRCLE_COLLIDER
-}
-
 
 /////////////////////////////
 //:Names

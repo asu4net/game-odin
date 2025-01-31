@@ -44,7 +44,8 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
     // Skull
     skull : Entity_Handle
     {
-        handle, data := entity_create("KamikazeSkullPrefab", KAMIKAZE_FLAGS)
+        flags := GROUP_FLAGS_KAMIKAZE
+        handle, data := entity_create("KamikazeSkullPrefab", flags)
         skull = handle
         manager.skull_prefab = handle
         data.sprite.texture = &manager.skull_tex
@@ -57,7 +58,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
 
     // Saw
     {
-        handle, data := entity_create("KamikazeSawPrefab", KAMIKAZE_SAW_FLAGS)
+        handle, data := entity_create("KamikazeSawPrefab", GROUP_FLAGS_KAMIKAZE_SAW)
         manager.saw_prefab = handle
         data.tranform.position = V3_UP
         data.sprite.texture = &manager.saw_tex
@@ -81,32 +82,27 @@ kamikaze_manager_init :: proc(manager : ^KamikazeManager) {
 kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
     
     // Saw follows skull
-    for handle in entity_get_group({.KAMIKAZE_SAW}) {
-        if !entity_iterable(handle) {
-            continue
-        }
+    for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE_SAW) {
         entity := entity_data(handle)
-
-        if !entity_valid(entity.kamikaze_saw.kamikaze_skull) || .PENDING_DESTROY in entity_data(entity.kamikaze_saw.kamikaze_skull).flags {
+        entity.rotation.z -= KAMIKAZE_SAW_SPEED * delta_seconds()
+        skull := entity.kamikaze_saw.kamikaze_skull
+        
+        if !entity_exists(skull) || !entity_valid(skull) {
             entity_destroy(handle)
             continue
         }
         
-        entity.rotation.z -= KAMIKAZE_SAW_SPEED * delta_seconds()
         entity.tranform.position = entity_data(entity.kamikaze_saw.kamikaze_skull).tranform.position
     }
 
     // Skull //TODO: Interpolate speed
-    for handle in entity_get_group({.KAMIKAZE}) {
-        if !entity_iterable(handle) {
-            continue
-        }
+    for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE) {
+        
         entity := entity_data(handle)
         
         for collision_enter_event in entity.collision_enter {
             other_data := entity_data(collision_enter_event.other);
             if(other_data.collision_flag == CollisionFlag.player_bullet){
-
                 entity_destroy(handle)
             }
         }

@@ -38,18 +38,13 @@ DEFAULT_COLLIDER_2D : Collider2D : {
     collision_tint   = V4_COLOR_LIGHT_GREEN
 }
 
-collision_2d_init :: proc() {
-    entity_create_group(CIRCLE_COLLIDER_GROUP_FLAGS)
-}
-
 collision_2d_finish :: proc() {
-    for handle in entity_get_group(CIRCLE_COLLIDER_GROUP_FLAGS) {
+    for handle in entity_get_group(GROUP_FLAGS_COLLIDER_2D) {
         entity := entity_data(handle);
         delete(entity.collision_enter);
         delete(entity.collision_exit);
         delete(entity.colliding_with);
-    }
-        
+    }       
 }
 
 collision_2d_draw :: proc(reg : ^Entity_Registry) {
@@ -64,18 +59,10 @@ collision_2d_draw :: proc(reg : ^Entity_Registry) {
         
     scene_2d_begin(scene)
 
-    for handle in entity_get_group(CIRCLE_COLLIDER_GROUP_FLAGS) {
-        
-        if !entity_iterable(handle) {
-            continue
-        }
+    for handle in entity_get_group(GROUP_FLAGS_COLLIDER_2D) {
         
         entity := entity_data(handle)
         
-        if .VISIBLE not_in entity.flags {
-            continue
-        }
-
         circle : Circle = DEFAULT_CIRCLE
         circle.radius = entity.collision_radius
         if(len(entity.colliding_with) == 0){
@@ -83,9 +70,8 @@ collision_2d_draw :: proc(reg : ^Entity_Registry) {
         } else {
             draw_circle(&entity.tranform, &circle, {1, 0, 0, 1}, entity.id)
         }
-
     }
-    
+
     scene_2d_end()        
 }
 
@@ -93,7 +79,7 @@ collision_2d_query :: proc(reg : ^Entity_Registry) {
     assert(reg != nil);
     using reg;
 
-    circle_group : = entity_get_group(CIRCLE_COLLIDER_GROUP_FLAGS);
+    circle_group : = entity_get_group(GROUP_FLAGS_COLLIDER_2D);
     for i in 0..<len(circle_group) {
         entity := entity_data(circle_group[i]);
         clear(&entity.collision_enter);
@@ -101,14 +87,8 @@ collision_2d_query :: proc(reg : ^Entity_Registry) {
     }
     for i in 0..<len(circle_group) {
         entity_A := entity_data(circle_group[i]);
-        if !entity_iterable(circle_group[i]) {
-            continue
-        }
         for j in (i + 1) ..< len(circle_group){
             entity_B := entity_data(circle_group[j]);
-            if !entity_iterable(circle_group[j]) {
-                continue
-            }
             handle_collision(entity_A, entity_B);
             handle_collision(entity_B, entity_A);
         } 

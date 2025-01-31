@@ -35,7 +35,7 @@ player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
     texture_2d_init(&texture, PLAYER_TEXTURE_PATH)
-    entity_handler, data := entity_create(PLAYER_NAME, PLAYER_FLAGS)
+    entity_handler, data := entity_create(PLAYER_NAME, { .PLAYER, .COLLIDER_2D } + GROUP_FLAGS_SPRITE)
     entity  = entity_handler
     data.texture = &texture
     speed = PLAYER_SPEED 
@@ -123,7 +123,7 @@ projectiles := 0
 fire_projectile :: proc(player : ^Player) {
     // placeholder projectile
 
-    handle, data := entity_create(flags = { .CIRCLE, .PROJECTILE, .CIRCLE_COLLIDER, })
+    handle, data := entity_create(flags = GROUP_FLAGS_PROJECTILE + GROUP_FLAGS_CIRCLE)
     player_entity := entity_data(player.entity)
     data.position = player_entity.position
     data.radius = 0.1

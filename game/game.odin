@@ -20,11 +20,11 @@ game : Game
 game_init :: proc() {
     using game
 
-    entity_create_group({.PROJECTILE})
-    entity_create_group({.KAMIKAZE})
-    entity_create_group({.KAMIKAZE_SAW})
+    // Game groups
+    entity_create_group(GROUP_FLAGS_PROJECTILE)
+    entity_create_group(GROUP_FLAGS_KAMIKAZE)
+    entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
 
-    projectile_init() // No need to finish    
     player_init(&player)
     kamikaze_manager_init(&kamikaze_manager)
 }
@@ -95,14 +95,15 @@ main :: proc() {
     entity_registry_init()
     defer entity_registry_finish()
 
+    defer collision_2d_finish()
+
+    // Engine groups
+    entity_create_group(GROUP_FLAGS_SPRITE)
+    entity_create_group(GROUP_FLAGS_CIRCLE)
+    entity_create_group(GROUP_FLAGS_COLLIDER_2D)
+
     time_init()
     //#NOTE_asuarez no need to finish
-
-    enities_2d_init()
-    //#NOTE_asuarez no need to finish
-
-    collision_2d_init();
-    defer collision_2d_finish();
 
     game_init()
     defer game_finish()
@@ -129,5 +130,4 @@ main :: proc() {
         entity_clean_destroyed_entities(&entity_registry)
         window_update()
     }
-
 }

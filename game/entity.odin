@@ -7,12 +7,12 @@ ENTITY_ID    :: u32
 
 Entity_Flag :: enum {
     // Engine stuff
+    VALID,
     ENABLED,
-    PENDING_DESTROY,
     VISIBLE,
     SPRITE,
     CIRCLE,
-    CIRCLE_COLLIDER,
+    COLLIDER_2D,
 
     // Gameplay stuff
     PROJECTILE,
@@ -37,7 +37,7 @@ EntityCommon :: struct {
 }
 
 DEFAULT_ENTITY_COMMON : EntityCommon : {
-    flags = { .ENABLED, .VISIBLE },
+    flags = { .VALID, .ENABLED, .VISIBLE },
     id    = NIL_ENTITY_ID,
     tint  = V4_COLOR_WHITE
 }
@@ -135,14 +135,14 @@ entity_registry_finish :: proc() {
 entity_valid :: proc(entity : Entity_Handle) -> bool {
     using entity_registry
     assert(entity_registry_initialized())
-    return sparse_test(&sparse_set, entity.id)
+    assert(entity_exists(entity))
+    return .VALID in entity_data(entity).flags 
 }
 
-entity_iterable :: proc(entity : Entity_Handle) -> bool {
+entity_exists :: proc(entity : Entity_Handle) -> bool {
     using entity_registry
     assert(entity_registry_initialized())
-    data := entity_data(entity)
-    return entity_valid(entity) && (.PENDING_DESTROY not_in data.flags || .ENABLED in data.flags)  
+    return sparse_test(&sparse_set, entity.id)
 }
 
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle, data : ^Entity) {
@@ -182,9 +182,9 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     
     assert(entity_registry_initialized())
 
-    if (!entity_valid(entity)) {
+    if (!entity_exists(entity)) {
         when ODIN_DEBUG {
-            fmt.printf("Trying to access invalid entity id[%v] \n", entity)
+            fmt.printf("Trying to access unexisting entity id[%v] \n", entity)
         }
         assert(false)
     }
@@ -194,61 +194,90 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
 }
 
 @(private = "file")
-Entity_Group_Op :: enum { ADD, REMOVE }
-
-@(private = "file")
-entity_group_op :: proc(data : ^Entity, op : Entity_Group_Op) {
+entity_remove_from_groups :: proc(data : ^Entity) {
     using entity_registry
     assert(entity_registry_initialized() && data != nil)    
     for group_flags, &group in entity_groups {
-        if data.flags & group_flags != nil {
-            if op == .ADD {
-                // add the element to the group
-                entity : Entity_Handle = { data.id }
-                append_elem(&group, entity)
-            } else {
-                rm_idx := -1
-                // find the entity and remove it from the group
-                for i in 0..<len(group) {
-                    entity := group[i]
-                    if entity.id == data.id {
-                        rm_idx = i
-                        break
-                    }
+        if group_flags - data.flags != nil {
+            rm_idx := -1
+            // find the entity and remove it from the group
+            for i in 0..<len(group) {
+                entity := group[i]
+                if entity.id == data.id {
+                    rm_idx = i
+                    break
                 }
-                assert(rm_idx >= 0)
+            }
+            if rm_idx >= 0 {
                 unordered_remove(&group, rm_idx)
             }
         }
     }
 }
 
+@(private = "file")
+entity_remove_from_all_groups :: proc(data : ^Entity) {
+    using entity_registry
+    assert(entity_registry_initialized() && data != nil)    
+    for group_flags, &group in entity_groups {
+        rm_idx := -1
+        // find the entity and remove it from the group
+        for i in 0..<len(group) {
+            entity := group[i]
+            if entity.id == data.id {
+                rm_idx = i
+                break
+            }
+        }
+        if rm_idx >= 0 {
+            unordered_remove(&group, rm_idx)
+        }
+    }
+}
+
+@(private = "file")
+entity_add_to_groups :: proc(data : ^Entity) {
+    using entity_registry
+    assert(entity_registry_initialized() && data != nil)    
+    for group_flags, &group in entity_groups {
+        if group_flags - data.flags == nil {
+            entity : Entity_Handle = { data.id }
+            append_elem(&group, entity)
+        }
+    }
+}
+
 entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
     using entity_registry
-    assert(entity_registry_initialized() && entity_valid(entity))
+    assert(entity_registry_initialized())
+    assert(entity_exists(entity))
     data = entity_data(entity)
     data.flags += flags
-    entity_group_op(data, .ADD)
+    entity_add_to_groups(data)
     return
 }
 
 entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
     using entity_registry
-    assert(entity_registry_initialized() && entity_valid(entity))
+    assert(entity_registry_initialized())
+    assert(entity_exists(entity))
     data = entity_data(entity)
-    entity_group_op(data, .REMOVE)
     data.flags -= flags
+    entity_remove_from_groups(data)
     return
 }
 
 entity_destroy :: proc(entity : Entity_Handle) {
     using entity_registry
-    assert(entity_registry_initialized() && entity_count > 0 && entity_valid(entity))
+
+    assert(entity_registry_initialized() && entity_count > 0)
+    assert(entity_exists(entity))
+
     data := entity_data(entity)
-    data.flags += { .PENDING_DESTROY }
+    entity_remove_flags(entity, { .VALID })
     pending_destroy[entity] = {}
 
-    // jjjjjjjjjjjjjjjjjjjjjjjjjjjjj
+    //TODO: Remove from here .Iterate pending destroy entities in collision system and do this
     for other, value in data.colliding_with {
         other_data := entity_data(other);
         // What remains is to pray that this doesnt get cleared when detecting collision
@@ -262,6 +291,7 @@ entity_clean_destroyed_entities :: proc(entity_registry : ^Entity_Registry) {
     assert(entity_registry_initialized())
     
     for handle, _ in pending_destroy {
+
         data := entity_data(handle)
         
         delete(data.collision_enter);
@@ -276,7 +306,7 @@ entity_clean_destroyed_entities :: proc(entity_registry : ^Entity_Registry) {
             }
         }
 
-        entity_group_op(data, .REMOVE)
+        entity_remove_from_all_groups(data)
         deleted, last := sparse_remove(&sparse_set, data.id)
         entity_count -= 1
 
@@ -304,4 +334,10 @@ entity_create_group :: proc(flags : Entity_Flag_Set) -> (group : Entity_Group) {
     group = make(Entity_Group)
     entity_registry.entity_groups[flags] = group
     return
+}
+
+entity_print_groups :: proc() {
+    using entity_registry
+    assert(entity_registry_initialized())
+    fmt.println(entity_groups)
 }
