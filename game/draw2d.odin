@@ -18,16 +18,8 @@ draw_2d_entities :: proc(reg : ^Entity_Registry) {
     for handle in entity_get_group(GROUP_FLAGS_SPRITE) {
         
         entity := entity_data(handle)
-        draw_sprite(&entity.tranform, &entity.sprite, entity.tint, entity.id)
+        draw_sprite_atlas_item(&entity.tranform, &entity.sprite, entity.tint, entity.id)
     }
-
-    /*
-    transform : Transform         = DEFAULT_TRANSFORM
-    sprite    : Sprite_Atlas_Item = DEFAULT_SPRITE_ATLAS_ITEM
-    sprite.item = .Kamikaze_Skull
-    
-    draw_sprite_atlas_item(&transform, &sprite)
-    */
 
     for handle in entity_get_group(GROUP_FLAGS_CIRCLE) {
         

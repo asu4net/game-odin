@@ -32,7 +32,6 @@ game_init :: proc() {
 game_finish :: proc() {
     using game
     player_finish(&player)
-    kamikaze_manager_finish(&kamikaze_manager)
 }
 
 game_update :: proc() {

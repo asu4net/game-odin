@@ -22,7 +22,6 @@ Player :: struct {
     using movement : Player_Movement,
     using weapons  : Player_Weapons,
     entity         : Entity_Handle,
-    texture        : Texture2D,
     initialized    : bool
 }
 
@@ -34,10 +33,9 @@ player_initialized :: proc(player : ^Player) -> bool {
 player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
-    texture_2d_init(&texture, TEXTURE_PATH_PLAYER)
     entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D } + GROUP_FLAGS_SPRITE)
     entity  = entity_handler
-    data.texture = &texture
+    data.item = .Player
     speed = PLAYER_SPEED 
     firerate = PLAYER_FIRERATE
     
@@ -49,7 +47,6 @@ player_init :: proc(player : ^Player) {
 
 player_finish :: proc(player : ^Player) {
     assert(player_initialized(player))
-    texture_2d_finish(&player.texture)
     entity_destroy(player.entity)
 }
 

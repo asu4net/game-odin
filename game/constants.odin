@@ -41,14 +41,6 @@ NAME_KAMIKAZE      :: "KamikazePrefab"
 NAME_KAMIKAZE_SAW  :: "KamikazeSawPrefab"
 
 /////////////////////////////
-//:Paths
-/////////////////////////////
-
-TEXTURE_PATH_PLAYER       :: "assets/textures/player.png" 
-TEXTURE_PATH_KAMIKAZE     :: "assets/textures/kamikaze_skull.png"
-TEXTURE_PATH_KAMIKAZE_SAW :: "assets/textures/kazmikaze_saw.png"
-
-/////////////////////////////
 //:Debug
 /////////////////////////////
 

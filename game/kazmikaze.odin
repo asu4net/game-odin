@@ -29,8 +29,6 @@ KamikazeManager :: struct {
     cooldown      : f32,
     skull_prefab  : Entity_Handle,  
     saw_prefab    : Entity_Handle,  
-    skull_tex     : Texture2D,
-    saw_tex       : Texture2D,
 }
 
 DEFAULT_KAMIKAZE_MANAGER : KamikazeManager : { 
@@ -46,7 +44,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         handle, data := entity_create(NAME_KAMIKAZE, flags)
         skull = handle
         manager.skull_prefab = handle
-        data.sprite.texture = &manager.skull_tex
+        data.sprite.item = .Kamikaze_Skull
         data.position = pos
         data.kamikaze.attack_cd = cd
 
@@ -59,7 +57,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         handle, data := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         manager.saw_prefab = handle
         data.tranform.position = V3_UP
-        data.sprite.texture = &manager.saw_tex
+        data.sprite.item = .Kazmikaze_Saw
         data.kamikaze_saw.kamikaze_skull = skull
         data.position = pos
         data.kamikaze.attack_cd = cd
@@ -68,9 +66,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
 
 kamikaze_manager_init :: proc(manager : ^KamikazeManager) {
     manager := manager
-    texture_2d_init(&manager.saw_tex,   TEXTURE_PATH_KAMIKAZE_SAW)
-    texture_2d_init(&manager.skull_tex, TEXTURE_PATH_KAMIKAZE)
-
+    
     // placeholder as fuck
     spawn_kamikaze(manager, V3_UP * 3)
     spawn_kamikaze(manager, V3_UP * 3 + V3_RIGHT * 1, KAMIKAZE_ATTACK_CD + 0.25)
@@ -136,9 +132,4 @@ kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
             }
         }
     }
-}
-
-kamikaze_manager_finish :: proc(manager : ^KamikazeManager) {
-    texture_2d_finish(&manager.saw_tex)    
-    texture_2d_finish(&manager.skull_tex)    
 }
