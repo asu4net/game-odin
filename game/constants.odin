@@ -25,10 +25,12 @@ MAX_TEXTURE_SLOTS           :: 32
 MAX_ENTITIES                :: 3000
 
 // Kamikaze
-KAMIKAZE_WAVE_0_AMOUNT :: 5
-KAMIKAZE_SPEED         :: 6  
-KAMIKAZE_LIFE          :: 10
-KAMIKAZE_SCORE         :: 10
+KAMIKAZE_WAVE_0_AMOUNT :: 5   // not implemented
+KAMIKAZE_SPEED_MIN     :: 0   // min speed
+KAMIKAZE_SPEED         :: 8   // max speed
+KAMIKAZE_ACC           :: 0.7 // time to accelerate at max speed
+KAMIKAZE_LIFE          :: 10  // not implemented
+KAMIKAZE_SCORE         :: 10  // not implemented
 KAMIKAZE_ATTACK_CD     :: 1
 KAMIKAZE_SAW_SPEED     :: 360 * 2 // degrees per sec
 

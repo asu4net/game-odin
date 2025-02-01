@@ -1,6 +1,7 @@
 package game
 import "core:fmt"
 import "core:math/linalg"
+import "core:math"
 
 KamikazeState :: enum {
     IDLE,
@@ -8,7 +9,10 @@ KamikazeState :: enum {
 }
 
 KamikazeSkull :: struct {
+    speed_min     : f32,
     speed         : f32,
+    acc           : f32,
+    acc_time      : f32,
     state         : KamikazeState,
     idle_time     : f32,
     attack_target : v3, 
@@ -20,7 +24,9 @@ KamikazeSaw :: struct {
 }
 
 DEFAULT_KAMIKAZE_SKULL : KamikazeSkull : {
+    speed_min = KAMIKAZE_SPEED_MIN,
     speed     = KAMIKAZE_SPEED,
+    acc       = KAMIKAZE_ACC,
     attack_cd = KAMIKAZE_ATTACK_CD
 }
 
@@ -112,11 +118,18 @@ kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
                 if entity.kamikaze.idle_time >= entity.kamikaze.attack_cd {
                     entity.kamikaze.idle_time = 0
                     entity.kamikaze.attack_target = entity_data(game.player.entity).position
+                    entity.kamikaze.acc_time = 0
                     entity.kamikaze.state = .ATTACK
                 }
             }
             case .ATTACK: {
-                delta_speed := entity.kamikaze.speed * delta_seconds()
+
+                entity.kamikaze.acc_time += delta_seconds()
+                entity.kamikaze.acc_time = math.clamp(entity.kamikaze.acc_time, 0.0, entity.kamikaze.acc)
+                normalized_time := entity.kamikaze.acc_time / entity.kamikaze.acc
+                speed :=  interp_ease_in_expo(normalized_time, entity.kamikaze.speed_min, entity.kamikaze.speed)
+                
+                delta_speed := speed * delta_seconds()
                 distance := linalg.distance(entity.kamikaze.attack_target, entity.position)
                 
                 if delta_speed >= distance {

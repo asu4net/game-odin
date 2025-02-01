@@ -219,3 +219,20 @@ sparse_remove :: proc(sparse_set : ^Sparse_Set, element : u32) -> (deleted, last
     
     return
 }
+
+/////////////////////////////
+//:Easings
+/////////////////////////////
+
+ease_out_expo :: proc(x: f32) -> f32 {
+    return x == 1 ? 1 : math.pow(2.0, -10.0 * x)
+}
+
+interp_ease_in_expo :: proc(x, min, max: f32) -> f32 {
+    factor := ease_in_expo(x)
+    return min + (max - min) * factor
+}
+
+ease_in_expo :: proc(x: f32) -> f32 {
+    return x == 0.0 ? 0.0 : math.pow(2, 10 * (x - 1))
+}
