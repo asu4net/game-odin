@@ -56,7 +56,11 @@ collision_2d_draw :: proc(reg : ^Entity_Registry) {
         window_width = f32(width),
         window_height = f32(height)   
     }
-        
+    
+    if !DEBUG_DRAW_COLLIDERS {
+        return
+    }
+
     scene_2d_begin(scene)
 
     for handle in entity_get_group(GROUP_FLAGS_COLLIDER_2D) {
@@ -72,7 +76,8 @@ collision_2d_draw :: proc(reg : ^Entity_Registry) {
         }
     }
 
-    scene_2d_end()        
+    scene_2d_end()
+            
 }
 
 collision_2d_query :: proc(reg : ^Entity_Registry) {

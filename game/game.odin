@@ -57,6 +57,8 @@ main :: proc() {
     //:Track of memory allocations
     /////////////////////////////
 
+    fmt.printf("Size of entity data: %i", size_of(Entity))
+
     when ODIN_DEBUG {
 		track: mem.Tracking_Allocator
 		mem.tracking_allocator_init(&track, context.allocator)

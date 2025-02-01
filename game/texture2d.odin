@@ -4,6 +4,10 @@ import "core:strings"
 import gl "vendor:OpenGL"
 import stb "vendor:stb/image"
 
+Rect :: struct {
+    x, y, width, height: int,
+}
+
 /////////////////////////////
 //:Texture
 /////////////////////////////

@@ -13,6 +13,12 @@ import "core:math/linalg"
 VERTICES_PER_2D_PRIMITIVE   :: 4
 INDICES_PER_2D_PRIMITIVE    :: 6
 
+Default_Texture_Slots :: enum {
+    WHITE,
+    ATLAS,
+    COUNT,
+}
+
 V4Verts2D :: [VERTICES_PER_2D_PRIMITIVE] v4
 V2Verts2D :: [VERTICES_PER_2D_PRIMITIVE] v2
 
@@ -103,7 +109,7 @@ fill_vertex_colors :: proc(vertex_colors : ^V4Verts2D, color : v4) {
     vertex_colors[3] = color
 }
 
-fill_sprite_sheet_vertex_uvs :: proc(
+fill_sprite_atlas_item_vertex_uvs :: proc(
     vertex_uvs    : ^V2Verts2D, 
     texture_size  : v2,
     item_size     : v2,
@@ -158,11 +164,12 @@ Primitive_Type :: enum {
 
 Renderer2D :: struct {
     white_texture      : Texture2D,
+    atlas_texture      : Texture2D,
     texture_slots      : [MAX_TEXTURE_SLOTS] i32,
     textures_to_bind   : [MAX_TEXTURE_SLOTS]^Texture2D,
     last_texture_slot  : i32,
     projection_view    : m4,
-    
+
     curr_primitive     : Primitive_Type,
 
     // Quad
@@ -190,7 +197,7 @@ renderer_2d : ^Renderer2D
 @(private = "file")
 assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
     if texture == nil {
-        texture_slot = 0
+        texture_slot = i32(Default_Texture_Slots.WHITE)
         return
     }
 
@@ -230,9 +237,11 @@ renderer_2d_init :: proc() {
 
     projection_view = M4_IDENTITY
     texture_2d_init_as_white(&white_texture)
-    
-    textures_to_bind[0] = &white_texture
-    last_texture_slot = 1
+    texture_2d_init(&atlas_texture, "assets/atlas.png")
+
+    textures_to_bind[Default_Texture_Slots.WHITE] = &white_texture
+    textures_to_bind[Default_Texture_Slots.ATLAS] = &atlas_texture
+    last_texture_slot = i32(Default_Texture_Slots.COUNT)
 
     for i in 0..<MAX_TEXTURE_SLOTS {
         texture_slots[i] = i32(i)
@@ -301,6 +310,7 @@ renderer_2d_finish :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
     texture_2d_finish(&white_texture)
+    texture_2d_finish(&atlas_texture)
 
     delete(quad_batch)
     vertex_buffer_finish(&quad_vbo)
@@ -318,7 +328,7 @@ start_batch :: proc() {
     using renderer_2d
     assert(renderer_2d != nil)
     
-    last_texture_slot = 1
+    last_texture_slot = i32(Default_Texture_Slots.COUNT)
     
     quad_count = 0
     quad_index_count = 0
@@ -484,6 +494,79 @@ draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint :
     
     slot := assign_texture_slot(texture) 
 
+    for i in 0..<VERTICES_PER_2D_PRIMITIVE {
+        quad_batch[i + int(quad_count) * VERTICES_PER_2D_PRIMITIVE] = {
+            vertex_positions[i], vertex_colors[i], vertex_uvs[i], slot, i32(entity_id)
+        }
+    }    
+    
+    quad_index_count += INDICES_PER_2D_PRIMITIVE
+    quad_count += 1
+}
+
+Sprite_Atlas_Item :: struct {
+    item      : Texture_Name,
+    tiling    : v2          ,
+    flip_x    : bool        ,
+    flip_y    : bool        ,
+    autosize  : bool        ,
+}
+
+DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
+    item     = nil,
+    tiling   = V2_ONE,
+    flip_x   = false,
+    flip_y   = false,
+    autosize = true,
+}
+
+draw_sprite_atlas_item :: proc(transform : ^Transform = nil, sprite : ^Sprite_Atlas_Item = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+{
+    assert(renderer_2d != nil && transform != nil && sprite != nil)
+    using renderer_2d, transform, sprite
+
+    assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
+    
+    if curr_primitive != .nil && curr_primitive != .QUAD {
+        next_batch()
+    }
+
+    curr_primitive = .QUAD
+
+    if quad_count == MAX_2D_PRIMITIVES_PER_BATCH {
+        next_batch()
+    }
+
+    vertex_positions := DEFAULT_VERTEX_POSITIONS_2D
+    vertex_uvs       := DEFAULT_VERTEX_UVS_2D
+    vertex_colors    := DEFAULT_VERTEX_COLORS_2D
+
+    fill_vertex_colors(&vertex_colors, tint)
+
+    slot := i32(Default_Texture_Slots.WHITE)
+
+    if item != nil {
+
+        slot = i32(Default_Texture_Slots.ATLAS)
+        info := atlas_textures[sprite.item]
+
+        fill_sprite_atlas_item_vertex_uvs(
+             &vertex_uvs,
+             {f32(atlas_texture.width), f32(atlas_texture.height)},
+             {f32(info.rect.width),     f32(info.rect.height)},
+             {f32(info.rect.x),         f32(info.rect.y)},
+             flip_x,
+             flip_y,
+             tiling
+         )
+         
+        if autosize {
+           fill_quad_vertex_positions(&vertex_positions, {f32(info.rect.width), f32(info.rect.height)}) 
+        }
+    }
+
+    transform_vertex_positions(&vertex_positions, m4_transform(position, rotation, scale))
+    
     for i in 0..<VERTICES_PER_2D_PRIMITIVE {
         quad_batch[i + int(quad_count) * VERTICES_PER_2D_PRIMITIVE] = {
             vertex_positions[i], vertex_colors[i], vertex_uvs[i], slot, i32(entity_id)

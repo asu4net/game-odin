@@ -21,11 +21,19 @@ draw_2d_entities :: proc(reg : ^Entity_Registry) {
         draw_sprite(&entity.tranform, &entity.sprite, entity.tint, entity.id)
     }
 
+    /*
+    transform : Transform         = DEFAULT_TRANSFORM
+    sprite    : Sprite_Atlas_Item = DEFAULT_SPRITE_ATLAS_ITEM
+    sprite.item = .Kamikaze_Skull
+    
+    draw_sprite_atlas_item(&transform, &sprite)
+    */
+
     for handle in entity_get_group(GROUP_FLAGS_CIRCLE) {
         
         entity := entity_data(handle)
         draw_circle(&entity.tranform, &entity.circle, entity.tint, entity.id)
     }
-    
+
     scene_2d_end()
 }

@@ -44,13 +44,15 @@ NAME_KAMIKAZE_SAW  :: "KamikazeSawPrefab"
 //:Paths
 /////////////////////////////
 
-TEXTURE_PATH_PLAYER       :: "assets/player.png" 
-TEXTURE_PATH_KAMIKAZE     :: "assets/kamikaze_skull.png"
-TEXTURE_PATH_KAMIKAZE_SAW :: "assets/kazmikaze_saw.png"
+TEXTURE_PATH_PLAYER       :: "assets/textures/player.png" 
+TEXTURE_PATH_KAMIKAZE     :: "assets/textures/kamikaze_skull.png"
+TEXTURE_PATH_KAMIKAZE_SAW :: "assets/textures/kazmikaze_saw.png"
 
 /////////////////////////////
 //:Debug
 /////////////////////////////
 
+DEBUG_AI_MOVEMENT_ENABLED      :: true
+DEBUG_DRAW_COLLIDERS           :: false
 DEBUG_PRINT_CREATED_ENTITIES   :: false
 DEBUG_PRINT_DESTROYED_ENTITIES :: false

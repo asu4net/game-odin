@@ -25,7 +25,6 @@ DEFAULT_KAMIKAZE_SKULL : KamikazeSkull : {
 }
 
 KamikazeManager :: struct {
-    enabled       : bool,
     current_score : f32,
     cooldown      : f32,
     skull_prefab  : Entity_Handle,  
@@ -35,7 +34,6 @@ KamikazeManager :: struct {
 }
 
 DEFAULT_KAMIKAZE_MANAGER : KamikazeManager : { 
-    enabled  = true,
     cooldown = KAMIKAZE_ATTACK_CD
 }
 
@@ -93,6 +91,10 @@ kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
         }
         
         entity.tranform.position = entity_data(entity.kamikaze_saw.kamikaze_skull).tranform.position
+    }
+
+    if !DEBUG_AI_MOVEMENT_ENABLED {
+        return
     }
 
     // Skull //TODO: Interpolate speed
