@@ -16,7 +16,6 @@ Game :: struct {
 
 game : Game
 
-
 game_init :: proc() {
     using game
 
@@ -37,8 +36,8 @@ game_finish :: proc() {
 game_update :: proc() {
     using game
     player_update(&player)
-    projectile_update(&entity_registry)
-    kamikaze_manager_update(&kamikaze_manager)
+    projectile_update()
+    kamikaze_manager_update()
 }
 
 game_fixed_update :: proc() {
@@ -80,9 +79,6 @@ main :: proc() {
 		}
 	}
 
-	entity_registry_set_instance(&entity_registry)
-    renderer_2d_set_instance(&renderer_2d)
-    
     /////////////////////////////
     //:Init & Finish
     /////////////////////////////
@@ -90,10 +86,10 @@ main :: proc() {
     window_init(title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
     defer window_finish()
     
-    renderer_2d_init()
+    renderer_2d_init(&renderer_2d)
     defer renderer_2d_finish()
 
-    entity_registry_init()
+    entity_registry_init(&entity_registry)
     defer entity_registry_finish()
 
     defer collision_2d_finish()

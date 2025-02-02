@@ -190,9 +190,8 @@ Renderer2D :: struct {
     circle_shader      : Shader,
 }
 
-// Should access this through your provided instance
 @(private = "file")
-renderer_2d : ^Renderer2D
+renderer_2d_instance : ^Renderer2D
 
 @(private = "file")
 assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
@@ -201,7 +200,7 @@ assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
         return
     }
 
-    using renderer_2d
+    using renderer_2d_instance
     for i in 0..<last_texture_slot {
         if textures_to_bind[i].id == texture.id {
             texture_slot = i
@@ -219,21 +218,11 @@ assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
     return
 }
 
-renderer_2d_set_instance :: proc(renderer : ^Renderer2D) {
-    if (renderer_2d != nil) {
-        assert(false)
-        return
-    }
-    renderer_2d = renderer
-}
-
-renderer_get_instance :: proc() -> ^Renderer2D {
-    return renderer_2d
-}
-
-renderer_2d_init :: proc() {
-    using renderer_2d
-    assert(renderer_2d != nil)
+renderer_2d_init :: proc(instance : ^Renderer2D) {
+    assert(renderer_2d_instance == nil)
+    assert(instance != nil)
+    renderer_2d_instance = instance
+    using renderer_2d_instance
 
     projection_view = M4_IDENTITY
     texture_2d_init_as_white(&white_texture)
@@ -307,8 +296,8 @@ renderer_2d_init :: proc() {
 }
 
 renderer_2d_finish :: proc() {
-    using renderer_2d
-    assert(renderer_2d != nil)
+    using renderer_2d_instance
+    assert(renderer_2d_instance != nil)
     texture_2d_finish(&white_texture)
     texture_2d_finish(&atlas_texture)
 
@@ -320,13 +309,13 @@ renderer_2d_finish :: proc() {
     vertex_buffer_finish(&circle_vbo)
     shader_finish(&circle_shader)
     
-    renderer_2d^ = {}
+    renderer_2d_instance^ = {}
 }
 
 @(private = "file")
 start_batch :: proc() {
-    using renderer_2d
-    assert(renderer_2d != nil)
+    using renderer_2d_instance
+    assert(renderer_2d_instance != nil)
     
     last_texture_slot = i32(Default_Texture_Slots.COUNT)
     
@@ -339,8 +328,8 @@ start_batch :: proc() {
 
 @(private = "file")
 flush :: proc() {
-    using renderer_2d
-    assert(renderer_2d != nil)
+    using renderer_2d_instance
+    assert(renderer_2d_instance != nil)
     
     switch curr_primitive {
         
@@ -403,8 +392,8 @@ DEFAULT_SCENE_2D : Scene2D : {
 }
 
 scene_2d_begin :: proc(scene : Scene2D = DEFAULT_SCENE_2D) {
-    assert(renderer_2d != nil)
-    using renderer_2d, scene, scene.camera
+    assert(renderer_2d_instance != nil)
+    using renderer_2d_instance, scene, scene.camera
     
     set_viewport(u32(window_width), u32(window_height))
     aspect = window_width / window_height
@@ -462,8 +451,8 @@ DEFAULT_SPRITE : Sprite : {
 //#TODO_asuarez add subtextures
 draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
 {
-    assert(renderer_2d != nil && transform != nil && sprite != nil)
-    using renderer_2d, transform, sprite
+    assert(renderer_2d_instance != nil && transform != nil && sprite != nil)
+    using renderer_2d_instance, transform, sprite
 
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
     
@@ -522,8 +511,8 @@ DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
 
 draw_sprite_atlas_item :: proc(transform : ^Transform = nil, sprite : ^Sprite_Atlas_Item = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
 {
-    assert(renderer_2d != nil && transform != nil && sprite != nil)
-    using renderer_2d, transform, sprite
+    assert(renderer_2d_instance != nil && transform != nil && sprite != nil)
+    using renderer_2d_instance, transform, sprite
 
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
     
@@ -591,8 +580,8 @@ DEFAULT_CIRCLE : Circle : {
 
 draw_circle :: proc(transform : ^Transform = nil, circle : ^Circle = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
 {
-    assert(renderer_2d != nil && transform != nil && circle != nil)
-    using renderer_2d, transform, circle
+    assert(renderer_2d_instance != nil && transform != nil && circle != nil)
+    using renderer_2d_instance, transform, circle
 
     if curr_primitive != .nil && curr_primitive != .CIRCLE {
         next_batch()

@@ -48,9 +48,6 @@ collision_2d_finish :: proc() {
 }
 
 draw_2d_collisions :: proc() {
-
-    reg := entity_registry_get_instance()
-    assert(reg != nil);
     
     width, height := window_get_size()
     
@@ -84,8 +81,6 @@ draw_2d_collisions :: proc() {
 }
 
 collision_2d_query :: proc() {
-    reg := entity_registry_get_instance()
-    assert(reg != nil);
 
     circle_group : = entity_get_group(GROUP_FLAGS_COLLIDER_2D);
     for i in 0..<len(circle_group) {

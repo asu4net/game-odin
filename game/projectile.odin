@@ -16,7 +16,7 @@ DEFAULT_PROJECTILE : Projectile : {
     max_lifetime = 1.0,
 }
 
-projectile_update :: proc(reg : ^Entity_Registry) {
+projectile_update :: proc() {
 
     for handle in entity_get_group(GROUP_FLAGS_PROJECTILE) {
         entity := entity_data(handle)

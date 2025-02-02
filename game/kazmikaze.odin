@@ -41,7 +41,11 @@ DEFAULT_KAMIKAZE_MANAGER : KamikazeManager : {
     cooldown = KAMIKAZE_ATTACK_CD
 }
 
-spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
+kamikaze_manager_instance : ^KamikazeManager = nil
+
+spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
+
+    using kamikaze_manager_instance
 
     // Skull
     skull : Entity_Handle
@@ -49,7 +53,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
         flags := GROUP_FLAGS_KAMIKAZE
         handle, data := entity_create(NAME_KAMIKAZE, flags)
         skull = handle
-        manager.skull_prefab = handle
+        skull_prefab = handle
         data.sprite.item = .Kamikaze_Skull
         data.position = pos
         data.kamikaze.attack_cd = cd
@@ -61,7 +65,7 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
     // Saw
     {
         handle, data := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
-        manager.saw_prefab = handle
+        saw_prefab = handle
         data.tranform.position = V3_UP
         data.sprite.item = .Kazmikaze_Saw
         data.kamikaze_saw.kamikaze_skull = skull
@@ -70,17 +74,22 @@ spawn_kamikaze :: proc(manager : ^KamikazeManager, pos := V3_ZERO, cd : f32 = KA
     }
 }
 
-kamikaze_manager_init :: proc(manager : ^KamikazeManager) {
-    manager := manager
+kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
+    assert(kamikaze_manager_instance == nil)
+    kamikaze_manager_instance = instance
+    using kamikaze_manager_instance
     
     // placeholder as fuck
-    spawn_kamikaze(manager, V3_UP * 3)
-    spawn_kamikaze(manager, V3_UP * 3 + V3_RIGHT * 1, KAMIKAZE_ATTACK_CD + 0.25)
-    spawn_kamikaze(manager, V3_UP * 3 + V3_RIGHT * 2, KAMIKAZE_ATTACK_CD + 0.5)
+    spawn_kamikaze(V3_UP * 3)
+    spawn_kamikaze(V3_UP * 3 + V3_RIGHT * 1, KAMIKAZE_ATTACK_CD + 0.25)
+    spawn_kamikaze(V3_UP * 3 + V3_RIGHT * 2, KAMIKAZE_ATTACK_CD + 0.5)
 }
 
-kamikaze_manager_update :: proc(manager : ^KamikazeManager) {
+kamikaze_manager_update :: proc() {
     
+    assert(kamikaze_manager_instance != nil)
+    using kamikaze_manager_instance
+
     // Saw follows skull
     for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE_SAW) {
         entity := entity_data(handle)

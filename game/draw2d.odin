@@ -1,9 +1,6 @@
 package game
 
 draw_2d_entities :: proc() {
-
-    reg := entity_registry_get_instance()
-    assert(reg != nil);
     
     width, height := window_get_size()
     
