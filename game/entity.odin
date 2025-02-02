@@ -77,13 +77,14 @@ Entity_Group :: [dynamic]Entity_Handle
 Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
 
 Entity_Registry :: struct {
-    entities        : [] Entity,
-    sparse_set      : Sparse_Set,
-    entity_ids      : queue.Queue(u32),
-    entity_count    : u32,
-    entity_groups   : Entity_Group_Map, 
-    initialized     : bool,
-    pending_destroy : map[Entity_Handle]struct{},
+    entities             : [] Entity,
+    sparse_set           : Sparse_Set,
+    entity_ids           : queue.Queue(u32),
+    entity_count         : u32,
+    entity_groups        : Entity_Group_Map, 
+    initialized          : bool,
+    pending_destroy      : map[Entity_Handle]struct{},
+    frames_since_cleaned : u32
 }
 
 @(private = "file")
@@ -170,16 +171,8 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
 
 entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     using entity_registry_instance
-    
     assert(entity_registry_initialized())
-
-    if (!entity_exists(entity)) {
-        when ODIN_DEBUG {
-            fmt.printf("Trying to access unexisting entity id[%v] \n", entity)
-        }
-        assert(false)
-    }
-
+    assert(entity_exists(entity), "Trying to access unexisting entity")
     index := sparse_search(&sparse_set, entity.id)
     return &entities[index]
 }
@@ -273,6 +266,13 @@ clean_destroyed_entities :: proc() {
 
     assert(entity_registry_initialized());
     using entity_registry_instance
+
+    if frames_since_cleaned < ENTITY_CLEANUP_INTERVAL {
+        frames_since_cleaned += 1
+        return 
+    }
+
+    frames_since_cleaned = 0
 
     for handle, _ in pending_destroy {
 

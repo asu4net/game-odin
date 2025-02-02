@@ -12,7 +12,7 @@ Game :: struct {
     renderer_2d      : Renderer2D,
     entity_registry  : Entity_Registry,
     collisions_2d    : Collisions2D,
-    
+
     // Game specific
     player           : Player,    
     kamikaze_manager : KamikazeManager,

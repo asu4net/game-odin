@@ -23,6 +23,7 @@ MAX_TEXTURE_SLOTS           :: 32
 
 // Entity
 MAX_ENTITIES                :: 3000
+ENTITY_CLEANUP_INTERVAL     :: 2 // Zero means each frame 
 
 // Kamikaze
 KAMIKAZE_WAVE_0_AMOUNT :: 5   // not implemented
