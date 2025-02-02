@@ -286,10 +286,12 @@ entity_destroy :: proc(entity : Entity_Handle) {
     }
 }
 
-entity_clean_destroyed_entities :: proc(entity_registry : ^Entity_Registry) {
-    using entity_registry
-    assert(entity_registry_initialized())
-    
+clean_destroyed_entities :: proc() {
+
+    reg := entity_registry_get_instance()
+    assert(reg != nil);
+    using reg
+
     for handle, _ in pending_destroy {
 
         data := entity_data(handle)

@@ -56,7 +56,7 @@ main :: proc() {
     //:Track of memory allocations
     /////////////////////////////
 
-    fmt.printf("Size of entity data: %i", size_of(Entity))
+    fmt.printf("Size of entity data: %i \n", size_of(Entity))
 
     when ODIN_DEBUG {
 		track: mem.Tracking_Allocator
@@ -119,16 +119,16 @@ main :: proc() {
         time_step()
 
 		for time.fixed_update_calls > 0 {
-			collision_2d_query(&entity_registry)
+			collision_2d_query()
             game_fixed_update()
 			time.fixed_update_calls-=1
 		}
 
         game_update()
 		clear_screen()
-        draw_2d_entities(&entity_registry)
-        collision_2d_draw(&entity_registry)
-        entity_clean_destroyed_entities(&entity_registry)
+        draw_2d_entities()
+        draw_2d_collisions()
+        clean_destroyed_entities()
         window_update()
     }
 }
