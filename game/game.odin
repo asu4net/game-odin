@@ -9,6 +9,7 @@ import "core:fmt"
 Game :: struct {
     renderer_2d      : Renderer2D,
     entity_registry  : Entity_Registry,
+    collisions_2d    : Collisions2D,
     player           : Player,    
     kamikaze_manager : KamikazeManager,
     exit             : bool,
@@ -42,6 +43,24 @@ game_update :: proc() {
 
 game_fixed_update :: proc() {
     using game
+}
+
+game_late_update :: proc() {
+    using game
+
+    for enter_event in collisions_2d.collision_enter_events {
+        
+        source := entity_data(enter_event.source) 
+        target := entity_data(enter_event.target)  
+
+        if .KAMIKAZE in target.flags {
+            kamikaze_collision(source, target)    
+        } else if .PROJECTILE in target.flags {
+            projectile_collision(source, target)
+        } else if target.id == player.entity.id {
+            player_collision(source, target)
+        }
+    }
 }
 
 /////////////////////////////
@@ -92,7 +111,8 @@ main :: proc() {
     entity_registry_init(&entity_registry)
     defer entity_registry_finish()
 
-    defer collision_2d_finish()
+    collisions_2d_init(&collisions_2d)
+    defer collisions_2d_finish()
 
     // Engine groups
     entity_create_group(GROUP_FLAGS_SPRITE)
@@ -113,14 +133,16 @@ main :: proc() {
 
         window_poll_input_events()
         time_step()
+        
+        game_update()
+        collisions_2d_query()
 
 		for time.fixed_update_calls > 0 {
-			collision_2d_query()
             game_fixed_update()
 			time.fixed_update_calls-=1
 		}
 
-        game_update()
+        game_late_update()
 		clear_screen()
         draw_2d_entities()
         draw_2d_collisions()

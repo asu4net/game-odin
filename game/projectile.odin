@@ -16,15 +16,20 @@ DEFAULT_PROJECTILE : Projectile : {
     max_lifetime = 1.0,
 }
 
+projectile_collision :: proc(source : ^Entity, target : ^Entity) {
+    entity_destroy({ id = target.id })
+}
+
 projectile_update :: proc() {
 
+    /*
     for handle in entity_get_group(GROUP_FLAGS_PROJECTILE) {
         entity := entity_data(handle)
 
         for collision_enter_event in entity.collision_enter {
             entity_destroy(handle)
         }   
-    }
+    }*/
 
     for handle in entity_get_group(GROUP_FLAGS_PROJECTILE) {
         entity := entity_data(handle)

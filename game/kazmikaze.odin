@@ -41,6 +41,7 @@ DEFAULT_KAMIKAZE_MANAGER : KamikazeManager : {
     cooldown = KAMIKAZE_ATTACK_CD
 }
 
+@(private = "file")
 kamikaze_manager_instance : ^KamikazeManager = nil
 
 spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
@@ -57,7 +58,7 @@ spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
         data.sprite.item = .Kamikaze_Skull
         data.position = pos
         data.kamikaze.attack_cd = cd
-
+        
         data.collision_flag = CollisionFlag.enemy;
         data.collides_with = { .player, .player_bullet };
     }
@@ -83,6 +84,12 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
     spawn_kamikaze(V3_UP * 3)
     spawn_kamikaze(V3_UP * 3 + V3_RIGHT * 1, KAMIKAZE_ATTACK_CD + 0.25)
     spawn_kamikaze(V3_UP * 3 + V3_RIGHT * 2, KAMIKAZE_ATTACK_CD + 0.5)
+}
+
+kamikaze_collision :: proc(source : ^Entity, target : ^Entity) {
+    if .player_bullet == source.collision_flag {
+        entity_destroy({ id = target.id })
+    }
 }
 
 kamikaze_manager_update :: proc() {
@@ -112,13 +119,6 @@ kamikaze_manager_update :: proc() {
     for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE) {
         
         entity := entity_data(handle)
-
-        for collision_enter_event in entity.collision_enter {
-            other_data := entity_data(collision_enter_event.other);
-            if(other_data.collision_flag == CollisionFlag.player_bullet){
-                entity_destroy(handle)
-            }
-        }
 
         switch entity.kamikaze.state {
             

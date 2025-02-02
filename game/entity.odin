@@ -267,14 +267,6 @@ entity_destroy :: proc(entity : Entity_Handle) {
     data := entity_data(entity)
     entity_remove_flags(entity, { .VALID })
     pending_destroy[entity] = {}
-
-    //TODO: Remove from here .Iterate pending destroy entities in collision system and do this
-    for other, value in data.colliding_with {
-        other_data := entity_data(other);
-        // What remains is to pray that this doesnt get cleared when detecting collision
-        append_elem(&other_data.collision_exit, CollisionEventExit{ other, entity });
-        delete_key(&other_data.colliding_with, entity);
-    }
 }
 
 clean_destroyed_entities :: proc() {
@@ -285,10 +277,6 @@ clean_destroyed_entities :: proc() {
     for handle, _ in pending_destroy {
 
         data := entity_data(handle)
-        
-        delete(data.collision_enter);
-        delete(data.collision_exit);
-        delete(data.colliding_with);
         
         queue.push(&entity_ids, data.id)
 

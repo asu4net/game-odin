@@ -53,10 +53,14 @@ player_finish :: proc(player : ^Player) {
 player_update :: proc(player : ^Player) {
     assert(player_initialized(player))
     input_update(player)
-    collision_update(player);
     movement_update(player)
     weapons_update(player)
+}
 
+player_collision :: proc(source : ^Entity, target : ^Entity) {
+    if source.collision_flag == .enemy {
+        game.exit = true
+    }
 }
 
 @(private = "file")
@@ -85,14 +89,6 @@ input_update :: proc(player : ^Player) {
     }
 
     fire = input_is_key_pressed(KEY_SPACE)
-}
-
-@(private = "file")
-collision_update :: proc(player : ^Player) {
-    entity := entity_data(player.entity);
-    for collision_enter_event in entity.collision_enter {
-        game.exit = true;
-    }
 }
 
 @(private = "file")
