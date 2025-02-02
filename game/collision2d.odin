@@ -102,7 +102,7 @@ draw_2d_collisions :: proc() {
             
 }
 
-collisions_2d_query :: proc() {
+query_2d_collisions :: proc() {
 
     using collisions_2d_instance
 

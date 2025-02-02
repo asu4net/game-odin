@@ -59,7 +59,7 @@ player_update :: proc(player : ^Player) {
 
 player_collision :: proc(source : ^Entity, target : ^Entity) {
     if source.collision_flag == .enemy {
-        game.exit = true
+        game_quit()
     }
 }
 

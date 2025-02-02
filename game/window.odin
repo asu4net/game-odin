@@ -18,20 +18,25 @@ Cursor_Mode :: enum  {
     Captured
 }
 
-window_handle : glfw.WindowHandle = nil
+Window :: struct {
+    handle : glfw.WindowHandle,
+    time   : Time,
+}
+
+window_instance : ^Window
 
 window_init :: proc(
+    instance    : ^Window,
     title       : string      = "Game", 
     width       : i32         = 1280, 
     height      : i32         = 720,
-    v_sync      : b32         = true,
+    v_sync      : b32         = false,
     start_max   : b32         = false,
     cursor_mode : Cursor_Mode = Cursor_Mode.Normal
 ) {
-	if window_handle != nil
-    {
-        window_finish()
-    }
+    assert(window_instance == nil)
+    assert(instance != nil)
+    window_instance = instance
 
     glfw.WindowHint(glfw.RESIZABLE, glfw.TRUE)
 
@@ -44,8 +49,7 @@ window_init :: proc(
 	glfw.WindowHint(glfw.CONTEXT_VERSION_MAJOR, GL_MAJOR_VERSION) 
 	glfw.WindowHint(glfw.CONTEXT_VERSION_MINOR, GL_MINOR_VERSION)
 
-	if glfw.Init() != glfw.TRUE 
-    {
+	if glfw.Init() != glfw.TRUE {
 		assert(false)
 		return
 	}
@@ -53,58 +57,46 @@ window_init :: proc(
     title_cstring := strings.clone_to_cstring(title)
     defer delete(title_cstring)
 	
-    window_handle = glfw.CreateWindow(width, height, title_cstring, nil, nil)
-	assert(window_handle != nil)
+    window_instance.handle = glfw.CreateWindow(width, height, title_cstring, nil, nil)
+	assert(window_instance.handle != nil)
 
-    glfw.MakeContextCurrent(window_handle)
+    glfw.MakeContextCurrent(window_instance.handle)
     OpenGL.load_up_to(int(GL_MAJOR_VERSION), GL_MINOR_VERSION, glfw.gl_set_proc_address)
 
-    if start_max
-    {
+    if start_max {
         window_maximize()
     }
 	
     window_set_v_sync(v_sync)
 	window_set_cursor_mode(cursor_mode)
     set_clear_color(V4_COLOR_DARK_GRAY)
+
+    time_init(&window_instance.time)
 }
 
 window_finish :: proc() {
-    assert(window_handle != nil)
+    assert(window_instance != nil)
     glfw.Terminate()
-	glfw.DestroyWindow(window_handle)
-    window_handle = nil
+	glfw.DestroyWindow(window_instance.handle)
+    window_instance.handle = nil
 }
 
-window_should_close :: proc() -> b32 {
-    if window_handle == nil {
-        return false
-    }
-    return glfw.WindowShouldClose(window_handle)
+window_close :: proc() {
+    assert(window_instance != nil)
+    glfw.SetWindowShouldClose(window_instance.handle, true)
 }
 
-window_poll_input_events :: proc() {
-    if window_handle == nil {
-        return
-    }
-
+keep_window_opened :: proc() -> b32 {
+    assert(window_instance != nil)
+    glfw.SwapBuffers(window_instance.handle)
     glfw.PollEvents()
-}
-
-window_update :: proc() {
-    if window_handle == nil {
-        return
-    }
-
-    glfw.SwapBuffers(window_handle)
+    time_step(&window_instance.time)
+    return !glfw.WindowShouldClose(window_instance.handle)
 }
 
 window_maximize :: proc() {
-    if window_handle == nil {
-        return
-    }
-
-    glfw.MaximizeWindow(window_handle)
+    assert(window_instance != nil)
+    glfw.MaximizeWindow(window_instance.handle)
 }
 
 window_set_v_sync :: proc (enabled : b32 = true) {
@@ -113,28 +105,23 @@ window_set_v_sync :: proc (enabled : b32 = true) {
 }
 
 window_set_cursor_mode :: proc (mode : Cursor_Mode) {
-    if window_handle == nil {
-        return
-    }
+    assert(window_instance != nil)
 
     switch mode {
         case .Normal:
-            glfw.SetInputMode(window_handle, glfw.CURSOR, glfw.CURSOR_NORMAL)
+            glfw.SetInputMode(window_instance.handle, glfw.CURSOR, glfw.CURSOR_NORMAL)
         case .Disabled:
-            glfw.SetInputMode(window_handle, glfw.CURSOR, glfw.CURSOR_DISABLED)
+            glfw.SetInputMode(window_instance.handle, glfw.CURSOR, glfw.CURSOR_DISABLED)
         case .Hidden:
-            glfw.SetInputMode(window_handle, glfw.CURSOR, glfw.CURSOR_HIDDEN)
+            glfw.SetInputMode(window_instance.handle, glfw.CURSOR, glfw.CURSOR_HIDDEN)
         case .Captured:
-            glfw.SetInputMode(window_handle, glfw.CURSOR, glfw.CURSOR_CAPTURED)
+            glfw.SetInputMode(window_instance.handle, glfw.CURSOR, glfw.CURSOR_CAPTURED)
     }
 }
 
 window_get_size :: proc() -> (width, height : i32) {
-    if window_handle == nil {
-        return
-    }
-
-    width, height = glfw.GetWindowSize(window_handle)
+    assert(window_instance != nil)
+    width, height = glfw.GetWindowSize(window_instance.handle)
     return
 }
 
@@ -144,11 +131,8 @@ window_get_aspect :: proc() -> f32 {
 }
 
 winodw_get_cursor_position :: proc() -> (x, y : f32) {
-    if window_handle == nil {
-        return
-    }
-    
-    xpos, ypos := glfw.GetCursorPos(window_handle);
+    assert(window_instance != nil)
+    xpos, ypos := glfw.GetCursorPos(window_instance.handle);
     x = f32(xpos)
     y = f32(ypos)
     return
@@ -174,12 +158,10 @@ Time :: struct {
     scale               : f32
 }
 
-time : Time
-
-time_init :: proc(max_delta : f64 = 1.0 / 15.0, fixed_delta : f64 = 0.06) {
+time_init :: proc(time : ^Time, max_delta : f64 = 1.0 / 15.0, fixed_delta : f64 = 0.06) {
     using time
-    assert(window_handle != nil)
-    time = {}
+    assert(window_instance.handle != nil)
+    time^ = {}
     last_time = window_get_time()
     fixed_delta_seconds = fixed_delta
     acc_fixed_delta = fixed_delta_seconds
@@ -187,7 +169,7 @@ time_init :: proc(max_delta : f64 = 1.0 / 15.0, fixed_delta : f64 = 0.06) {
     scale = 1;
 }
 
-time_step :: proc() {
+time_step :: proc(time : ^Time) {
     using time
     current_time := window_get_time()
     frame_count+=1;
@@ -205,5 +187,6 @@ time_step :: proc() {
 }
 
 delta_seconds :: proc() -> f32 {
-    return time.delta_seconds
+    assert(window_instance.handle != nil)
+    return window_instance.time.delta_seconds
 }
