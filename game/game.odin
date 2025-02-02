@@ -62,7 +62,6 @@ game_init :: proc(instance : ^Game) {
     /////////////////////////////
 
     for keep_window_opened() {
-
         update()
         query_2d_collisions()
         post_collisions_update()
