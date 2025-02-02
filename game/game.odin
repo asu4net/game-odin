@@ -49,11 +49,6 @@ game_init :: proc(instance : ^Game) {
     entity_create_group(GROUP_FLAGS_CIRCLE)
     entity_create_group(GROUP_FLAGS_COLLIDER_2D)
     
-    // Game groups
-    entity_create_group(GROUP_FLAGS_PROJECTILE)
-    entity_create_group(GROUP_FLAGS_KAMIKAZE)
-    entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
-    
     start()
     defer finish()
 
@@ -83,6 +78,12 @@ game_quit :: proc() {
 @(private = "file")
 start :: proc() {
     using game_instance
+    
+    // Game groups
+    entity_create_group(GROUP_FLAGS_PROJECTILE)
+    entity_create_group(GROUP_FLAGS_KAMIKAZE)
+    entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
+
     player_init(&player)
     kamikaze_manager_init(&kamikaze_manager)
 }
