@@ -14,6 +14,7 @@ Entity_Flag :: enum {
     CIRCLE,
     COLLIDER_2D,
     BLINK,
+    MOVEMENT_2D,
 
     // Gameplay stuff
     PROJECTILE,
@@ -49,10 +50,13 @@ Entity :: struct {
     using sprite       : Sprite_Atlas_Item,
     using circle       : Circle,
     using collider     : Collider2D,
-    blink        : Blink,
-    projectile   : Projectile,
-    kamikaze     : KamikazeSkull,
-    kamikaze_saw : KamikazeSaw,
+    blink              : Blink,
+    movement_2d        : Movement2D,
+    
+    // Game specific
+    projectile         : Projectile,
+    kamikaze           : KamikazeSkull,
+    kamikaze_saw       : KamikazeSaw,
 }
 
 NIL_ENTITY_ID :: SPARSE_SET_INVALID
@@ -64,6 +68,7 @@ DEFAULT_ENTITY : Entity : {
     circle      = DEFAULT_CIRCLE,
     collider    = DEFAULT_COLLIDER_2D,
     blink       = DEFAULT_BLINK,
+    movement_2d = DEFAULT_MOVEMENT_2D,
     projectile  = DEFAULT_PROJECTILE,
     kamikaze    = DEFAULT_KAMIKAZE_SKULL,
 }

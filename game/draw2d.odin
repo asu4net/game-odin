@@ -49,8 +49,8 @@ draw_2d_entities :: proc() {
                 if normalized_progress == 1 {
                     new_target := start_tint
                     start_tint = tint 
-                    tint = new_target
-                    progress = 0
+                    tint       = new_target
+                    progress   = 0
                 }
             }
         }

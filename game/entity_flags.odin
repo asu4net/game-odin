@@ -31,6 +31,13 @@ GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
     .SPRITE,
     .COLLIDER_2D,
     .KAMIKAZE,
+    .MOVEMENT_2D,
+}
+
+GROUP_FLAGS_MOVEMENT_2D : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .MOVEMENT_2D,
 }
 
 GROUP_FLAGS_KAMIKAZE_SAW : Entity_Flag_Set : {

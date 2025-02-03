@@ -28,7 +28,7 @@ ENTITY_CLEANUP_INTERVAL     :: 2 // Zero means each frame
 // Kamikaze
 KAMIKAZE_WAVE_0_AMOUNT :: 5   // not implemented
 KAMIKAZE_SPEED_MIN     :: 0   // min speed
-KAMIKAZE_SPEED         :: 8   // max speed
+KAMIKAZE_SPEED_MAX     :: 7   // max speed
 KAMIKAZE_ACC           :: 0.7 // time to accelerate at max speed
 KAMIKAZE_LIFE          :: 10  // not implemented
 KAMIKAZE_SCORE         :: 10  // not implemented

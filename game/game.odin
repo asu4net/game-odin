@@ -48,6 +48,7 @@ game_init :: proc(instance : ^Game) {
     entity_create_group(GROUP_FLAGS_SPRITE)
     entity_create_group(GROUP_FLAGS_CIRCLE)
     entity_create_group(GROUP_FLAGS_COLLIDER_2D)
+    entity_create_group(GROUP_FLAGS_MOVEMENT_2D)
     
     start()
     defer finish()
@@ -58,6 +59,7 @@ game_init :: proc(instance : ^Game) {
 
     for keep_window_opened() {
         update()
+        update_entity_movement()
         query_2d_collisions()
         post_collisions_update()
 		clear_screen()
