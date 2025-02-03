@@ -91,9 +91,9 @@ draw_2d_collisions :: proc() {
         if handle in collisions_map {
             collides_with := collisions_map[handle] 
             if len(collides_with) == 0 {
-                draw_circle(&entity.tranform, &circle, entity.collision_tint, entity.id)
+                draw_circle(entity.tranform, circle, entity.collision_tint, entity.id)
             } else {
-                draw_circle(&entity.tranform, &circle, {1, 0, 0, 1}, entity.id)
+                draw_circle(entity.tranform, circle, {1, 0, 0, 1}, entity.id)
             }
         }
     }

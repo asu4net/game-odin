@@ -170,6 +170,7 @@ Renderer2D :: struct {
     last_texture_slot  : i32,
     projection_view    : m4,
 
+    curr_blending      : Blending_Mode,
     curr_primitive     : Primitive_Type,
 
     // Quad
@@ -221,6 +222,9 @@ assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
 renderer_2d_init :: proc(instance : ^Renderer2D) {
     assert(renderer_2d_instance == nil)
     assert(instance != nil)
+    
+    set_blending_mode(.ALPHA)
+
     renderer_2d_instance = instance
     using renderer_2d_instance
 
@@ -397,7 +401,6 @@ scene_2d_begin :: proc(scene : Scene2D = DEFAULT_SCENE_2D) {
     
     set_viewport(u32(window_width), u32(window_height))
     aspect = window_width / window_height
-    set_blending_mode(.Alpha)
     set_depth_test_enabled(false)
     set_blending_enabled()
 
@@ -433,11 +436,12 @@ DEFAULT_TRANSFORM : Transform : {
 /////////////////////////////
 
 Sprite :: struct {
-    texture   : ^Texture2D ,
-    tiling    : v2         ,
-    flip_x    : bool       ,
-    flip_y    : bool       ,
-    autosize  : bool       ,
+    texture   : ^Texture2D    ,
+    tiling    : v2            ,
+    flip_x    : bool          ,
+    flip_y    : bool          ,
+    autosize  : bool          ,
+    blending  : Blending_Mode ,
 }
 
 DEFAULT_SPRITE : Sprite : {
@@ -446,16 +450,23 @@ DEFAULT_SPRITE : Sprite : {
     flip_x    = false,
     flip_y    = false,
     autosize  = true,
+    blending  = .ALPHA
 }
 
 //#TODO_asuarez add subtextures
-draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+draw_sprite :: proc(transform : Transform = DEFAULT_TRANSFORM, sprite : Sprite = DEFAULT_SPRITE, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
 {
-    assert(renderer_2d_instance != nil && transform != nil && sprite != nil)
+    assert(renderer_2d_instance != nil)
     using renderer_2d_instance, transform, sprite
 
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
     
+    if curr_blending != sprite.blending {
+        next_batch()
+        set_blending_mode(sprite.blending)
+        curr_blending = sprite.blending
+    }
+
     if curr_primitive != .nil && curr_primitive != .QUAD {
         next_batch()
     }
@@ -494,11 +505,12 @@ draw_sprite :: proc(transform : ^Transform = nil, sprite : ^Sprite = nil, tint :
 }
 
 Sprite_Atlas_Item :: struct {
-    item      : Texture_Name,
-    tiling    : v2          ,
-    flip_x    : bool        ,
-    flip_y    : bool        ,
-    autosize  : bool        ,
+    item      : Texture_Name  ,
+    tiling    : v2            ,
+    flip_x    : bool          ,
+    flip_y    : bool          ,
+    autosize  : bool          ,
+    blending  : Blending_Mode ,
 }
 
 DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
@@ -507,15 +519,22 @@ DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
     flip_x   = false,
     flip_y   = false,
     autosize = true,
+    blending = .ALPHA,
 }
 
-draw_sprite_atlas_item :: proc(transform : ^Transform = nil, sprite : ^Sprite_Atlas_Item = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+draw_sprite_atlas_item :: proc(transform : Transform = DEFAULT_TRANSFORM, sprite : Sprite_Atlas_Item = DEFAULT_SPRITE_ATLAS_ITEM, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
 {
-    assert(renderer_2d_instance != nil && transform != nil && sprite != nil)
+    assert(renderer_2d_instance != nil)
     using renderer_2d_instance, transform, sprite
 
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
     
+    if curr_blending != sprite.blending {
+        next_batch()
+        set_blending_mode(sprite.blending)
+        curr_blending = sprite.blending
+    }
+
     if curr_primitive != .nil && curr_primitive != .QUAD {
         next_batch()
     }
@@ -578,11 +597,16 @@ DEFAULT_CIRCLE : Circle : {
     fade      = 0.01,
 }
 
-draw_circle :: proc(transform : ^Transform = nil, circle : ^Circle = nil, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+draw_circle :: proc(transform : Transform = DEFAULT_TRANSFORM, circle : Circle = DEFAULT_CIRCLE, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
 {
-    assert(renderer_2d_instance != nil && transform != nil && circle != nil)
+    assert(renderer_2d_instance != nil)
     using renderer_2d_instance, transform, circle
 
+    if curr_blending != .ALPHA {
+        next_batch()
+        set_blending_mode(.ALPHA)
+    }
+    
     if curr_primitive != .nil && curr_primitive != .CIRCLE {
         next_batch()
     }

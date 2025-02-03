@@ -9,10 +9,10 @@ import "core:math"
 /////////////////////////////
 
 Blending_Mode :: enum {
-    Alpha,
-    Solid,
-    Add,
-    Multiply
+    ALPHA,
+    SOLID,
+    ADD,
+    MULTIPLY
 }
 
 Shader_Data_Type :: enum {
@@ -127,16 +127,16 @@ set_blending_enabled :: proc(enabled: b32 = true) {
 set_blending_mode :: proc(blending_mode : Blending_Mode) {
     switch blending_mode
     {
-        case .Solid: 
+        case .SOLID: 
             OpenGL.BlendFunc(OpenGL.ONE, OpenGL.ZERO)                
             return
-        case .Alpha:
+        case .ALPHA:
             OpenGL.BlendFunc(OpenGL.SRC_ALPHA, OpenGL.ONE_MINUS_SRC_ALPHA) 
             return
-        case .Add:
+        case .ADD:
             OpenGL.BlendFunc(OpenGL.SRC_ALPHA, OpenGL.ONE)                 
             return
-        case .Multiply: 
+        case .MULTIPLY: 
             OpenGL.BlendFunc(OpenGL.DST_COLOR, OpenGL.ZERO)                
             return
     }
