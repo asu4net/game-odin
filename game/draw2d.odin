@@ -66,3 +66,24 @@ draw_2d_entities :: proc() {
 
     scene_2d_end() 
 }
+
+draw_2d_particles :: proc() {
+    width, height := window_get_size()
+    
+    scene : Scene2D = {
+        camera = DEFAULT_CAMERA,
+        window_width = f32(width),
+        window_height = f32(height)   
+    }
+        
+    scene_2d_begin(scene)
+
+    for handle in particle_get_group() {
+        
+        particle := particle_data(handle)
+
+        draw_sprite_atlas_item(particle.tranform, particle.sprite, particle.color, particle.id)
+    }
+
+    scene_2d_end() 
+}

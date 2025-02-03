@@ -8,14 +8,16 @@ import "core:fmt"
 
 Game :: struct {
     // Engine
-    window           : Window,
-    renderer_2d      : Renderer2D,
-    entity_registry  : Entity_Registry,
-    collisions_2d    : Collisions2D,
+    window             : Window,
+    renderer_2d        : Renderer2D,
+    entity_registry    : Entity_Registry,
+    particle_registry  : Particle_Registry,
+    collisions_2d      : Collisions2D,
 
     // Game specific
-    player           : Player,    
-    kamikaze_manager : KamikazeManager,
+    player             : Player,    
+    particle_manager   : ParticleManager,
+    kamikaze_manager   : KamikazeManager,
 }
 
 @(private = "file")
@@ -41,6 +43,9 @@ game_init :: proc(instance : ^Game) {
     entity_registry_init(&entity_registry)
     defer entity_registry_finish()
 
+    particle_registry_init(&particle_registry)
+    defer particle_registry_finish()
+
     collisions_2d_init(&collisions_2d)
     defer collisions_2d_finish()
     
@@ -64,6 +69,7 @@ game_init :: proc(instance : ^Game) {
         post_collisions_update()
 		clear_screen()
         draw_2d_entities()
+        draw_2d_particles()
         draw_2d_collisions()
         clean_destroyed_entities()
     }
@@ -87,6 +93,7 @@ start :: proc() {
     entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
 
     player_init(&player)
+    particle_manager_init(&particle_manager)
     kamikaze_manager_init(&kamikaze_manager)
 }
 
@@ -96,6 +103,7 @@ update :: proc() {
     player_update(&player)
     projectile_update()
     kamikaze_manager_update()
+    particle_manager_update()
 }
 
 @(private = "file")

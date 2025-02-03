@@ -25,6 +25,13 @@ MAX_TEXTURE_SLOTS           :: 32
 MAX_ENTITIES                :: 3000
 ENTITY_CLEANUP_INTERVAL     :: 2 // Zero means each frame 
 
+// Particle
+MAX_PARTICLES               :: 10000
+PARTICLE_VELOCITY           :: V3_ONE
+PARTICLE_COLOR              :: V4_COLOR_LIGHT_GREEN
+PARTICLE_LIFETIME           :: 1      
+PARTICLE_SPAWN_TIME         :: 0.01
+
 // Kamikaze
 KAMIKAZE_WAVE_0_AMOUNT :: 5   // not implemented
 KAMIKAZE_SPEED_MIN     :: 0   // min speed
