@@ -41,7 +41,7 @@ player_init :: proc(player : ^Player) {
     
     data.collision_flag = CollisionFlag.player;
     data.collides_with = { .enemy, .enemy_bullet };
-
+    
     initialized = true
 }
 
