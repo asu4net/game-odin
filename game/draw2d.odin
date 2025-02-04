@@ -55,13 +55,13 @@ draw_2d_entities :: proc() {
             }
         }
 
-        draw_sprite_atlas_item(entity.tranform, entity.sprite, entity.tint, entity.id)
+        draw_sprite_atlas_item(entity.transform, entity.sprite, entity.tint, entity.id)
     }
 
     for handle in entity_get_group(GROUP_FLAGS_CIRCLE) {
         
         entity := entity_data(handle)
-        draw_circle(entity.tranform, entity.circle, entity.tint, entity.id)
+        draw_circle(entity.transform, entity.circle, entity.tint, entity.id)
     }
 
     scene_2d_end() 
@@ -82,7 +82,7 @@ draw_2d_particles :: proc() {
         
         particle := particle_data(handle)
 
-        draw_sprite_atlas_item(particle.tranform, particle.sprite, particle.color, particle.id)
+        draw_sprite_atlas_item(particle.transform, particle.sprite, particle.color, particle.id)
     }
 
     scene_2d_end() 

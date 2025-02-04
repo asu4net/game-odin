@@ -28,6 +28,8 @@ ENTITY_CLEANUP_INTERVAL     :: 2 // Zero means each frame
 // Particle
 MAX_PARTICLES               :: 10000
 MAX_EMITTERS                :: 500
+MAX_SPRITES_PER_EMITTER     :: 5
+DEFAULT_PARTICLE_SPRITE     :: Texture_Name.Kamikaze_Skull
 PARTICLE_VELOCITY           :: V3_ONE
 PARTICLE_COLOR              :: V4_COLOR_LIGHT_GREEN
 PARTICLE_LIFETIME           :: 1      

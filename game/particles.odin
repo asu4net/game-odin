@@ -21,7 +21,7 @@ Particle_Handle :: struct {
 
 Particle :: struct {
     id            : PARTICLE_ID,
-    using tranform     : Transform,
+    using transform     : Transform,
     using sprite       : Sprite_Atlas_Item,
     velocity           : v3,
     color              : v4,
@@ -31,7 +31,7 @@ Particle :: struct {
 
 DEFAULT_PARTICLE : Particle : {
     id          = NIL_PARTICLE_ID,
-    tranform    = DEFAULT_TRANSFORM,
+    transform    = DEFAULT_TRANSFORM,
     sprite      = DEFAULT_SPRITE_ATLAS_ITEM,
     velocity    = PARTICLE_VELOCITY,
     color       = PARTICLE_COLOR,    
@@ -53,9 +53,10 @@ Emitter_Handle :: struct {
 
 ParticleEmitter :: struct {
     id               : EMITTER_ID,
-    position         : v3,
+    using transform  : Transform,
     pos_amplitude    : v3,
-    texture_name     : Texture_Name,
+    num_textures     : u8,
+    texture_names    : [MAX_SPRITES_PER_EMITTER]Texture_Name,
     velocity         : v3,
     vel_amplitude    : v3,
     color            : v4,
@@ -68,9 +69,10 @@ ParticleEmitter :: struct {
 
 DEFAULT_EMITTER : ParticleEmitter : {
     id               = NIL_EMITTER_ID,
-    position         = V3_ZERO,
+    transform        = DEFAULT_TRANSFORM,
     pos_amplitude    = v3{0.1, 0.1, 0},
-    texture_name     = Texture_Name.Kamikaze_Skull,
+    num_textures     = 0,
+    texture_names    = DEFAULT_PARTICLE_SPRITE,
     velocity         = PARTICLE_VELOCITY,
     vel_amplitude    = V3_ONE,
     color            = PARTICLE_COLOR,
@@ -324,6 +326,36 @@ emitter_get_group :: proc() -> Emitter_Group {
     return emitter_group;
 }
 
+emitter_add_texture :: proc(emitter : Emitter_Handle, texture_name : Texture_Name) {
+    
+    using particle_registry_instance
+
+    assert(particle_registry_initialized() && emitter_count > 0)
+    assert(emitter_exists(emitter))
+
+    data := emitter_data(emitter)
+
+    assert(data.num_textures < MAX_SPRITES_PER_EMITTER, "Emitter texture_names array overflow. Increase MAX_SPRITES_PER_EMITTER if needed")
+
+    data.texture_names[data.num_textures] = texture_name
+    data.num_textures += 1
+
+}
+
+emitter_remove_last_texture :: proc(emitter : Emitter_Handle) {
+
+    using particle_registry_instance
+
+    assert(particle_registry_initialized() && emitter_count > 0)
+    assert(emitter_exists(emitter))
+
+    data := emitter_data(emitter)
+    if(data.num_textures > 1) { 
+        // haha
+        data.num_textures -= 1
+    }
+}
+
 spawn_particle :: proc(emitter : ^ParticleEmitter) {
 
     particle : Particle_Handle
@@ -331,10 +363,11 @@ spawn_particle :: proc(emitter : ^ParticleEmitter) {
         // Generate numbers between -1.0 and 1.0
         random := v3{ (rand.float32() - 0.5) * 2, (rand.float32() - 0.5) * 2, 0 }  
         random_color := v4{ (rand.float32() - 0.5) * 2, (rand.float32() - 0.5) * 2, (rand.float32() - 0.5) * 2, 0 }  
+        random_sprite := rand.uint32()
         
         handle, data := particle_create()
         particle = handle
-        data.sprite.item = emitter.texture_name;
+        data.sprite.item = emitter.num_textures > 1 ? rand.choice(emitter.texture_names[0:emitter.num_textures]) : emitter.texture_names[0];
         data.position = emitter.position + random * emitter.pos_amplitude;
         data.velocity = emitter.velocity + random * emitter.vel_amplitude;
         data.color = emitter.color + random_color * emitter.color_amplitude;

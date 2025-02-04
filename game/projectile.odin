@@ -34,7 +34,7 @@ projectile_update :: proc() {
     for handle in entity_get_group(GROUP_FLAGS_PROJECTILE) {
         entity := entity_data(handle)
                 
-        using entity.projectile, entity.tranform
+        using entity.projectile, entity.transform
         curr_lifetime += delta_seconds()
         if curr_lifetime >= max_lifetime {
             entity_destroy(handle)

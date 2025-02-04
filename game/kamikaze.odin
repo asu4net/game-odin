@@ -63,13 +63,15 @@ spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
         emitter_data.position = entity.position;
         emitter_data.pos_amplitude = v3{0.05,0.05,0};
         emitter_data.vel_amplitude = V3_ZERO;
+        emitter_add_texture(emitter_handle, .Kamikaze_Skull)
+        emitter_add_texture(emitter_handle, .Kazmikaze_Saw)
     }
 
     // Saw
     {
         handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         saw_prefab = handle
-        entity.tranform.position = V3_UP
+        entity.transform.position = V3_UP
         entity.sprite.item = .Kazmikaze_Saw
         entity.kamikaze_saw.kamikaze_skull = skull
         entity.position = pos
@@ -110,7 +112,7 @@ kamikaze_manager_update :: proc() {
             continue
         }
         
-        entity.tranform.position = entity_data(entity.kamikaze_saw.kamikaze_skull).tranform.position
+        entity.transform.position = entity_data(entity.kamikaze_saw.kamikaze_skull).transform.position
     }
 
     if !DEBUG_AI_MOVEMENT_ENABLED {
