@@ -18,11 +18,11 @@ Player_Weapons :: struct {
 }
 
 Player :: struct {
-    using input    : Player_Input,
-    using movement : Player_Movement,
-    using weapons  : Player_Weapons,
-    entity         : Entity_Handle,
-    initialized    : bool
+    using input      : Player_Input,
+    using movement   : Player_Movement,
+    using weapons    : Player_Weapons,
+    entity           : Entity_Handle,
+    initialized      : bool,
 }
 
 player_initialized :: proc(player : ^Player) -> bool {
@@ -42,6 +42,10 @@ player_init :: proc(player : ^Player) {
     data.collision_flag = CollisionFlag.player;
     data.collides_with = { .enemy, .enemy_bullet };
     
+    emitter_handle, emitter_data := emitter_create();
+    data.particle_emitter = emitter_handle;
+    emitter_data.position = data.position;
+
     initialized = true
 }
 
@@ -97,6 +101,11 @@ movement_update :: proc(player : ^Player) {
     using player.movement, player.input
     entity := entity_data(player.entity)
     entity.position.xy += axis * speed * delta_seconds() 
+    
+    emitter_data := emitter_data(entity.particle_emitter);
+    emitter_data.velocity = (-entity.position + emitter_data.position) * 1000;
+    emitter_data.active = emitter_data.velocity != V3_ZERO;
+    emitter_data.position = entity.position;
 }
 
 @(private = "file")

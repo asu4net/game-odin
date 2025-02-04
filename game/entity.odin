@@ -52,6 +52,7 @@ Entity :: struct {
     using collider     : Collider2D,
     blink              : Blink,
     movement_2d        : Movement2D,
+    particle_emitter   : Emitter_Handle,
     
     // Game specific
     projectile         : Projectile,
@@ -62,15 +63,16 @@ Entity :: struct {
 NIL_ENTITY_ID :: SPARSE_SET_INVALID
 
 DEFAULT_ENTITY : Entity : {
-    common      = DEFAULT_ENTITY_COMMON,
-    tranform    = DEFAULT_TRANSFORM,
-    sprite      = DEFAULT_SPRITE_ATLAS_ITEM,
-    circle      = DEFAULT_CIRCLE,
-    collider    = DEFAULT_COLLIDER_2D,
-    blink       = DEFAULT_BLINK,
-    movement_2d = DEFAULT_MOVEMENT_2D,
-    projectile  = DEFAULT_PROJECTILE,
-    kamikaze    = DEFAULT_KAMIKAZE_SKULL,
+    common           = DEFAULT_ENTITY_COMMON,
+    tranform         = DEFAULT_TRANSFORM,
+    sprite           = DEFAULT_SPRITE_ATLAS_ITEM,
+    circle           = DEFAULT_CIRCLE,
+    collider         = DEFAULT_COLLIDER_2D,
+    blink            = DEFAULT_BLINK,
+    movement_2d      = DEFAULT_MOVEMENT_2D,
+    particle_emitter = {NIL_EMITTER_ID},
+    projectile       = DEFAULT_PROJECTILE,
+    kamikaze         = DEFAULT_KAMIKAZE_SKULL,
 }
 
 Entity_Handle :: struct {
@@ -267,6 +269,12 @@ entity_destroy :: proc(entity : Entity_Handle) {
 
     data := entity_data(entity)
     entity_remove_flags(entity, { .VALID })
+
+    if(emitter_exists(data.particle_emitter)) {
+        emitter := emitter_data(data.particle_emitter)
+        emitter.active = false;
+    }
+
     pending_destroy[entity] = {}
 }
 
@@ -285,6 +293,10 @@ clean_destroyed_entities :: proc() {
     for handle, _ in pending_destroy {
 
         data := entity_data(handle)
+        
+        if(emitter_exists(data.particle_emitter)) {
+            emitter_destroy(data.particle_emitter)
+        }
         
         queue.push(&entity_ids, data.id)
 

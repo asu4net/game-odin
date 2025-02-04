@@ -15,8 +15,7 @@ Game :: struct {
     collisions_2d      : Collisions2D,
 
     // Game specific
-    player             : Player,    
-    particle_manager   : ParticleManager,
+    player             : Player,
     kamikaze_manager   : KamikazeManager,
 }
 
@@ -54,7 +53,7 @@ game_init :: proc(instance : ^Game) {
     entity_create_group(GROUP_FLAGS_CIRCLE)
     entity_create_group(GROUP_FLAGS_COLLIDER_2D)
     entity_create_group(GROUP_FLAGS_MOVEMENT_2D)
-    
+
     start()
     defer finish()
 
@@ -67,9 +66,10 @@ game_init :: proc(instance : ^Game) {
         update_entity_movement()
         query_2d_collisions()
         post_collisions_update()
+        particle_update()
 		clear_screen()
-        draw_2d_entities()
         draw_2d_particles()
+        draw_2d_entities()
         draw_2d_collisions()
         clean_destroyed_entities()
     }
@@ -93,7 +93,6 @@ start :: proc() {
     entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
 
     player_init(&player)
-    particle_manager_init(&particle_manager)
     kamikaze_manager_init(&kamikaze_manager)
 }
 
@@ -103,7 +102,6 @@ update :: proc() {
     player_update(&player)
     projectile_update()
     kamikaze_manager_update()
-    particle_manager_update()
 }
 
 @(private = "file")
