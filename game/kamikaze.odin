@@ -58,6 +58,7 @@ spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
         entity.collision_flag = CollisionFlag.enemy;
         entity.collides_with = { .player, .player_bullet };
         
+        /*
         emitter_handle, emitter_data := emitter_create();
         entity.particle_emitter = emitter_handle;
         emitter_data.position = entity.position;
@@ -65,6 +66,7 @@ spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
         emitter_data.vel_amplitude = V3_ZERO;
         emitter_add_texture(emitter_handle, .Kamikaze_Skull)
         emitter_add_texture(emitter_handle, .Kazmikaze_Saw)
+        */
     }
 
     // Saw
@@ -120,16 +122,19 @@ kamikaze_manager_update :: proc() {
     }
 
     // Skull //TODO: Interpolate speed
+    
     for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE) {
         
         entity := entity_data(handle)
 
+        /*
         emitter_data := emitter_data(entity.particle_emitter);
         // no () on purpose, effect goes hard
         emitter_data.velocity = entity.position - emitter_data.position * 2;
         emitter_data.active = emitter_data.velocity != V3_ZERO;
         emitter_data.position = entity.position;
-
+        */
+        
         switch entity.kamikaze.state {
             
             case .IDLE: {
