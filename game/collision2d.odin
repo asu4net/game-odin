@@ -63,45 +63,6 @@ collisions_2d_finish :: proc() {
     delete(collisions_map)
 }
 
-draw_2d_collisions :: proc() {
-    
-    using collisions_2d_instance
-
-    width, height := window_get_size()
-    
-    scene : Scene2D = {
-        camera = DEFAULT_CAMERA,
-        window_width = f32(width),
-        window_height = f32(height)   
-    }
-    
-    if !DEBUG_DRAW_COLLIDERS {
-        return
-    }
-
-    scene_2d_begin(scene)
-
-    for handle in entity_get_group(GROUP_FLAGS_COLLIDER_2D) {
-        
-        entity := entity_data(handle)
-        
-        circle : Circle = DEFAULT_CIRCLE
-        circle.radius = entity.collision_radius
-        
-        if handle in collisions_map {
-            collides_with := collisions_map[handle] 
-            if len(collides_with) == 0 {
-                draw_circle(entity.transform, circle, entity.collision_tint, entity.id)
-            } else {
-                draw_circle(entity.transform, circle, {1, 0, 0, 1}, entity.id)
-            }
-        }
-    }
-
-    scene_2d_end()
-            
-}
-
 query_2d_collisions :: proc() {
 
     using collisions_2d_instance

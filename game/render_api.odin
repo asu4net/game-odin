@@ -9,6 +9,7 @@ import "core:math"
 /////////////////////////////
 
 Blending_Mode :: enum {
+    nil,
     ALPHA,
     SOLID,
     ADD,
@@ -125,9 +126,13 @@ set_blending_enabled :: proc(enabled: b32 = true) {
 }
 
 set_blending_mode :: proc(blending_mode : Blending_Mode) {
+    set_blending_enabled()
     switch blending_mode
     {
-        case .SOLID: 
+        case .nil:
+             assert(false) 
+            return
+        case .SOLID:
             OpenGL.BlendFunc(OpenGL.ONE, OpenGL.ZERO)                
             return
         case .ALPHA:
@@ -137,7 +142,7 @@ set_blending_mode :: proc(blending_mode : Blending_Mode) {
             OpenGL.BlendFunc(OpenGL.SRC_ALPHA, OpenGL.ONE)                 
             return
         case .MULTIPLY: 
-            OpenGL.BlendFunc(OpenGL.DST_COLOR, OpenGL.ZERO)                
+            OpenGL.BlendFuncSeparate(OpenGL.DST_COLOR, OpenGL.ONE, OpenGL.SRC_ALPHA, OpenGL.ONE_MINUS_SRC_ALPHA)                
             return
     }
 }

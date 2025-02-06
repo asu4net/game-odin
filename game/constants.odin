@@ -57,7 +57,7 @@ NAME_KAMIKAZE_SAW  :: "KamikazeSawPrefab"
 //:Debug
 /////////////////////////////
 
-DEBUG_AI_MOVEMENT_ENABLED      :: true
+DEBUG_AI_MOVEMENT_ENABLED      :: false
 DEBUG_DRAW_COLLIDERS           :: true
 DEBUG_PRINT_CREATED_ENTITIES   :: false
 DEBUG_PRINT_DESTROYED_ENTITIES :: false

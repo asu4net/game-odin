@@ -401,8 +401,6 @@ scene_2d_begin :: proc(scene : Scene2D = DEFAULT_SCENE_2D) {
     
     set_viewport(u32(window_width), u32(window_height))
     aspect = window_width / window_height
-    set_depth_test_enabled(false)
-    set_blending_enabled()
 
     right      := aspect * size
     left       := -right

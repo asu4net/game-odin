@@ -68,9 +68,7 @@ game_init :: proc(instance : ^Game) {
         post_collisions_update()
         particle_update()
 		clear_screen()
-        draw_2d_particles()
-        draw_2d_entities()
-        draw_2d_collisions()
+        draw_2d()
         clean_destroyed_entities()
     }
 }
