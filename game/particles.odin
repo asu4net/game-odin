@@ -370,6 +370,7 @@ spawn_particle :: proc(emitter : ^ParticleEmitter) {
         data.sprite.item = emitter.num_textures > 1 ? rand.choice(emitter.texture_names[0:emitter.num_textures]) : emitter.texture_names[0];
         data.position = emitter.position + random * emitter.pos_amplitude;
         data.velocity = emitter.velocity + random * emitter.vel_amplitude;
+        data.scale = emitter.scale
         data.color = emitter.color + random_color * emitter.color_amplitude;
         data.life = emitter.starting_life;
         data.total_life = emitter.starting_life;

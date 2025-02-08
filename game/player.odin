@@ -46,6 +46,7 @@ player_init :: proc(player : ^Player) {
     emitter_handle, emitter_data := emitter_create();
     data.particle_emitter = emitter_handle;
     emitter_data.position = data.position;
+    emitter_data.scale = V3_ONE * 0.15
 
     initialized = true
 }

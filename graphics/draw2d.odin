@@ -442,25 +442,36 @@ draw_quad :: proc(
     fill_vertex_colors(&vertex_colors, tint)
 
     if texture != nil {
+
+        pixel_width, pixel_height : int
+
         if .USE_SUBTEX in flags {
+            
+            pixel_width  = sub_tex_rect.width
+            pixel_height = sub_tex_rect.height
+
             fill_quad_sub_tex_vertex_uvs(
                 &vertex_uvs,
-                {f32(texture.width),  f32(texture.height)},
-                {f32(sub_tex_rect.width),     f32(sub_tex_rect.height)},
-                {f32(sub_tex_rect.x),         f32(sub_tex_rect.y)},
+                {f32(texture.width), f32(texture.height)},
+                {f32(sub_tex_rect.width), f32(sub_tex_rect.height)},
+                {f32(sub_tex_rect.x), f32(sub_tex_rect.y)},
                 .FLIP_X in flags,
                 .FLIP_Y in flags,
                 tiling
             )
         } else {
+
+            pixel_width  = int(texture.width)
+            pixel_height = int(texture.height)
+
             fill_quad_vertex_uvs(&vertex_uvs, .FLIP_X in flags, .FLIP_Y in flags, tiling)
         }
 
         if .AUTOSIZE in flags {
-            fill_quad_vertex_positions(&vertex_positions, { f32(sub_tex_rect.width), f32(sub_tex_rect.height) })
+            fill_quad_vertex_positions(&vertex_positions, { f32(pixel_width), f32(pixel_height) })
         }
     }
-
+    
     transform_vertex_positions(&vertex_positions, transform)
     
     slot := assign_texture_slot(texture) 

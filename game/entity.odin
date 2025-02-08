@@ -46,7 +46,7 @@ DEFAULT_ENTITY_COMMON : EntityCommon : {
 
 Entity :: struct {
     using common       : EntityCommon,
-    using transform     : Transform,
+    using transform    : Transform,
     using sprite       : Sprite_Atlas_Item,
     using circle       : Circle,
     using collider     : Collider2D,

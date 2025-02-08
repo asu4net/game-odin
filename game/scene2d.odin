@@ -124,8 +124,8 @@ draw_scene_2d :: proc() {
     window_size : v2 = { f32(width), f32(height) }
 
     graphics.draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
-    draw_entities()
     draw_particles()
+    draw_entities()
     draw_collisions()
     graphics.draw_2d_end()
 }
@@ -152,14 +152,17 @@ draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT
     if sprite.flip_x   do quad_flags += {.FLIP_X}
     if sprite.flip_y   do quad_flags += {.FLIP_Y}
 
+    texture : ^graphics.Texture2D
+
     if (sprite.item != nil) {
+        texture = &scene2d_instance.atlas_texture
         quad_flags += {.USE_SUBTEX}
         rect = atlas_textures[sprite.item].rect
     }
 
     graphics.draw_quad(
         transform    = transform_to_m4(transform),
-        texture      = &scene2d_instance.atlas_texture,
+        texture      = texture,
         tiling       = sprite.tiling,
         blending     = sprite.blending,
         sub_tex_rect = rect,
