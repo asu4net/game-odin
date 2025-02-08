@@ -66,7 +66,7 @@ game_init :: proc(instance : ^Game) {
         update_entity_movement()
         query_2d_collisions()
         post_collisions_update()
-        particle_update()
+        update_particles()
         draw_scene_2d()
         clean_destroyed_entities()
     }

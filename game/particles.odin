@@ -377,7 +377,7 @@ spawn_particle :: proc(emitter : ^ParticleEmitter) {
     }
 }
 
-particle_update :: proc() {
+update_particles :: proc() {
     
     assert(particle_registry_instance != nil)
     using particle_registry_instance
