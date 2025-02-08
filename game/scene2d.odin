@@ -1,25 +1,18 @@
 package game
 import "core:math"
 import "core:fmt"
-import "../graphics"
-
-/////////////////////////////
-//:Rect
-/////////////////////////////
-
-Rect :: graphics.Rect
 
 /////////////////////////////
 //:Sprite
 /////////////////////////////
 
 Sprite :: struct {
-    texture   : ^graphics.Texture2D    ,
+    texture   : ^Texture2D    ,
     tiling    : v2            ,
     flip_x    : bool          ,
     flip_y    : bool          ,
     autosize  : bool          ,
-    blending  : graphics.Blending_Mode ,
+    blending  : Blending_Mode ,
 }
 
 DEFAULT_SPRITE : Sprite : {
@@ -41,7 +34,7 @@ Sprite_Atlas_Item :: struct {
     flip_x    : bool                   ,
     flip_y    : bool                   ,
     autosize  : bool                   ,
-    blending  : graphics.Blending_Mode ,
+    blending  : Blending_Mode ,
 }
 
 DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
@@ -87,8 +80,8 @@ DEFAULT_BLINK : Blink : {
 }
 
 Scene2D :: struct {
-    draw_2d       : graphics.Draw2D_Context,
-    atlas_texture : graphics.Texture2D,
+    draw_2d       : Draw2D_Context,
+    atlas_texture : Texture2D,
 }
 
 @(private = "file")
@@ -104,35 +97,35 @@ scene_2d_init :: proc(scene2d : ^Scene2D) {
     scene2d_instance = scene2d
     using scene2d_instance
 
-    graphics.set_clear_color(V4_COLOR_DARK_GRAY)
-    graphics.draw_2d_init(&scene2d.draw_2d)
-    graphics.texture_2d_init(&atlas_texture, "assets/atlas.png")
+    set_clear_color(V4_COLOR_DARK_GRAY)
+    draw_2d_init(&scene2d.draw_2d)
+    texture_2d_init(&atlas_texture, "assets/atlas.png")
 }
 
 scene_2d_finish :: proc() {
     assert(scene_2d_initialized())
     using scene2d_instance
-    graphics.texture_2d_finish(&atlas_texture)
-    graphics.draw_2d_finish()
+    texture_2d_finish(&atlas_texture)
+    draw_2d_finish()
 }
 
 draw_scene_2d :: proc() {
 
-    graphics.clear_screen()
+    clear_screen()
     
     width, height := viewport_size()
     window_size : v2 = { f32(width), f32(height) }
 
-    graphics.draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
+    draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
     draw_particles()
     draw_entities()
     draw_collisions()
-    graphics.draw_2d_end()
+    draw_2d_end()
 }
 
 @(private = "file")
-draw_circle :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := V4_COLOR_WHITE, entity_id : u32 = 0) {
-    graphics.draw_circle(
+draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := V4_COLOR_WHITE, entity_id : u32 = 0) {
+    draw_circle(
         transform = transform_to_m4(transform),
         radius    = circle.radius,
         thickness = circle.thickness,
@@ -145,14 +138,14 @@ draw_circle :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, ti
 @(private = "file")
 draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT_SPRITE_ATLAS_ITEM, tint := V4_COLOR_WHITE, entity_id : u32 = 0) {
 
-    rect : graphics.Rect
-    quad_flags := graphics.DEFAULT_QUAD_FLAGS
+    rect : Rect
+    quad_flags := DEFAULT_QUAD_FLAGS
     
     if sprite.autosize do quad_flags += {.AUTOSIZE}
     if sprite.flip_x   do quad_flags += {.FLIP_X}
     if sprite.flip_y   do quad_flags += {.FLIP_Y}
 
-    texture : ^graphics.Texture2D
+    texture : ^Texture2D
 
     if (sprite.item != nil) {
         texture = &scene2d_instance.atlas_texture
@@ -160,7 +153,7 @@ draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT
         rect = atlas_textures[sprite.item].rect
     }
 
-    graphics.draw_quad(
+    draw_quad(
         transform    = transform_to_m4(transform),
         texture      = texture,
         tiling       = sprite.tiling,
@@ -203,14 +196,14 @@ draw_entities :: proc() {
             }
         }
 
-        rect : graphics.Rect
+        rect : Rect
         draw_sprite_atlas_item(entity.transform, entity.sprite, entity.tint, entity.id)
     }
 
     for handle in entity_get_group(GROUP_FLAGS_CIRCLE) {
         
         entity := entity_data(handle)
-        draw_circle(entity.transform, entity.circle, entity.tint, entity.id)
+        draw_circle_internal(entity.transform, entity.circle, entity.tint, entity.id)
     }
 }
 
@@ -242,9 +235,9 @@ draw_collisions :: proc() {
         if handle in collisions_map {
             collides_with := collisions_map[handle] 
             if len(collides_with) == 0 {
-                draw_circle(entity.transform, circle, entity.collision_tint, entity.id)
+                draw_circle_internal(entity.transform, circle, entity.collision_tint, entity.id)
             } else {
-                draw_circle(entity.transform, circle, {1, 0, 0, 1}, entity.id)
+                draw_circle_internal(entity.transform, circle, {1, 0, 0, 1}, entity.id)
             }
         }
     }

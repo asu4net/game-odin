@@ -1,15 +1,14 @@
 package game
 import "core:mem"
 import "core:fmt"
-import "../core"
 
-/////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Game
-/////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Game :: struct {
     // Engine
-    window             : core.Window,
+    window             : Window,
     scene_2d           : Scene2D,
     entity_registry    : Entity_Registry,
     particle_registry  : Particle_Registry,
@@ -34,8 +33,8 @@ game_init :: proc(instance : ^Game) {
     //:Init & Finish
     /////////////////////////////
     
-    core.window_init(&window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
-    defer core.window_finish()
+    window_init(&window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
+    defer window_finish()
     
     scene_2d_init(&scene_2d)
     defer scene_2d_finish()
@@ -62,7 +61,7 @@ game_init :: proc(instance : ^Game) {
     //:Main Loop
     /////////////////////////////
 
-    for core.keep_window_opened() {
+    for keep_window_opened() {
         update()
         update_entity_movement()
         query_2d_collisions()
@@ -74,15 +73,11 @@ game_init :: proc(instance : ^Game) {
 }
 
 game_quit :: proc() {
-    core.window_close()
-}
-
-delta_seconds :: proc() -> f32 {
-    return core.delta_seconds()
+    window_close()
 }
 
 viewport_size :: proc() -> (i32, i32) {
-    return core.window_get_size()
+    return window_get_size()
 }
 
 /////////////////////////////
@@ -133,4 +128,43 @@ post_collisions_update :: proc() {
 finish :: proc() {
     using game_instance
     player_finish(&player)
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Main
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+game : Game
+
+main :: proc() {
+
+    defer game_init(&game)
+
+    /////////////////////////////
+    //:Track of memory allocations
+    /////////////////////////////
+
+    fmt.printf("Size of entity data: %i \n", size_of(Entity))
+
+    when ODIN_DEBUG {
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		context.allocator = mem.tracking_allocator(&track)
+
+		defer {
+			if len(track.allocation_map) > 0 {
+				fmt.eprintf("=== %v allocations not freed: ===\n", len(track.allocation_map))
+				for _, entry in track.allocation_map {
+					fmt.eprintf("- %v bytes @ %v\n", entry.size, entry.location)
+				}
+			}
+			if len(track.bad_free_array) > 0 {
+				fmt.eprintf("=== %v incorrect frees: ===\n", len(track.bad_free_array))
+				for entry in track.bad_free_array {
+					fmt.eprintf("- %p @ %v\n", entry.memory, entry.location)
+				}
+			}
+			mem.tracking_allocator_destroy(&track)
+		}
+	}
 }

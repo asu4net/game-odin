@@ -2,7 +2,6 @@ package game
 import "core:math/linalg"
 import "core:strings"
 import "core:fmt"
-import "../core"
 
 Player_Movement :: struct {
     speed : f32,
@@ -71,7 +70,7 @@ player_collision :: proc(source : ^Entity, target : ^Entity) {
 
 @(private = "file")
 input_update :: proc(player : ^Player) {
-    using player.input, core
+    using player.input
     assert(player_initialized(player))
 
     if input_is_key_pressed(KEY_W) {

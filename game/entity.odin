@@ -3,6 +3,64 @@ import "core:strings"
 import "core:fmt"
 import "core:container/queue"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Entity flags
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .VISIBLE,
+    .SPRITE,
+}
+
+GROUP_FLAGS_CIRCLE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .VISIBLE,
+    .CIRCLE,
+}
+
+GROUP_FLAGS_COLLIDER_2D : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .VISIBLE,
+    .COLLIDER_2D,
+}
+
+GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .SPRITE,
+    .COLLIDER_2D,
+    .KAMIKAZE,
+    .MOVEMENT_2D,
+}
+
+GROUP_FLAGS_MOVEMENT_2D : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .MOVEMENT_2D,
+}
+
+GROUP_FLAGS_KAMIKAZE_SAW : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .SPRITE,
+    .KAMIKAZE_SAW,
+}
+
+GROUP_FLAGS_PROJECTILE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .COLLIDER_2D,
+    .PROJECTILE,
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Entity
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ENTITY_ID    :: u32
 
 Entity_Flag :: enum {
@@ -25,10 +83,6 @@ Entity_Flag :: enum {
 }
 
 Entity_Flag_Set :: bit_set[Entity_Flag]
-
-/////////////////////////////
-//:Entity
-/////////////////////////////
 
 EntityCommon :: struct {
     //TODO: some uuid
@@ -79,9 +133,9 @@ Entity_Handle :: struct {
     id : ENTITY_ID    
 }
 
-/////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Entity Registry
-/////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Entity_Group :: [dynamic]Entity_Handle
 Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
