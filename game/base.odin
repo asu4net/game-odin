@@ -3,6 +3,7 @@ package game
 import "core:math"
 import "core:math/linalg"
 import "core:mem"
+import "../graphics"
 
 /////////////////////////////
 //:Vector2
@@ -247,4 +248,22 @@ interp_linear_v4 :: proc(x : f32, min, max: v4) -> (v : v4) {
 
 ease_in_expo :: proc(x: f32) -> f32 {
     return x == 0.0 ? 0.0 : math.pow(2, 10 * (x - 1))
+}
+
+/////////////////////////////
+//:Transform
+/////////////////////////////
+
+Transform :: struct {
+    position : v3,
+    rotation : v3,
+    scale    : v3
+}
+
+DEFAULT_TRANSFORM : Transform : {
+    V3_ZERO, V3_ZERO, V3_ONE
+}
+
+transform_to_m4 :: proc(transform : Transform) -> m4 {
+    return m4_transform(transform.position, transform.rotation, transform.scale)
 }

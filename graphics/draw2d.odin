@@ -1,4 +1,4 @@
-package game
+package graphics
 
 import "core:fmt"
 import "core:c"
@@ -12,10 +12,11 @@ import "core:math/linalg"
 
 VERTICES_PER_2D_PRIMITIVE   :: 4
 INDICES_PER_2D_PRIMITIVE    :: 6
+MAX_2D_PRIMITIVES_PER_BATCH :: 3000
+MAX_TEXTURE_SLOTS           :: 32
 
 Default_Texture_Slots :: enum {
     WHITE,
-    ATLAS,
     COUNT,
 }
 
@@ -109,7 +110,7 @@ fill_vertex_colors :: proc(vertex_colors : ^V4Verts2D, color : v4) {
     vertex_colors[3] = color
 }
 
-fill_sprite_atlas_item_vertex_uvs :: proc(
+fill_quad_sub_tex_vertex_uvs :: proc(
     vertex_uvs    : ^V2Verts2D, 
     texture_size  : v2,
     item_size     : v2,
@@ -162,9 +163,8 @@ Primitive_Type :: enum {
     CIRCLE
 }
 
-Renderer2D :: struct {
+Draw2D_Context :: struct {
     white_texture      : Texture2D,
-    atlas_texture      : Texture2D,
     texture_slots      : [MAX_TEXTURE_SLOTS] i32,
     textures_to_bind   : [MAX_TEXTURE_SLOTS]^Texture2D,
     last_texture_slot  : i32,
@@ -192,7 +192,7 @@ Renderer2D :: struct {
 }
 
 @(private = "file")
-renderer_2d_instance : ^Renderer2D
+draw_2d_context : ^Draw2D_Context
 
 @(private = "file")
 assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
@@ -201,7 +201,7 @@ assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
         return
     }
 
-    using renderer_2d_instance
+    using draw_2d_context
     for i in 0..<last_texture_slot {
         if textures_to_bind[i].id == texture.id {
             texture_slot = i
@@ -219,21 +219,21 @@ assign_texture_slot :: proc(texture : ^Texture2D) -> (texture_slot : i32) {
     return
 }
 
-renderer_2d_init :: proc(instance : ^Renderer2D) {
-    assert(renderer_2d_instance == nil)
+draw_2d_init :: proc(instance : ^Draw2D_Context) {
+    assert(draw_2d_context == nil)
     assert(instance != nil)
     
     set_blending_mode(.ALPHA)
 
-    renderer_2d_instance = instance
-    using renderer_2d_instance
+    draw_2d_context = instance
+    using draw_2d_context
 
     projection_view = M4_IDENTITY
     texture_2d_init_as_white(&white_texture)
-    texture_2d_init(&atlas_texture, "assets/atlas.png")
+    //texture_2d_init(&atlas_texture, "assets/atlas.png")
 
     textures_to_bind[Default_Texture_Slots.WHITE] = &white_texture
-    textures_to_bind[Default_Texture_Slots.ATLAS] = &atlas_texture
+    //textures_to_bind[Default_Texture_Slots.ATLAS] = &atlas_texture
     last_texture_slot = i32(Default_Texture_Slots.COUNT)
 
     for i in 0..<MAX_TEXTURE_SLOTS {
@@ -299,11 +299,11 @@ renderer_2d_init :: proc(instance : ^Renderer2D) {
     }
 }
 
-renderer_2d_finish :: proc() {
-    using renderer_2d_instance
-    assert(renderer_2d_instance != nil)
+draw_2d_finish :: proc() {
+    using draw_2d_context
+    assert(draw_2d_context != nil)
     texture_2d_finish(&white_texture)
-    texture_2d_finish(&atlas_texture)
+    //texture_2d_finish(&atlas_texture)
 
     delete(quad_batch)
     vertex_buffer_finish(&quad_vbo)
@@ -313,13 +313,13 @@ renderer_2d_finish :: proc() {
     vertex_buffer_finish(&circle_vbo)
     shader_finish(&circle_shader)
     
-    renderer_2d_instance^ = {}
+    draw_2d_context^ = {}
 }
 
 @(private = "file")
 start_batch :: proc() {
-    using renderer_2d_instance
-    assert(renderer_2d_instance != nil)
+    using draw_2d_context
+    assert(draw_2d_context != nil)
     
     last_texture_slot = i32(Default_Texture_Slots.COUNT)
     
@@ -332,8 +332,8 @@ start_batch :: proc() {
 
 @(private = "file")
 flush :: proc() {
-    using renderer_2d_instance
-    assert(renderer_2d_instance != nil)
+    using draw_2d_context
+    assert(draw_2d_context != nil)
     
     switch curr_primitive {
         
@@ -366,103 +366,64 @@ next_batch :: proc() {
     start_batch()
 }
 
-/////////////////////////////
-//:Scene2D
-/////////////////////////////
-
-Camera :: struct {
-    aspect : f32,
-    near   : f32,
-    far    : f32,
-    size   : f32      
-}
-
-DEFAULT_CAMERA : Camera : {
-    near   = 0.1,
-    far    = 1000,
-    size   = CAMERA_SIZE
-}
-
-Scene2D :: struct {
-    camera        : Camera,
-    window_width  : f32,
-    window_height : f32
-}
-
-DEFAULT_SCENE_2D : Scene2D : {
-    camera = DEFAULT_CAMERA,
-    window_width = WINDOW_WIDTH,
-    window_height = WINDOW_HEIGHT
-}
-
-scene_2d_begin :: proc(scene : Scene2D = DEFAULT_SCENE_2D) {
-    assert(renderer_2d_instance != nil)
-    using renderer_2d_instance, scene, scene.camera
+draw_2d_begin :: proc(
+    viewport : v2  = v2{ 1920, 1080 }, 
+    eye      : v3  = v3{ 0, 0, -1 }, 
+    size     : f32 = 1, 
+    near     : f32 = 0.1,
+    far      : f32 = 1000,
+    front    : v3  = V3_FORWARD,
+    right    : v3  = V3_RIGHT,
+    up       : v3  = V3_UP,
+) {
+    assert(draw_2d_context != nil)
+    using draw_2d_context
     
-    set_viewport(u32(window_width), u32(window_height))
-    aspect = window_width / window_height
-
-    right      := aspect * size
-    left       := -right
-    projection := linalg.matrix_ortho3d_f32(left, right, -size, size, near, far)
-    view       := linalg.matrix4_look_at_from_fru_f32(V3_FORWARD * -3, V3_FORWARD, V3_RIGHT, V3_UP)
+    set_viewport(u32(viewport.x), u32(viewport.y))
+    aspect := viewport.x / viewport.y
+    limit  := aspect * size
+    projection := linalg.matrix_ortho3d_f32(-limit, limit, -size, size, near, far)
+    view := linalg.matrix4_look_at_from_fru_f32({ 0, 0, -3 }, front, right, up)
     projection_view = projection * view
     
     start_batch()
 }
 
-scene_2d_end :: proc() {
+draw_2d_end :: proc() {
     flush()
 }
 
-/////////////////////////////
-//:Transform
-/////////////////////////////
-
-Transform :: struct {
-    position : v3,
-    rotation : v3,
-    scale    : v3
+QuadFlag :: enum {
+    AUTOSIZE,
+    FLIP_X,
+    FLIP_Y,
+    USE_SUBTEX,
 }
 
-DEFAULT_TRANSFORM : Transform : {
-    V3_ZERO, V3_ZERO, V3_ONE
-}
+QuadFlagSet :: bit_set[QuadFlag]
 
-/////////////////////////////
-//:Sprite
-/////////////////////////////
+DEFAULT_QUAD_FLAGS : QuadFlagSet : { .AUTOSIZE }
 
-Sprite :: struct {
-    texture   : ^Texture2D    ,
-    tiling    : v2            ,
-    flip_x    : bool          ,
-    flip_y    : bool          ,
-    autosize  : bool          ,
-    blending  : Blending_Mode ,
-}
-
-DEFAULT_SPRITE : Sprite : {
-    texture   = nil,
-    tiling    = V2_ONE,
-    flip_x    = false,
-    flip_y    = false,
-    autosize  = true,
-    blending  = .ALPHA
-}
-
-//#TODO_asuarez add subtextures
-draw_sprite :: proc(transform : Transform = DEFAULT_TRANSFORM, sprite : Sprite = DEFAULT_SPRITE, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+draw_quad :: proc(
+    transform     : m4            = M4_IDENTITY,
+    texture       : ^Texture2D    = nil,
+    tiling        : v2            = { 1, 1 },
+    blending      : Blending_Mode = .ALPHA,
+    sub_tex_rect  : Rect          = {},
+    tint          : v4            = { 1, 1, 1, 1},
+    entity_id     : u32           = 0,
+    flags         : QuadFlagSet   = DEFAULT_QUAD_FLAGS,
+)
 {
-    assert(renderer_2d_instance != nil)
-    using renderer_2d_instance, transform, sprite
+    assert(draw_2d_context != nil)
+    using draw_2d_context
 
     assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
     
-    if curr_blending != sprite.blending {
+    if curr_blending != blending {
         next_batch()
-        set_blending_mode(sprite.blending)
-        curr_blending = sprite.blending
+        set_blending_mode(blending)
+        curr_blending = blending
     }
 
     if curr_primitive != .nil && curr_primitive != .QUAD {
@@ -477,18 +438,31 @@ draw_sprite :: proc(transform : Transform = DEFAULT_TRANSFORM, sprite : Sprite =
 
     vertex_positions := DEFAULT_VERTEX_POSITIONS_2D
     vertex_uvs       := DEFAULT_VERTEX_UVS_2D
-    vertex_colors    := DEFAULT_VERTEX_COLORS_2D
 
+    vertex_colors    : V4Verts2D = ---
     fill_vertex_colors(&vertex_colors, tint)
 
     if texture != nil {
-       fill_quad_vertex_uvs(&vertex_uvs, flip_x, flip_y, tiling)
-       if autosize {
-           fill_quad_vertex_positions(&vertex_positions, {f32(texture.width), f32(texture.height)}) 
-       }
+        if .USE_SUBTEX in flags {
+            fill_quad_sub_tex_vertex_uvs(
+                &vertex_uvs,
+                {f32(texture.width),  f32(texture.height)},
+                {f32(sub_tex_rect.width),     f32(sub_tex_rect.height)},
+                {f32(sub_tex_rect.x),         f32(sub_tex_rect.y)},
+                .FLIP_X in flags,
+                .FLIP_Y in flags,
+                tiling
+            )
+        } else {
+            fill_quad_vertex_uvs(&vertex_uvs, .FLIP_X in flags, .FLIP_Y in flags, tiling)
+        }
+
+        if .AUTOSIZE in flags {
+            fill_quad_vertex_positions(&vertex_positions, { f32(sub_tex_rect.width), f32(sub_tex_rect.height) })
+        }
     }
 
-    transform_vertex_positions(&vertex_positions, m4_transform(position, rotation, scale))
+    transform_vertex_positions(&vertex_positions, transform)
     
     slot := assign_texture_slot(texture) 
 
@@ -502,103 +476,17 @@ draw_sprite :: proc(transform : Transform = DEFAULT_TRANSFORM, sprite : Sprite =
     quad_count += 1
 }
 
-Sprite_Atlas_Item :: struct {
-    item      : Texture_Name  ,
-    tiling    : v2            ,
-    flip_x    : bool          ,
-    flip_y    : bool          ,
-    autosize  : bool          ,
-    blending  : Blending_Mode ,
-}
-
-DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
-    item     = nil,
-    tiling   = V2_ONE,
-    flip_x   = false,
-    flip_y   = false,
-    autosize = true,
-    blending = .ALPHA,
-}
-
-draw_sprite_atlas_item :: proc(transform : Transform = DEFAULT_TRANSFORM, sprite : Sprite_Atlas_Item = DEFAULT_SPRITE_ATLAS_ITEM, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
+draw_circle :: proc(
+    transform : m4  = M4_IDENTITY,
+    radius    : f32 = 0.5,
+    thickness : f32 = 0.05,
+    fade      : f32 = 0.01,
+    tint      : v4  = { 1, 1, 1, 1 }, 
+    entity_id : u32 = 0,
+)
 {
-    assert(renderer_2d_instance != nil)
-    using renderer_2d_instance, transform, sprite
-
-    assert(quad_count <= MAX_2D_PRIMITIVES_PER_BATCH)
-    
-    if curr_blending != sprite.blending {
-        next_batch()
-        set_blending_mode(sprite.blending)
-        curr_blending = sprite.blending
-    }
-
-    if curr_primitive != .nil && curr_primitive != .QUAD {
-        next_batch()
-    }
-
-    curr_primitive = .QUAD
-
-    if quad_count == MAX_2D_PRIMITIVES_PER_BATCH {
-        next_batch()
-    }
-
-    vertex_positions := DEFAULT_VERTEX_POSITIONS_2D
-    vertex_uvs       := DEFAULT_VERTEX_UVS_2D
-    vertex_colors    := DEFAULT_VERTEX_COLORS_2D
-
-    fill_vertex_colors(&vertex_colors, tint)
-
-    slot := i32(Default_Texture_Slots.WHITE)
-
-    if item != nil {
-
-        slot = i32(Default_Texture_Slots.ATLAS)
-        info := atlas_textures[sprite.item]
-
-        fill_sprite_atlas_item_vertex_uvs(
-             &vertex_uvs,
-             {f32(atlas_texture.width), f32(atlas_texture.height)},
-             {f32(info.rect.width),     f32(info.rect.height)},
-             {f32(info.rect.x),         f32(info.rect.y)},
-             flip_x,
-             flip_y,
-             tiling
-         )
-         
-        if autosize {
-           fill_quad_vertex_positions(&vertex_positions, {f32(info.rect.width), f32(info.rect.height)}) 
-        }
-    }
-
-    transform_vertex_positions(&vertex_positions, m4_transform(position, rotation, scale))
-    
-    for i in 0..<VERTICES_PER_2D_PRIMITIVE {
-        quad_batch[i + int(quad_count) * VERTICES_PER_2D_PRIMITIVE] = {
-            vertex_positions[i], vertex_colors[i], vertex_uvs[i], slot, i32(entity_id)
-        }
-    }    
-    
-    quad_index_count += INDICES_PER_2D_PRIMITIVE
-    quad_count += 1
-}
-
-Circle :: struct {
-    radius    : f32,
-    thickness : f32,
-    fade      : f32,
-}
-
-DEFAULT_CIRCLE : Circle : {
-    radius    = 0.5,
-    thickness = 0.05,
-    fade      = 0.01,
-}
-
-draw_circle :: proc(transform : Transform = DEFAULT_TRANSFORM, circle : Circle = DEFAULT_CIRCLE, tint : v4 = V4_COLOR_WHITE, entity_id : u32 = 0)
-{
-    assert(renderer_2d_instance != nil)
-    using renderer_2d_instance, transform, circle
+    assert(draw_2d_context != nil)
+    using draw_2d_context
 
     if curr_blending != .ALPHA {
         next_batch()
@@ -624,7 +512,7 @@ draw_circle :: proc(transform : Transform = DEFAULT_TRANSFORM, circle : Circle =
     vertex_colors    : V4Verts2D = ---
     fill_vertex_colors(&vertex_colors, tint)
 
-    transform_vertex_positions(&vertex_positions, m4_transform(position, rotation, scale))
+    transform_vertex_positions(&vertex_positions, transform)
     
     default_vertex_positions := DEFAULT_VERTEX_POSITIONS_2D 
     

@@ -1,4 +1,4 @@
-package game
+package graphics
 
 import "vendor:OpenGL"
 import "core:c"

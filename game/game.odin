@@ -9,7 +9,7 @@ import "core:fmt"
 Game :: struct {
     // Engine
     window             : Window,
-    renderer_2d        : Renderer2D,
+    scene_2d           : Scene2D,
     entity_registry    : Entity_Registry,
     particle_registry  : Particle_Registry,
     collisions_2d      : Collisions2D,
@@ -36,8 +36,8 @@ game_init :: proc(instance : ^Game) {
     window_init(&window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
     defer window_finish()
     
-    renderer_2d_init(&renderer_2d)
-    defer renderer_2d_finish()
+    scene_2d_init(&scene_2d)
+    defer scene_2d_finish()
     
     entity_registry_init(&entity_registry)
     defer entity_registry_finish()
@@ -67,8 +67,7 @@ game_init :: proc(instance : ^Game) {
         query_2d_collisions()
         post_collisions_update()
         particle_update()
-		clear_screen()
-        draw_2d()
+        draw_scene_2d()
         clean_destroyed_entities()
     }
 }

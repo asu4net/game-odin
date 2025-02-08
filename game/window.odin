@@ -69,7 +69,7 @@ window_init :: proc(
 	
     window_set_v_sync(v_sync)
 	window_set_cursor_mode(cursor_mode)
-    set_clear_color(V4_COLOR_DARK_GRAY)
+    OpenGL.ClearColor(V4_COLOR_DARK_GRAY.r, V4_COLOR_DARK_GRAY.g, V4_COLOR_DARK_GRAY.b, V4_COLOR_DARK_GRAY.a)
 
     time_init(&window_instance.time)
 }

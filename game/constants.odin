@@ -17,10 +17,6 @@ PLAYER_FIRERATE             :: 0.3
 // Camera
 CAMERA_SIZE                 :: 3.0 * 1.7
 
-// Render 2D
-MAX_2D_PRIMITIVES_PER_BATCH :: 3000
-MAX_TEXTURE_SLOTS           :: 32
-
 // Entity
 MAX_ENTITIES                :: 3000
 ENTITY_CLEANUP_INTERVAL     :: 2 // Zero means each frame 
@@ -57,7 +53,7 @@ NAME_KAMIKAZE_SAW  :: "KamikazeSawPrefab"
 //:Debug
 /////////////////////////////
 
-DEBUG_AI_MOVEMENT_ENABLED      :: true
+DEBUG_AI_MOVEMENT_ENABLED      :: false
 DEBUG_DRAW_COLLIDERS           :: true
 DEBUG_PRINT_CREATED_ENTITIES   :: false
 DEBUG_PRINT_DESTROYED_ENTITIES :: false
