@@ -1,15 +1,15 @@
-package game
+package core
 import "vendor:glfw"
 
 /////////////////////////////
 //:Input
 /////////////////////////////
 
-input_get_mouse_position :: proc() -> (pos : v2) {
+input_get_mouse_position :: proc() -> (x, y : f32) {
     assert(window_instance != nil)
-    x, y := glfw.GetCursorPos(window_instance.handle)
-    pos.x = f32(x)
-    pos.y = f32(y)
+    x64, y64 := glfw.GetCursorPos(window_instance.handle)
+    x = f32(x64)
+    y = f32(y64)
     return
 }
 

@@ -2,7 +2,6 @@ package graphics
 
 import "core:fmt"
 import "core:c"
-import "vendor:OpenGL"
 import "core:math"
 import "core:math/linalg"
 

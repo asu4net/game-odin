@@ -1,6 +1,7 @@
 package game
 import "core:mem"
 import "core:fmt"
+import "../core"
 
 /////////////////////////////
 //:Game
@@ -8,7 +9,7 @@ import "core:fmt"
 
 Game :: struct {
     // Engine
-    window             : Window,
+    window             : core.Window,
     scene_2d           : Scene2D,
     entity_registry    : Entity_Registry,
     particle_registry  : Particle_Registry,
@@ -33,8 +34,8 @@ game_init :: proc(instance : ^Game) {
     //:Init & Finish
     /////////////////////////////
     
-    window_init(&window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
-    defer window_finish()
+    core.window_init(&window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
+    defer core.window_finish()
     
     scene_2d_init(&scene_2d)
     defer scene_2d_finish()
@@ -61,7 +62,7 @@ game_init :: proc(instance : ^Game) {
     //:Main Loop
     /////////////////////////////
 
-    for keep_window_opened() {
+    for core.keep_window_opened() {
         update()
         update_entity_movement()
         query_2d_collisions()
@@ -73,7 +74,15 @@ game_init :: proc(instance : ^Game) {
 }
 
 game_quit :: proc() {
-    window_close()
+    core.window_close()
+}
+
+delta_seconds :: proc() -> f32 {
+    return core.delta_seconds()
+}
+
+viewport_size :: proc() -> (i32, i32) {
+    return core.window_get_size()
 }
 
 /////////////////////////////

@@ -118,8 +118,8 @@ scene_2d_finish :: proc() {
 draw_scene_2d :: proc() {
 
     graphics.clear_screen()
-
-    width, height := window_get_size()
+    
+    width, height := viewport_size()
     window_size : v2 = { f32(width), f32(height) }
 
     graphics.draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
@@ -211,9 +211,7 @@ draw_entities :: proc() {
 }
 
 @(private = "file")
-draw_particles :: proc() {
-    width, height := window_get_size()
-    
+draw_particles :: proc() {    
     for handle in particle_get_group() {
         
         particle := particle_data(handle)

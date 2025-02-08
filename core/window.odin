@@ -1,4 +1,4 @@
-package game
+package core
 
 import "core:fmt"
 import "core:c"
@@ -59,7 +59,7 @@ window_init :: proc(
 	
     window_instance.handle = glfw.CreateWindow(width, height, title_cstring, nil, nil)
 	assert(window_instance.handle != nil)
-
+    
     glfw.MakeContextCurrent(window_instance.handle)
     OpenGL.load_up_to(int(GL_MAJOR_VERSION), GL_MINOR_VERSION, glfw.gl_set_proc_address)
 
@@ -69,7 +69,6 @@ window_init :: proc(
 	
     window_set_v_sync(v_sync)
 	window_set_cursor_mode(cursor_mode)
-    OpenGL.ClearColor(V4_COLOR_DARK_GRAY.r, V4_COLOR_DARK_GRAY.g, V4_COLOR_DARK_GRAY.b, V4_COLOR_DARK_GRAY.a)
 
     time_init(&window_instance.time)
 }

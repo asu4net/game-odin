@@ -3,7 +3,6 @@ package game
 import "core:math"
 import "core:math/linalg"
 import "core:mem"
-import "../graphics"
 
 /////////////////////////////
 //:Vector2
