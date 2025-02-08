@@ -104,6 +104,7 @@ scene_2d_init :: proc(scene2d : ^Scene2D) {
     scene2d_instance = scene2d
     using scene2d_instance
 
+    graphics.set_clear_color(V4_COLOR_DARK_GRAY)
     graphics.draw_2d_init(&scene2d.draw_2d)
     graphics.texture_2d_init(&atlas_texture, "assets/atlas.png")
 }
