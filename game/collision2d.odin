@@ -74,8 +74,7 @@ query_2d_collisions :: proc() {
     prev_collisions := make([dynamic] CollisionEventEnter, len(collisions_in_last_frame))
     defer delete(prev_collisions)
 
-    // Copy collisions_in_last_frame to 
-    for prev_collision, i in collisions_in_last_frame do prev_collisions[i] = prev_collision
+    copy(prev_collisions[:], collisions_in_last_frame[:])
     clear(&collisions_in_last_frame)
 
     circle_group := entity_get_group(GROUP_FLAGS_COLLIDER_2D);
