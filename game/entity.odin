@@ -211,16 +211,16 @@ entity_exists :: proc(entity : Entity_Handle) -> bool {
     return sparse_test(&sparse_set, entity.id)
 }
 
-entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (entity : Entity_Handle, data : ^Entity) {
+entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (handle : Entity_Handle, entity : ^Entity) {
     using entity_registry_instance
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
-    entity = { queue.front(&entity_ids) }
+    handle = { queue.front(&entity_ids) }
     queue.pop_front(&entity_ids)
-    index := sparse_insert(&sparse_set, entity.id)
-    data = &entities[index]
-    data^ = DEFAULT_ENTITY
-    data.id = entity.id
-    data.name = len(name) == 0 ? "Entity" : name
+    index := sparse_insert(&sparse_set, handle.id)
+    entity = &entities[index]
+    entity^ = DEFAULT_ENTITY
+    entity.id = handle.id
+    entity.name = len(name) == 0 ? "Entity" : name
 
     /*if len(data.name) == 0 {
         builder : strings.Builder
@@ -231,16 +231,38 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (enti
         data.name = strings.clone(strings.to_string(builder)) // this makes an allocation    
     }*/
 
-    entity_add_flags(entity, flags)
+    entity_add_flags(handle, flags)
     entity_count += 1
     
     when ODIN_DEBUG { 
         if (DEBUG_PRINT_CREATED_ENTITIES) {
-            fmt.printf("Created entity. Name[%v], Id[%v] \n", data.name, data.id)
+            fmt.printf("Created entity. Name[%v], Id[%v] \n", entity.name, entity.id)
         }
     }
 
     return    
+}
+
+entity_clone :: proc(template : Entity_Handle) -> (handle : Entity_Handle, entity : ^Entity) {
+    assert(entity_valid(template))
+    
+    template_entity := entity_data(template)
+    handle, entity = entity_create(template_entity.name, template_entity.flags)
+    entity^ = template_entity^
+    entity.id = handle.id
+    
+    //TODO: copy the particle emitter xd
+    entity.particle_emitter = {NIL_EMITTER_ID}
+
+    //We need to clone the saw too
+    if .KAMIKAZE in entity.flags {
+        saw_handle, saw_entity := entity_clone(entity.kamikaze.saw)    
+        saw_entity.position = entity.position
+        entity.kamikaze.saw = saw_handle
+        saw_entity.kamikaze_saw.kamikaze_skull = handle
+    }
+
+    return
 }
 
 entity_data :: proc(entity : Entity_Handle) -> ^Entity {

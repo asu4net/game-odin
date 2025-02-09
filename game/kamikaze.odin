@@ -12,7 +12,8 @@ KamikazeSkull :: struct {
     state         : KamikazeState,
     idle_time     : f32,
     attack_target : v3, 
-    attack_cd     : f32 
+    attack_cd     : f32,
+    saw           : Entity_Handle,
 }
 
 KamikazeSaw :: struct {
@@ -27,7 +28,8 @@ KamikazeManager :: struct {
     current_score : f32,
     cooldown      : f32,
     skull_prefab  : Entity_Handle,  
-    saw_prefab    : Entity_Handle,  
+    saw_prefab    : Entity_Handle,
+    spawner       : Spawner
 }
 
 DEFAULT_KAMIKAZE_MANAGER : KamikazeManager : { 
@@ -37,27 +39,26 @@ DEFAULT_KAMIKAZE_MANAGER : KamikazeManager : {
 @(private = "file")
 kamikaze_manager_instance : ^KamikazeManager = nil
 
-spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
-
+kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
+    assert(kamikaze_manager_instance == nil)
+    kamikaze_manager_instance = instance
     using kamikaze_manager_instance
-
-    // Skull
-    skull : Entity_Handle
+    
     {
-        flags := GROUP_FLAGS_KAMIKAZE
-        handle, entity := entity_create(NAME_KAMIKAZE, flags)
-        skull = handle
-        skull_prefab = handle
-        entity.sprite.item = .Kamikaze_Skull
-        entity.position = pos
-        entity.kamikaze.attack_cd = cd
-        entity.movement_2d.speed_min = KAMIKAZE_SPEED_MIN
-        entity.movement_2d.speed_max = KAMIKAZE_SPEED_MAX
-        entity.movement_2d.time_to_max_speed = KAMIKAZE_ACC
-        entity.collision_flag = CollisionFlag.enemy;
-        entity.collides_with = { .player, .player_bullet };
-        entity.damage_target.life = KAMIKAZE_LIFE
-
+        handle, entity := entity_create(NAME_KAMIKAZE, GROUP_FLAGS_KAMIKAZE)
+        {
+            using entity
+            sprite.item                   = .Kamikaze_Skull
+            kamikaze.attack_cd            = KAMIKAZE_ATTACK_CD
+            movement_2d.speed_min         = KAMIKAZE_SPEED_MIN
+            movement_2d.speed_max         = KAMIKAZE_SPEED_MAX
+            movement_2d.time_to_max_speed = KAMIKAZE_ACC
+            collision_flag                = CollisionFlag.enemy;
+            collides_with                 = { .player, .player_bullet };
+            damage_target.life            = KAMIKAZE_LIFE
+            skull_prefab                  = handle
+            entity_remove_flags(handle, {.ENABLED})
+        }
         /*
         emitter_handle, emitter_data := emitter_create();
         entity.particle_emitter = emitter_handle;
@@ -68,28 +69,23 @@ spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
         emitter_add_texture(emitter_handle, .Kazmikaze_Saw)
         */
     }
-
-    // Saw
     {
         handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         saw_prefab = handle
         entity.transform.position = V3_UP
         entity.sprite.item = .Kazmikaze_Saw
-        entity.kamikaze_saw.kamikaze_skull = skull
-        entity.position = pos
-        entity.kamikaze.attack_cd = cd
+        entity.kamikaze_saw.kamikaze_skull = skull_prefab
+        entity_data(skull_prefab).kamikaze.saw = handle
+        entity_remove_flags(handle, {.ENABLED})
     }
+
+    spawner_init(&spawner, skull_prefab, V3_UP * 3)
+    spawn(&spawner)
 }
 
-kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
-    assert(kamikaze_manager_instance == nil)
-    kamikaze_manager_instance = instance
-    using kamikaze_manager_instance
-    
-    // placeholder as fuck
-    spawn_kamikaze(V3_UP * 3)
-    spawn_kamikaze(V3_UP * 3 + V3_RIGHT * 1, KAMIKAZE_ATTACK_CD + 0.25)
-    spawn_kamikaze(V3_UP * 3 + V3_RIGHT * 2, KAMIKAZE_ATTACK_CD + 0.5)
+kamikaze_finish :: proc() {
+    assert(kamikaze_manager_instance != nil)
+    spawner_finish(&kamikaze_manager_instance.spawner)
 }
 
 kamikaze_collision :: proc(source : ^Entity, target : ^Entity) {
@@ -121,8 +117,6 @@ kamikaze_manager_update :: proc() {
         return
     }
 
-    // Skull //TODO: Interpolate speed
-    
     for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE) {
         
         entity := entity_data(handle)

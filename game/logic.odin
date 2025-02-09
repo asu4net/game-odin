@@ -3,6 +3,10 @@ import "core:math"
 import "core:math/linalg"
 import "core:fmt"
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Movement 2D
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Movement2D :: struct {
     start              : bool,
     speed_min          : f32,
@@ -16,24 +20,6 @@ Movement2D :: struct {
 DEFAULT_MOVEMENT_2D : Movement2D : {
     speed_max = 8,
     time_to_max_speed = 0.7
-}
-
-DamageSource :: struct {
-    damage  : f32    
-}
-
-DEFAULT_DAMAGE_SOURCE : DamageSource : {
-    damage  = 10,
-}
-
-DamageTarget :: struct {
-    max_life : f32,
-    life     : f32,
-}
-
-DEFAULT_DAMAGE_TARGET : DamageTarget : {
-    max_life = 100,
-    life     = 100,
 }
 
 update_entity_movement :: proc() {
@@ -68,6 +54,84 @@ update_entity_movement :: proc() {
         }
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Spawn
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Un spawner crea una cantidad de entidades de un solo tipo en una localización dada
+Spawner :: struct {
+    template_handle   : Entity_Handle,
+    position          : v3,
+    amount            : u32,
+    points_per_entity : f32, 
+    entities          : [dynamic] Entity_Handle,
+    // para saber si una entidad ha muerto iterar entities y comprobar su nivel de vida o si se han destruido
+}
+
+spawner_init :: proc(spawner : ^Spawner, template : Entity_Handle, position := V3_UP, amount : u32 = 1, points : f32 = 0) {
+    assert(spawner != nil)
+    assert(entity_valid(template))
+    entity_remove_flags(template, { .ENABLED })
+    assert(amount > 0)
+    spawner.amount = amount
+    spawner.template_handle = template
+    spawner.entities = make([dynamic] Entity_Handle, 0, spawner.amount)
+    spawner.position = position
+}
+
+spawner_finish :: proc(spawner : ^Spawner) {
+    assert(spawner != nil)
+    delete(spawner.entities)
+}
+
+spawn :: proc(spawner : ^Spawner) {
+    assert(spawner != nil && spawner.amount > 0 && len(&spawner.entities) == 0)
+    for i in 0..<spawner.amount {
+        handle, entity := entity_clone(spawner.template_handle)
+        entity.position = spawner.position
+        entity_add_flags(handle, { .ENABLED })
+        append_elem(&spawner.entities, handle)
+    }
+}
+
+// Una ronda crea una cantidad x entidades de x tipos
+Wave :: struct {
+    spawners : [dynamic] Spawner
+}
+
+// Cuando pasa el tiempo o todas las entidades de la ronda son destruidas pasamos a la siguiente
+// Cada entidad destruida en una ronda da puntuación
+WaveManager :: struct {
+    enabled            : bool,
+    spawners           : [dynamic] Wave,
+    points             : u32,
+    current_wave       : u32,
+    time_between_waves : f32
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Damage
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+DamageSource :: struct {
+    damage  : f32    
+}
+
+DEFAULT_DAMAGE_SOURCE : DamageSource : {
+    damage  = 10,
+}
+
+DamageTarget :: struct {
+    max_life : f32,
+    life     : f32,
+}
+
+DEFAULT_DAMAGE_TARGET : DamageTarget : {
+    max_life = 100,
+    life     = 100,
+}
+
 
 damage_collision :: proc(source, target : ^Entity) {
     using source.damage_source, target.damage_target
