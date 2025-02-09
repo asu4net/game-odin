@@ -7,6 +7,27 @@ import "core:container/queue"
 //:Entity flags
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+Entity_Flag :: enum {
+    // Engine stuff
+    VALID,
+    ENABLED,
+    VISIBLE,
+    SPRITE,
+    CIRCLE,
+    COLLIDER_2D,
+    BLINK,
+    MOVEMENT_2D,
+    DAMAGE_SOURCE,
+    DAMAGE_TARGET,
+
+    // Gameplay stuff
+    PROJECTILE,
+    PLAYER,
+    ENEMY,
+    KAMIKAZE,
+    KAMIKAZE_SAW,
+}
+
 GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
     .VALID,
     .ENABLED,
@@ -35,6 +56,8 @@ GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
     .COLLIDER_2D,
     .KAMIKAZE,
     .MOVEMENT_2D,
+    .DAMAGE_TARGET,
+    .DAMAGE_SOURCE,
 }
 
 GROUP_FLAGS_MOVEMENT_2D : Entity_Flag_Set : {
@@ -55,6 +78,8 @@ GROUP_FLAGS_PROJECTILE : Entity_Flag_Set : {
     .ENABLED,
     .COLLIDER_2D,
     .PROJECTILE,
+    .DAMAGE_SOURCE,
+    .DAMAGE_TARGET
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,25 +87,6 @@ GROUP_FLAGS_PROJECTILE : Entity_Flag_Set : {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ENTITY_ID    :: u32
-
-Entity_Flag :: enum {
-    // Engine stuff
-    VALID,
-    ENABLED,
-    VISIBLE,
-    SPRITE,
-    CIRCLE,
-    COLLIDER_2D,
-    BLINK,
-    MOVEMENT_2D,
-
-    // Gameplay stuff
-    PROJECTILE,
-    PLAYER,
-    ENEMY,
-    KAMIKAZE,
-    KAMIKAZE_SAW,
-}
 
 Entity_Flag_Set :: bit_set[Entity_Flag]
 
@@ -107,7 +113,9 @@ Entity :: struct {
     blink              : Blink,
     movement_2d        : Movement2D,
     particle_emitter   : Emitter_Handle,
-    
+    damage_source      : DamageSource,
+    damage_target      : DamageTarget,
+
     // Game specific
     projectile         : Projectile,
     kamikaze           : KamikazeSkull,
@@ -118,7 +126,7 @@ NIL_ENTITY_ID :: SPARSE_SET_INVALID
 
 DEFAULT_ENTITY : Entity : {
     common           = DEFAULT_ENTITY_COMMON,
-    transform         = DEFAULT_TRANSFORM,
+    transform        = DEFAULT_TRANSFORM,
     sprite           = DEFAULT_SPRITE_ATLAS_ITEM,
     circle           = DEFAULT_CIRCLE,
     collider         = DEFAULT_COLLIDER_2D,
@@ -127,6 +135,8 @@ DEFAULT_ENTITY : Entity : {
     particle_emitter = {NIL_EMITTER_ID},
     projectile       = DEFAULT_PROJECTILE,
     kamikaze         = DEFAULT_KAMIKAZE_SKULL,
+    damage_source    = DEFAULT_DAMAGE_SOURCE,
+    damage_target    = DEFAULT_DAMAGE_TARGET
 }
 
 Entity_Handle :: struct {

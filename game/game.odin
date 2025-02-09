@@ -8,12 +8,12 @@ import "core:fmt"
 
 Game :: struct {
     // Engine
-    window             : Window,
-    scene_2d           : Scene2D,
-    entity_registry    : Entity_Registry,
-    particle_registry  : Particle_Registry,
-    collisions_2d      : Collisions2D,
-
+    window                 : Window,
+    scene_2d               : Scene2D,
+    entity_registry        : Entity_Registry,
+    particle_registry      : Particle_Registry,
+    collisions_2d          : Collisions2D,
+    
     // Game specific
     player             : Player,
     kamikaze_manager   : KamikazeManager,
@@ -62,13 +62,22 @@ game_init :: proc(instance : ^Game) {
     /////////////////////////////
 
     for keep_window_opened() {
-        update()
-        update_entity_movement()
-        query_2d_collisions()
-        post_collisions_update()
-        update_particles()
+        
+        when ODIN_DEBUG do update_frame_by_frame_mode()
+
+        if can_update() {
+            update()
+            update_entity_movement()
+            query_2d_collisions()
+            post_collisions_update()
+            update_particles()
+        }
+        
         draw_scene_2d()
-        clean_destroyed_entities()
+        
+        if can_update() {
+            clean_destroyed_entities()
+        }
     }
 }
 
@@ -83,6 +92,11 @@ viewport_size :: proc() -> (i32, i32) {
 /////////////////////////////
 //:Game Private
 /////////////////////////////
+@(private = "file")
+can_update :: proc() -> bool {
+    when ODIN_DEBUG do return frame_by_frame_mode.next_frame
+    return true
+}
 
 @(private = "file")
 start :: proc() {
@@ -115,11 +129,14 @@ post_collisions_update :: proc() {
         target := entity_data(enter_event.target)  
 
         if .KAMIKAZE in target.flags {
-            kamikaze_collision(source, target)    
+            //kamikaze_collision(source, target)    
         } else if .PROJECTILE in target.flags {
-            projectile_collision(source, target)
+            //projectile_collision(source, target)
         } else if target.id == player.entity.id {
-            player_collision(source, target)
+            //player_collision(source, target)
+        } 
+        if .DAMAGE_TARGET in target.flags && .DAMAGE_SOURCE in source.flags {
+            damage_collision(source, target)
         }
     }
 }
@@ -167,4 +184,58 @@ main :: proc() {
 			mem.tracking_allocator_destroy(&track)
 		}
 	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//:Debug only
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+when ODIN_DEBUG {
+
+    @(private = "file")
+    FrameByFrameMode :: struct {
+        frame_by_frame         : bool,
+        frame_by_frame_pressed : bool,
+        next_frame             : bool,
+        next_frame_pressed     : bool,
+    }
+
+    @(private = "file")
+    DEFAULT_FRAME_BY_FRAME_MODE : FrameByFrameMode : {
+    }
+
+    @(private = "file")
+    frame_by_frame_mode : FrameByFrameMode
+
+    @(private = "file")
+    update_frame_by_frame_mode :: proc() {
+        using frame_by_frame_mode
+
+        if input_is_key_pressed(KEY_LEFT_CONTROL) && input_is_key_pressed(KEY_P) {
+
+            if !frame_by_frame_pressed {
+                frame_by_frame_pressed = true
+                frame_by_frame =! frame_by_frame
+            }
+
+        } else {
+            frame_by_frame_pressed = false
+        }
+
+        if !frame_by_frame {
+            next_frame = true
+            return    
+        }
+
+        next_frame = false
+        
+        if  input_is_key_pressed(KEY_LEFT_CONTROL) && input_is_key_pressed(KEY_RIGHT) {
+            if !next_frame_pressed {
+                next_frame_pressed = true
+                next_frame = true
+            }
+        } else {
+            next_frame_pressed = false
+        }
+    }    
 }

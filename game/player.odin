@@ -33,7 +33,7 @@ player_initialized :: proc(player : ^Player) -> bool {
 player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
-    entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D } + GROUP_FLAGS_SPRITE)
+    entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D, .DAMAGE_TARGET } + GROUP_FLAGS_SPRITE)
     entity  = entity_handler
     data.item = .Player
     speed = PLAYER_SPEED 
@@ -126,7 +126,7 @@ projectiles := 0
 fire_projectile :: proc(player : ^Player) {
     // placeholder projectile
 
-    handle, data := entity_create(flags = GROUP_FLAGS_PROJECTILE + GROUP_FLAGS_CIRCLE)
+    handle, data := entity_create(name = "Bullet", flags = GROUP_FLAGS_PROJECTILE + GROUP_FLAGS_CIRCLE)
     player_entity := entity_data(player.entity)
     data.position = player_entity.position
     data.radius = 0.1
