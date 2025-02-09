@@ -73,7 +73,7 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
         }
         
     }
-
+    
     // SAW
     {
         handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
