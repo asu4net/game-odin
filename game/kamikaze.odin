@@ -44,6 +44,7 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
     kamikaze_manager_instance = instance
     using kamikaze_manager_instance
     
+    // SKULL
     {
         handle, entity := entity_create(NAME_KAMIKAZE, GROUP_FLAGS_KAMIKAZE)
         {
@@ -57,18 +58,23 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
             collides_with                 = { .player, .player_bullet };
             damage_target.life            = KAMIKAZE_LIFE
             skull_prefab                  = handle
+
+            /*
+            emitter_handle, emitter_data := emitter_create();
+            entity.particle_emitter = emitter_handle;
+            emitter_data.position = entity.position;
+            emitter_data.pos_amplitude = v3{0.05,0.05,0};
+            emitter_data.vel_amplitude = V3_ZERO;
+            emitter_add_texture(emitter_handle, .Kamikaze_Skull)
+            emitter_add_texture(emitter_handle, .Kazmikaze_Saw)
+            */
+
             entity_remove_flags(handle, {.ENABLED})
         }
-        /*
-        emitter_handle, emitter_data := emitter_create();
-        entity.particle_emitter = emitter_handle;
-        emitter_data.position = entity.position;
-        emitter_data.pos_amplitude = v3{0.05,0.05,0};
-        emitter_data.vel_amplitude = V3_ZERO;
-        emitter_add_texture(emitter_handle, .Kamikaze_Skull)
-        emitter_add_texture(emitter_handle, .Kazmikaze_Saw)
-        */
+        
     }
+
+    // SAW
     {
         handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         saw_prefab = handle
