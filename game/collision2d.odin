@@ -62,6 +62,7 @@ collisions_2d_finish :: proc() {
     }
 
     delete(collisions_map)
+    delete(collisions_in_last_frame)
 }
 
 query_2d_collisions :: proc() {
