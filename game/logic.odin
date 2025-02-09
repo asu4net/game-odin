@@ -76,6 +76,12 @@ damage_collision :: proc(source, target : ^Entity) {
     if life == 0 {
         //TODO: this a placeholder, should send dead event
         if DEBUG_PRINT_DAMAGE do fmt.printf("%v killed %v\n", source.name, target.name)
-        //entity_destroy({target.id})
+        
+        if target.id == game.player.entity.id {
+            game_quit()
+            return
+        }
+
+        entity_destroy({target.id})
     }
 }

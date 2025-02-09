@@ -54,10 +54,10 @@ spawn_kamikaze :: proc(pos := V3_ZERO, cd : f32 = KAMIKAZE_ATTACK_CD) {
         entity.movement_2d.speed_min = KAMIKAZE_SPEED_MIN
         entity.movement_2d.speed_max = KAMIKAZE_SPEED_MAX
         entity.movement_2d.time_to_max_speed = KAMIKAZE_ACC
-
         entity.collision_flag = CollisionFlag.enemy;
         entity.collides_with = { .player, .player_bullet };
-        
+        entity.damage_target.life = KAMIKAZE_LIFE
+
         /*
         emitter_handle, emitter_data := emitter_create();
         entity.particle_emitter = emitter_handle;

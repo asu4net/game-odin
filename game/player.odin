@@ -34,14 +34,14 @@ player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
     entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D, .DAMAGE_TARGET } + GROUP_FLAGS_SPRITE)
-    entity  = entity_handler
+    entity = entity_handler
     data.item = .Player
     speed = PLAYER_SPEED 
     firerate = PLAYER_FIRERATE
     
     data.collision_flag = CollisionFlag.player;
     data.collides_with = { .enemy, .enemy_bullet };
-    
+    data.damage_target.life = 1
     emitter_handle, emitter_data := emitter_create();
     data.particle_emitter = emitter_handle;
     emitter_data.position = data.position;
@@ -126,13 +126,15 @@ projectiles := 0
 fire_projectile :: proc(player : ^Player) {
     // placeholder projectile
 
-    handle, data := entity_create(name = "Bullet", flags = GROUP_FLAGS_PROJECTILE + GROUP_FLAGS_CIRCLE)
+    handle, entity := entity_create(name = "Bullet", flags = GROUP_FLAGS_PROJECTILE + GROUP_FLAGS_CIRCLE)
     player_entity := entity_data(player.entity)
-    data.position = player_entity.position
-    data.radius = 0.1
-    data.collision_radius = 0.15
-    data.thickness = 1
-    data.tint = V4_COLOR_RED
-    data.collision_flag = CollisionFlag.player_bullet;
-    data.collides_with = { .enemy };
+    entity.position = player_entity.position
+    entity.radius = 0.1
+    entity.collision_radius = 0.15
+    entity.thickness = 1
+    entity.tint = V4_COLOR_RED
+    entity.collision_flag = CollisionFlag.player_bullet;
+    entity.collides_with = { .enemy };
+    entity.damage_target.life = 1
+    entity.damage_source.damage = PLAYER_DAMAGE
 }

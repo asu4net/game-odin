@@ -23,9 +23,10 @@ CollisionEventExit :: struct {
 }
 
 Collisions2D :: struct {
-    collision_enter_events : [dynamic]CollisionEventEnter,
-    collision_exit_events  : [dynamic]CollisionEventExit,
-    collisions_map         : map[Entity_Handle]map[Entity_Handle]struct{},
+    collisions_in_last_frame : [dynamic]CollisionEventEnter,
+    collision_enter_events   : [dynamic]CollisionEventEnter,
+    collision_exit_events    : [dynamic]CollisionEventExit,
+    collisions_map           : map[Entity_Handle]map[Entity_Handle]struct{},
 }
 
 Collider2D :: struct {
@@ -67,18 +68,19 @@ query_2d_collisions :: proc() {
 
     using collisions_2d_instance
 
-    prev_collisions := make([dynamic] CollisionEventEnter, len(collision_enter_events))
-    defer delete(prev_collisions)
-    mem.copy(raw_data(prev_collisions), raw_data(collision_enter_events), len(collision_enter_events))
     clear(&collision_enter_events)
     clear(&collision_exit_events)
     
-    for _, &entity_set in collisions_map {
-        clear_map(&entity_set)
-    }
+    prev_collisions := make([dynamic] CollisionEventEnter, len(collisions_in_last_frame))
+    defer delete(prev_collisions)
+
+    // Copy collisions_in_last_frame to 
+    for prev_collision, i in collisions_in_last_frame do prev_collisions[i] = prev_collision
+    clear(&collisions_in_last_frame)
 
     circle_group := entity_get_group(GROUP_FLAGS_COLLIDER_2D);
     
+    // Collision enter handle
     for i in 0..<len(circle_group) {
         entity_A := entity_data(circle_group[i]);
         for j in (i + 1) ..< len(circle_group){
@@ -88,17 +90,24 @@ query_2d_collisions :: proc() {
         } 
     }
 
-    for prev_enter_event in prev_collisions {
-        for enter_event in collision_enter_events {
-            if prev_enter_event == enter_event {
+    // Collision exit handle
+    for prev_collision in prev_collisions {
+        found : bool
+        for curr_collision in collisions_in_last_frame {
+            if prev_collision == curr_collision {
+                found = true
                 break
             }
         }
+        
+        if found do continue
+
         exit_event : CollisionEventExit = {
-            source = prev_enter_event.source,
-            target = prev_enter_event.target,
+            source = prev_collision.source,
+            target = prev_collision.target,
         }
         append_elem(&collision_exit_events, exit_event)
+        delete_key(&collisions_map[exit_event.source], exit_event.target)
     }
 }
 
@@ -120,8 +129,12 @@ handle_collision_enter :: proc(entity_A : ^Entity, entity_B : ^Entity) {
         }
 
         if(circle_collides(entity_A, entity_B)) {
+            
+            collision_enter_event : CollisionEventEnter = { entity_handle_A, entity_handle_B }
+            append_elem(&collisions_in_last_frame, collision_enter_event)
+
             if(entity_handle_B not_in collisions_map[entity_handle_A]){
-                append_elem(&collision_enter_events, CollisionEventEnter{ entity_handle_A, entity_handle_B });
+                append_elem(&collision_enter_events, collision_enter_event);
                 A_collides_width := &collisions_map[entity_handle_A]
                 A_collides_width[entity_handle_B] = {}
             }
