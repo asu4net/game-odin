@@ -20,8 +20,8 @@ Particle_Handle :: struct {
 }
 
 Particle :: struct {
-    id            : PARTICLE_ID,
-    using transform     : Transform,
+    id                 : PARTICLE_ID,
+    using transform    : Transform,
     using sprite       : Sprite_Atlas_Item,
     velocity           : v3,
     color              : v4,
@@ -190,6 +190,17 @@ particle_create :: proc() -> (particle : Particle_Handle, data : ^Particle) {
     return
 }
 
+particle_clone :: proc(template : Particle_Handle) -> (handle : Particle_Handle, particle : ^Particle) {
+    assert(particle_exists(template))
+    
+    template_particle := particle_data(template)
+    handle, particle = particle_create()
+    particle^ = template_particle^
+    particle.id = handle.id
+    
+    return
+}
+
 particle_data :: proc(particle : Particle_Handle) -> ^Particle {
     using particle_registry_instance
     assert(particle_registry_initialized())
@@ -273,6 +284,17 @@ emitter_create :: proc() -> (emitter : Emitter_Handle, data : ^ParticleEmitter) 
         }
     }
 
+    return
+}
+
+emitter_clone :: proc(template : Emitter_Handle) -> (handle : Emitter_Handle, emitter : ^ParticleEmitter) {
+    assert(emitter_exists(template))
+    
+    template_emitter := emitter_data(template)
+    handle, emitter = emitter_create()
+    emitter^ = template_emitter^
+    emitter.id = handle.id
+    
     return
 }
 

@@ -251,8 +251,12 @@ entity_clone :: proc(template : Entity_Handle) -> (handle : Entity_Handle, entit
     entity^ = template_entity^
     entity.id = handle.id
     
-    //TODO: copy the particle emitter xd
-    entity.particle_emitter = {NIL_EMITTER_ID}
+    if(emitter_exists(entity.particle_emitter))
+    {
+        emitter_handle, emitter := emitter_clone(entity.particle_emitter);
+        emitter.position = entity.position;
+        entity.particle_emitter = emitter_handle;
+    }
 
     //We need to clone the saw too
     if .KAMIKAZE in entity.flags {

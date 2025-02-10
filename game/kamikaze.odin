@@ -59,15 +59,14 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
             damage_target.life            = KAMIKAZE_LIFE
             skull_prefab                  = handle
 
-            /*
+            
             emitter_handle, emitter_data := emitter_create();
             entity.particle_emitter = emitter_handle;
             emitter_data.position = entity.position;
+            emitter_data.scale = v3{ 0.2, 0.2, 0.2 };
+            emitter_data.color = v4{ 1, 0.2, 0.2, 1 };
             emitter_data.pos_amplitude = v3{0.05,0.05,0};
-            emitter_data.vel_amplitude = V3_ZERO;
-            emitter_add_texture(emitter_handle, .Kamikaze_Skull)
-            emitter_add_texture(emitter_handle, .Kazmikaze_Saw)
-            */
+            emitter_data.vel_amplitude = V3_ZERO;            
 
             entity_remove_flags(handle, {.ENABLED})
         }
@@ -127,13 +126,13 @@ kamikaze_manager_update :: proc() {
         
         entity := entity_data(handle)
 
-        /*
+        
         emitter_data := emitter_data(entity.particle_emitter);
         // no () on purpose, effect goes hard
         emitter_data.velocity = entity.position - emitter_data.position * 2;
         emitter_data.active = emitter_data.velocity != V3_ZERO;
         emitter_data.position = entity.position;
-        */
+        
         
         switch entity.kamikaze.state {
             
