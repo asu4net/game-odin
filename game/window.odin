@@ -30,7 +30,7 @@ window_init :: proc(
     title       : string      = "Game", 
     width       : i32         = 1280, 
     height      : i32         = 720,
-    v_sync      : b32         = false,
+    v_sync      : b32         = true,
     start_max   : b32         = false,
     cursor_mode : Cursor_Mode = Cursor_Mode.Normal
 ) {
