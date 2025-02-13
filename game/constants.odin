@@ -42,13 +42,23 @@ KAMIKAZE_SCORE         :: 10  // not implemented
 KAMIKAZE_ATTACK_CD     :: 1
 KAMIKAZE_SAW_SPEED     :: 360 * 2 // degrees per sec
 
+// Homing Missile
+HOMING_MISSILE_RADIUS             :: 0.15
+HOMING_MISSILE_DISTANCE_TO_ATTACK :: 2
+HOMING_MISSILE_WAIT_TIME          :: 0.5
+HOMING_MISSILE_APPROACH_SPEED     :: 2
+HOMING_MISSILE_ATTACK_SPEED       :: 4
+HOMING_MISSILE_LIFE               :: 10
+
+
 /////////////////////////////
 //:Names
 /////////////////////////////
 
-NAME_PLAYER        :: "Player"
-NAME_KAMIKAZE      :: "KamikazePrefab"
-NAME_KAMIKAZE_SAW  :: "KamikazeSawPrefab"
+NAME_PLAYER          :: "Player"
+NAME_KAMIKAZE        :: "KamikazePrefab"
+NAME_KAMIKAZE_SAW    :: "KamikazeSawPrefab"
+NAME_HOMING_MISSILE  :: "HomingMissilePrefab"
 
 /////////////////////////////
 //:Debug

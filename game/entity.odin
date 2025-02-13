@@ -26,6 +26,7 @@ Entity_Flag :: enum {
     ENEMY,
     KAMIKAZE,
     KAMIKAZE_SAW,
+    HOMING_MISSILE,
 }
 
 GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
@@ -55,6 +56,17 @@ GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
     .SPRITE,
     .COLLIDER_2D,
     .KAMIKAZE,
+    .MOVEMENT_2D,
+    .DAMAGE_TARGET,
+    .DAMAGE_SOURCE,
+}
+
+GROUP_FLAGS_HOMING_MISSILE : Entity_Flag_Set : {
+    .VALID,
+    .ENABLED,
+    .SPRITE,
+    .COLLIDER_2D,
+    .HOMING_MISSILE,
     .MOVEMENT_2D,
     .DAMAGE_TARGET,
     .DAMAGE_SOURCE,
@@ -120,6 +132,7 @@ Entity :: struct {
     projectile         : Projectile,
     kamikaze           : KamikazeSkull,
     kamikaze_saw       : KamikazeSaw,
+    homing_missile     : HomingMissile,
 }
 
 NIL_ENTITY_ID :: SPARSE_SET_INVALID
@@ -135,6 +148,7 @@ DEFAULT_ENTITY : Entity : {
     particle_emitter = {NIL_EMITTER_ID},
     projectile       = DEFAULT_PROJECTILE,
     kamikaze         = DEFAULT_KAMIKAZE_SKULL,
+    homing_missile   = DEFAULT_HOMING_MISSILE,
     damage_source    = DEFAULT_DAMAGE_SOURCE,
     damage_target    = DEFAULT_DAMAGE_TARGET
 }

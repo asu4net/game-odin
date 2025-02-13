@@ -104,7 +104,7 @@ movement_update :: proc(player : ^Player) {
     entity.position.xy += axis * speed * delta_seconds() 
     
     emitter_data := emitter_data(entity.particle_emitter);
-    emitter_data.velocity = (-entity.position + emitter_data.position) * 1000;
+    emitter_data.velocity = (-entity.position + emitter_data.position) / delta_seconds();
     emitter_data.active = emitter_data.velocity != V3_ZERO;
     emitter_data.position = entity.position;
 }
