@@ -5,3 +5,4 @@
 **.vscode
 **/ols.json
 /scripts/
+game/bin/game
