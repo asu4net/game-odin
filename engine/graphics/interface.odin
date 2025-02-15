@@ -1,4 +1,5 @@
-package game
+package graphics
+
 import "engine:global/vector"
 import "engine:global/matrix4"
 

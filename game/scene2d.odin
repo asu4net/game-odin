@@ -4,14 +4,7 @@ import "core:fmt"
 import "engine:global/color"
 import "engine:global/matrix4"
 import "engine:global/interpolate"
-
-/////////////////////////////
-//:Rect
-/////////////////////////////
-
-Rect :: struct {
-    x, y : f32, width, height : int
-}
+import gfx "engine:graphics"
 
 /////////////////////////////
 //:Transform
@@ -37,10 +30,10 @@ transform_to_m4 :: proc(transform : Transform) -> m4 {
 
 Sprite :: struct {
     texture   : ^Texture2D    ,
-    tiling    : v2            ,
-    flip_x    : bool          ,
-    flip_y    : bool          ,
-    autosize  : bool          ,
+    tiling    : v2                ,
+    flip_x    : bool              ,
+    flip_y    : bool              ,
+    autosize  : bool              ,
     blending  : Blending_Mode ,
 }
 
@@ -109,7 +102,7 @@ DEFAULT_BLINK : Blink : {
 }
 
 Scene2D :: struct {
-    draw_2d       : Draw2D_Context,
+    draw_2d       : gfx.Draw2D_Context,
     atlas_texture : Texture2D,
 }
 
@@ -126,35 +119,35 @@ scene_2d_init :: proc(scene2d : ^Scene2D) {
     scene2d_instance = scene2d
     using scene2d_instance
 
-    set_clear_color(color.DARK_GRAY)
-    draw_2d_init(&scene2d.draw_2d)
-    texture_2d_init(&atlas_texture, "assets/atlas.png")
+    gfx.set_clear_color(color.DARK_GRAY)
+    gfx.draw_2d_init(&scene2d.draw_2d)
+    gfx.texture_2d_init(&atlas_texture, "assets/atlas.png")
 }
 
 scene_2d_finish :: proc() {
     assert(scene_2d_initialized())
     using scene2d_instance
-    texture_2d_finish(&atlas_texture)
-    draw_2d_finish()
+    gfx.texture_2d_finish(&atlas_texture)
+    gfx.draw_2d_finish()
 }
 
 draw_scene_2d :: proc() {
 
-    clear_screen()
+    gfx.clear_screen()
     
     width, height := viewport_size()
     window_size : v2 = { f32(width), f32(height) }
 
-    draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
+    gfx.draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
     draw_particles()
     draw_entities()
     draw_collisions()
-    draw_2d_end()
+    gfx.draw_2d_end()
 }
 
 @(private = "file")
 draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := color.WHITE, entity_id : u32 = 0) {
-    draw_circle(
+    gfx.draw_circle(
         transform = transform_to_m4(transform),
         radius    = circle.radius,
         thickness = circle.thickness,
@@ -168,7 +161,7 @@ draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_C
 draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT_SPRITE_ATLAS_ITEM, tint := color.WHITE, entity_id : u32 = 0) {
 
     rect : Rect
-    quad_flags := DEFAULT_QUAD_FLAGS
+    quad_flags := gfx.DEFAULT_QUAD_FLAGS
     
     if sprite.autosize do quad_flags += {.AUTOSIZE}
     if sprite.flip_x   do quad_flags += {.FLIP_X}
@@ -182,7 +175,7 @@ draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT
         rect = atlas_textures[sprite.item].rect
     }
 
-    draw_quad(
+    gfx.draw_quad(
         transform    = transform_to_m4(transform),
         texture      = texture,
         tiling       = sprite.tiling,
