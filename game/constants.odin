@@ -1,4 +1,5 @@
 package game
+import "engine:global/color"
 
 GAME_TITLE :: "Blessed Bullets"
 
@@ -28,7 +29,7 @@ MAX_EMITTERS                :: 500
 MAX_SPRITES_PER_EMITTER     :: 5
 DEFAULT_PARTICLE_SPRITE     :: Texture_Name.None
 PARTICLE_VELOCITY           :: V3_ONE
-PARTICLE_COLOR              :: V4_COLOR_LIGHT_GREEN
+PARTICLE_COLOR              :: color.LIGHT_GREEN
 PARTICLE_LIFETIME           :: 1      
 PARTICLE_SPAWN_TIME         :: 0.01
 

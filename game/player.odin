@@ -2,6 +2,7 @@ package game
 import "core:math/linalg"
 import "core:strings"
 import "core:fmt"
+import "engine:global/color"
 
 Player_Movement :: struct {
     speed : f32,
@@ -132,7 +133,7 @@ fire_projectile :: proc(player : ^Player) {
     entity.radius = 0.1
     entity.collision_radius = 0.15
     entity.thickness = 1
-    entity.tint = V4_COLOR_RED
+    entity.tint = color.LIGHT_RED
     entity.collision_flag = CollisionFlag.player_bullet;
     entity.collides_with = { .enemy };
     entity.damage_target.life = 1

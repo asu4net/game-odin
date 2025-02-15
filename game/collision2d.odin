@@ -1,6 +1,7 @@
 package game
 import "core:math/linalg"
 import "core:mem"
+import "engine:global/color"
 
 CollisionFlag :: enum {
     nil,
@@ -40,7 +41,7 @@ DEFAULT_COLLIDER_2D : Collider2D : {
     collision_flag   = nil,
     collides_with    = nil,
     collision_radius = 0.5,
-    collision_tint   = V4_COLOR_LIGHT_GREEN
+    collision_tint   = color.LIGHT_GREEN
 }
 
 collisions_2d_instance : ^Collisions2D = nil 

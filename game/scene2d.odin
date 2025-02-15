@@ -1,6 +1,7 @@
 package game
 import "core:math"
 import "core:fmt"
+import "engine:global/color"
 
 /////////////////////////////
 //:Sprite
@@ -76,7 +77,7 @@ Blink :: struct {
 
 DEFAULT_BLINK : Blink : {
     duration   = 0.25,
-    tint       = V4_COLOR_RED,
+    tint       = color.RED,
 }
 
 Scene2D :: struct {
@@ -97,7 +98,7 @@ scene_2d_init :: proc(scene2d : ^Scene2D) {
     scene2d_instance = scene2d
     using scene2d_instance
 
-    set_clear_color(V4_COLOR_DARK_GRAY)
+    set_clear_color(color.DARK_GRAY)
     draw_2d_init(&scene2d.draw_2d)
     texture_2d_init(&atlas_texture, "assets/atlas.png")
 }
@@ -124,7 +125,7 @@ draw_scene_2d :: proc() {
 }
 
 @(private = "file")
-draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := V4_COLOR_WHITE, entity_id : u32 = 0) {
+draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := color.WHITE, entity_id : u32 = 0) {
     draw_circle(
         transform = transform_to_m4(transform),
         radius    = circle.radius,
@@ -136,7 +137,7 @@ draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_C
 }
 
 @(private = "file")
-draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT_SPRITE_ATLAS_ITEM, tint := V4_COLOR_WHITE, entity_id : u32 = 0) {
+draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT_SPRITE_ATLAS_ITEM, tint := color.WHITE, entity_id : u32 = 0) {
 
     rect : Rect
     quad_flags := DEFAULT_QUAD_FLAGS

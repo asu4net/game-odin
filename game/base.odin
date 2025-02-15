@@ -43,23 +43,6 @@ v4 :: [4] f32
 
 V4_ZERO               : v4 : { 0, 0, 0, 0 }
 V4_ONE                : v4 : { 1, 1, 1, 1 }
-V4_COLOR_WHITE        : v4 : { 1, 1, 1, 1 }
-V4_COLOR_WHITE_FADED  : v4 : { 1, 1, 1, 0 }
-V4_COLOR_BLACK        : v4 : { 0, 0, 0, 1 }
-V4_COLOR_BLUE         : v4 : { 0, 0, 1, 1 }
-V4_COLOR_LIGHT_BLUE   : v4 : { 0.3, 0.3, 1, 1 }
-V4_COLOR_CYAN         : v4 : { 0, 1, 1, 1 }
-V4_COLOR_GRAY         : v4 : { 0.5, 0.5, 0.5, 1 }
-V4_COLOR_DARK_GRAY    : v4 : { 0.2, 0.2, 0.2, 1 }
-V4_COLOR_GREEN        : v4 : { 0, 1, 0, 1 }
-V4_COLOR_LIGHT_GREEN  : v4 : { 0.3, 1, 0.3, 1 }
-V4_COLOR_GREY         : v4 : { 0.5, 0.5, 0.5, 1 }
-V4_COLOR_DARK_GREY    : v4 : { 0.2, 0.2, 0.2, 1 }
-V4_COLOR_MAGENTA      : v4 : { 1, 0, 1, 1 }
-V4_COLOR_RED          : v4 : { 1, 0, 0, 1 }
-V4_COLOR_LIGHT_RED    : v4 : { 1, 0.3, 0.3, 1 }
-V4_COLOR_YELLOW       : v4 : { 1, 0.92, 0.016, 1 }
-V4_COLOR_ORANGE       : v4 : { 0.97, 0.6, 0.11, 1 }
 
 /////////////////////////////
 //:Matrix

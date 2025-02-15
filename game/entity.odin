@@ -2,6 +2,7 @@ package game
 import "core:strings"
 import "core:fmt"
 import "core:container/queue"
+import "engine:global/color"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Entity flags
@@ -113,7 +114,7 @@ EntityCommon :: struct {
 DEFAULT_ENTITY_COMMON : EntityCommon : {
     flags = { .VALID, .ENABLED, .VISIBLE },
     id    = NIL_ENTITY_ID,
-    tint  = V4_COLOR_WHITE
+    tint  = color.WHITE
 }
 
 Entity :: struct {
