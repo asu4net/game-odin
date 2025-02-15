@@ -74,7 +74,7 @@ DEFAULT_EMITTER : ParticleEmitter : {
     num_textures     = 0,
     texture_names    = DEFAULT_PARTICLE_SPRITE,
     velocity         = PARTICLE_VELOCITY,
-    vel_amplitude    = V3_ONE,
+    vel_amplitude    = ONE_3D,
     color            = PARTICLE_COLOR,
     color_amplitude  = v4{0.5, 0.5, 0.5, 0.0},
     starting_life    = PARTICLE_LIFETIME,        

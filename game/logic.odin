@@ -69,7 +69,7 @@ Spawner :: struct {
     // para saber si una entidad ha muerto iterar entities y comprobar su nivel de vida o si se han destruido
 }
 
-spawner_init :: proc(spawner : ^Spawner, template : Entity_Handle, position := V3_UP, amount : u32 = 1, points : f32 = 0) {
+spawner_init :: proc(spawner : ^Spawner, template : Entity_Handle, position := UP_3D, amount : u32 = 1, points : f32 = 0) {
     assert(spawner != nil)
     assert(entity_valid(template))
     entity_remove_flags(template, { .ENABLED })

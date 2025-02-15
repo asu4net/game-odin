@@ -66,7 +66,7 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
             emitter_data.scale = v3{ 0.2, 0.2, 0.2 };
             emitter_data.color = v4{ 1, 0.2, 0.2, 1 };
             emitter_data.pos_amplitude = v3{0.05,0.05,0};
-            emitter_data.vel_amplitude = V3_ZERO;            
+            emitter_data.vel_amplitude = ZERO_3D;            
 
             entity_remove_flags(handle, {.ENABLED})
         }
@@ -77,14 +77,14 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
     {
         handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         saw_prefab = handle
-        entity.transform.position = V3_UP
+        entity.transform.position = UP_3D
         entity.sprite.item = .Kazmikaze_Saw
         entity.kamikaze_saw.kamikaze_skull = skull_prefab
         entity_data(skull_prefab).kamikaze.saw = handle
         entity_remove_flags(handle, {.ENABLED})
     }
 
-    spawner_init(&spawner, skull_prefab, V3_UP * 3)
+    spawner_init(&spawner, skull_prefab, UP_3D * 3)
     spawn(&spawner)
 }
 
@@ -130,7 +130,7 @@ kamikaze_manager_update :: proc() {
         emitter_data := emitter_data(entity.particle_emitter);
         // no () on purpose, effect goes hard
         emitter_data.velocity = entity.position - emitter_data.position * 2;
-        emitter_data.active = emitter_data.velocity != V3_ZERO;
+        emitter_data.active = emitter_data.velocity != ZERO_3D;
         emitter_data.position = entity.position;
         
         

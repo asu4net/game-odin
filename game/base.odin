@@ -13,38 +13,6 @@ Rect :: struct {
 }
 
 /////////////////////////////
-//:Vector2
-/////////////////////////////
-
-v2 :: [2] f32
-
-V2_ONE   : v2 : { 1, 1 }
-V2_UP    : v2 : { 0, 1 }
-V2_RIGHT : v2 : { 1, 0 }
-V2_ZERO  : v2 : { 0, 0 }
-
-/////////////////////////////
-//:Vector3
-/////////////////////////////
-
-v3 :: [3] f32
-
-V3_ONE     : v3 : { 1, 1, 1 }
-V3_ZERO    : v3 : { 0, 0, 0 }
-V3_UP      : v3 : { 0, 1, 0 }
-V3_RIGHT   : v3 : { 1, 0, 0 }
-V3_FORWARD : v3 : { 0, 0, 1 }
-
-/////////////////////////////
-//:Vector4
-/////////////////////////////
-
-v4 :: [4] f32
-
-V4_ZERO               : v4 : { 0, 0, 0, 0 }
-V4_ONE                : v4 : { 1, 1, 1, 1 }
-
-/////////////////////////////
 //:Matrix
 /////////////////////////////
 
@@ -113,7 +81,7 @@ m4_rotate :: proc(mat: m4, rotation : v3) -> m4 {
 m4_transform :: proc(position, rotation, scale : v3) -> m4 {
     identity := M4_IDENTITY
     scale_matrix := m4_scale(identity, scale)
-    rotation_matrix := rotation != V3_ZERO ? m4_rotate(scale_matrix, math.RAD_PER_DEG * rotation) : scale_matrix
+    rotation_matrix := rotation != ZERO_3D ? m4_rotate(scale_matrix, math.RAD_PER_DEG * rotation) : scale_matrix
     translation_matrix := m4_translate(rotation_matrix, position)
     return translation_matrix
 }
@@ -251,7 +219,7 @@ Transform :: struct {
 }
 
 DEFAULT_TRANSFORM : Transform : {
-    V3_ZERO, V3_ZERO, V3_ONE
+    ZERO_3D, ZERO_3D, ONE_3D
 }
 
 transform_to_m4 :: proc(transform : Transform) -> m4 {

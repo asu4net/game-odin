@@ -18,7 +18,7 @@ Sprite :: struct {
 
 DEFAULT_SPRITE : Sprite : {
     texture   = nil,
-    tiling    = V2_ONE,
+    tiling    = ONE_2D,
     flip_x    = false,
     flip_y    = false,
     autosize  = true,
@@ -40,7 +40,7 @@ Sprite_Atlas_Item :: struct {
 
 DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
     item     = nil,
-    tiling   = V2_ONE,
+    tiling   = ONE_2D,
     flip_x   = false,
     flip_y   = false,
     autosize = true,

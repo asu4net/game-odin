@@ -11,7 +11,7 @@ Projectile :: struct {
 }
 
 DEFAULT_PROJECTILE : Projectile : {
-    dir          = V3_UP,
+    dir          = UP_3D,
     speed        = 7,
     max_lifetime = 1.0,
 }

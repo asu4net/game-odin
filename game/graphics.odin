@@ -1098,9 +1098,9 @@ draw_2d_begin :: proc(
     size     : f32 = 1, 
     near     : f32 = 0.1,
     far      : f32 = 1000,
-    front    : v3  = V3_FORWARD,
-    right    : v3  = V3_RIGHT,
-    up       : v3  = V3_UP,
+    front    : v3  = FRONT_3D,
+    right    : v3  = RIGHT_3D,
+    up       : v3  = UP_3D,
 ) {
     assert(draw_2d_context != nil)
     using draw_2d_context

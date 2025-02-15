@@ -46,7 +46,7 @@ player_init :: proc(player : ^Player) {
     emitter_handle, emitter_data := emitter_create();
     data.particle_emitter = emitter_handle;
     emitter_data.position = data.position;
-    emitter_data.scale = V3_ONE * 0.15
+    emitter_data.scale = ONE_3D * 0.15
 
     initialized = true
 }
@@ -90,7 +90,7 @@ input_update :: proc(player : ^Player) {
         axis.x = 0
     }
 
-    if axis != V2_ZERO {
+    if axis != ZERO_2D {
         axis = linalg.normalize(axis)
     }
 
@@ -106,7 +106,7 @@ movement_update :: proc(player : ^Player) {
     
     emitter_data := emitter_data(entity.particle_emitter);
     emitter_data.velocity = (-entity.position + emitter_data.position) / delta_seconds();
-    emitter_data.active = emitter_data.velocity != V3_ZERO;
+    emitter_data.active = emitter_data.velocity != ZERO_3D;
     emitter_data.position = entity.position;
 }
 

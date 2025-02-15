@@ -20,7 +20,7 @@ HomingMissile :: struct {
 
 DEFAULT_HOMING_MISSILE : HomingMissile : {
     state              = HomingState.IDLE,
-    attack_dir         = V3_ZERO, 
+    attack_dir         = ZERO_3D, 
     wait_timer         = 0,
 
     distance_to_attack = HOMING_MISSILE_DISTANCE_TO_ATTACK,
@@ -60,7 +60,7 @@ homing_missile_init :: proc() {
         entity_remove_flags(handle, { .ENABLED });
     }
 
-    spawner_init(&homing_missile_spawner, homing_missile_prefab, V3_UP * 5);
+    spawner_init(&homing_missile_spawner, homing_missile_prefab, UP_3D * 5);
     spawn(&homing_missile_spawner);
 } 
 
@@ -109,7 +109,7 @@ homing_missile_update :: proc() {
 
                 emitter_data := emitter_data(particle_emitter);
                 emitter_data.velocity = ((position - player_position) / distance) * homing_missile.approach_speed;
-                emitter_data.active = emitter_data.velocity != V3_ZERO;
+                emitter_data.active = emitter_data.velocity != ZERO_3D;
                 emitter_data.position = position;
             }
             case HomingState.WAITING: {
@@ -125,7 +125,7 @@ homing_missile_update :: proc() {
 
                 emitter_data := emitter_data(particle_emitter);
                 emitter_data.velocity = (-position + emitter_data.position) / delta_seconds();
-                emitter_data.active = emitter_data.velocity != V3_ZERO;
+                emitter_data.active = emitter_data.velocity != ZERO_3D;
                 emitter_data.position = position;
                 // Explode after a set time?
             }
