@@ -6,6 +6,7 @@ import "core:math/linalg"
 
 import gl "vendor:OpenGL"
 import stb "vendor:stb/image"
+import "engine:global/matrix4"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Graphics API
@@ -789,7 +790,7 @@ fill_quad_vertex_positions :: proc(vertex_positions : ^V4Verts2D, size : v2) {
 fill_circle_vertex_positions :: proc(vertex_positions : ^V4Verts2D, radius : f32) {
     
     radius := radius * 2.0
-    scale_mat := m4_scale(M4_IDENTITY, { radius, radius, 1.0 })
+    scale_mat := matrix4.scale(matrix4.IDENTITY, { radius, radius, 1.0 })
     vertex_positions[0] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[0]
     vertex_positions[1] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[1]
     vertex_positions[2] = scale_mat * DEFAULT_VERTEX_POSITIONS_2D[2]
@@ -954,7 +955,7 @@ draw_2d_init :: proc(instance : ^Draw2D_Context) {
     draw_2d_context = instance
     using draw_2d_context
 
-    projection_view = M4_IDENTITY
+    projection_view = matrix4.IDENTITY
     texture_2d_init_as_white(&white_texture)
     //texture_2d_init(&atlas_texture, "assets/atlas.png")
 
@@ -1131,7 +1132,7 @@ QuadFlagSet :: bit_set[QuadFlag]
 DEFAULT_QUAD_FLAGS : QuadFlagSet : { .AUTOSIZE }
 
 draw_quad :: proc(
-    transform     : m4            = M4_IDENTITY,
+    transform     : m4            = matrix4.IDENTITY,
     texture       : ^Texture2D    = nil,
     tiling        : v2            = { 1, 1 },
     blending      : Blending_Mode = .ALPHA,
@@ -1214,7 +1215,7 @@ draw_quad :: proc(
 }
 
 draw_circle :: proc(
-    transform : m4  = M4_IDENTITY,
+    transform : m4  = matrix4.IDENTITY,
     radius    : f32 = 0.5,
     thickness : f32 = 0.05,
     fade      : f32 = 0.01,

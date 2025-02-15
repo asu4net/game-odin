@@ -1,9 +1,11 @@
 package game
 import "engine:global/vector"
+import "engine:global/matrix4"
 
 v2       :: vector.v2
 v3       :: vector.v3
 v4       :: vector.v4
+m4       :: matrix4.m4
 ZERO_2D  :: vector.ZERO_2D
 ONE_2D   :: vector.ONE_2D
 UP_2D    :: vector.UP_2D
