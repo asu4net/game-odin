@@ -1,6 +1,8 @@
 package game
 import "core:mem"
 import "core:fmt"
+import "engine:window"
+import "engine:input"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Game
@@ -8,7 +10,7 @@ import "core:fmt"
 
 Game :: struct {
     // Engine
-    window                 : Window,
+    game_window            : window.Window,
     scene_2d               : Scene2D,
     entity_registry        : Entity_Registry,
     particle_registry      : Particle_Registry,
@@ -61,8 +63,8 @@ game_init :: proc(instance : ^Game) {
     //:Init & Finish
     /////////////////////////////
     
-    window_init(&window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
-    defer window_finish()
+    window.init(&game_window, title = GAME_TITLE, width = WINDOW_WIDTH, height = WINDOW_HEIGHT)
+    defer window.finish()
     
     scene_2d_init(&scene_2d)
     defer scene_2d_finish()
@@ -89,7 +91,7 @@ game_init :: proc(instance : ^Game) {
     //:Main Loop
     /////////////////////////////
 
-    for keep_window_opened() {
+    for window.keep_opened() {
         
         when ODIN_DEBUG do update_frame_by_frame_mode()
 
@@ -109,12 +111,16 @@ game_init :: proc(instance : ^Game) {
     }
 }
 
+delta_seconds :: proc() -> f32 {
+    return window.delta_seconds()
+}
+
 game_quit :: proc() {
-    window_close()
+    window.close()
 }
 
 viewport_size :: proc() -> (i32, i32) {
-    return window_get_size()
+    return window.get_size()
 }
 
 /////////////////////////////
@@ -215,7 +221,7 @@ when ODIN_DEBUG {
     update_frame_by_frame_mode :: proc() {
         using frame_by_frame_mode
 
-        if input_is_key_pressed(KEY_LEFT_CONTROL) && input_is_key_pressed(KEY_P) {
+        if input.is_key_pressed(input.KEY_LEFT_CONTROL) && input.is_key_pressed(input.KEY_P) {
 
             if !frame_by_frame_pressed {
                 frame_by_frame_pressed = true
@@ -233,7 +239,7 @@ when ODIN_DEBUG {
 
         next_frame = false
         
-        if  input_is_key_pressed(KEY_LEFT_CONTROL) && input_is_key_pressed(KEY_RIGHT) {
+        if  input.is_key_pressed(input.KEY_LEFT_CONTROL) && input.is_key_pressed(input.KEY_RIGHT) {
             if !next_frame_pressed {
                 next_frame_pressed = true
                 next_frame = true

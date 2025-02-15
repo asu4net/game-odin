@@ -1,16 +1,13 @@
 package game
+
 import "core:math/linalg"
 import "core:strings"
 import "core:fmt"
 import "engine:global/color"
+import "engine:input"
 
 Player_Movement :: struct {
     speed : f32,
-}
-
-Player_Input :: struct {
-    axis : v2,
-    fire : bool,
 }
 
 Player_Weapons :: struct { 
@@ -19,11 +16,12 @@ Player_Weapons :: struct {
 }
 
 Player :: struct {
-    using input      : Player_Input,
-    using movement   : Player_Movement,
-    using weapons    : Player_Weapons,
-    entity           : Entity_Handle,
-    initialized      : bool,
+    using movement     : Player_Movement,
+    using weapons      : Player_Weapons,
+    entity             : Entity_Handle,
+    initialized        : bool,
+    axis               : v2,
+    fire               : bool,
 }
 
 player_initialized :: proc(player : ^Player) -> bool {
@@ -71,20 +69,20 @@ player_collision :: proc(source : ^Entity, target : ^Entity) {
 
 @(private = "file")
 input_update :: proc(player : ^Player) {
-    using player.input
+    using player
     assert(player_initialized(player))
 
-    if input_is_key_pressed(KEY_W) {
+    if input.is_key_pressed(input.KEY_W) {
         axis.y = 1    
-    } else if input_is_key_pressed(KEY_S) {
+    } else if input.is_key_pressed(input.KEY_S) {
         axis.y = -1
     } else {
         axis.y = 0
     }
 
-    if input_is_key_pressed(KEY_A) {
+    if input.is_key_pressed(input.KEY_A) {
         axis.x = -1    
-    } else if input_is_key_pressed(KEY_D) {
+    } else if input.is_key_pressed(input.KEY_D) {
         axis.x = 1
     } else {
         axis.x = 0
@@ -94,15 +92,14 @@ input_update :: proc(player : ^Player) {
         axis = linalg.normalize(axis)
     }
 
-    fire = input_is_key_pressed(KEY_SPACE)
+    fire = input.is_key_pressed(input.KEY_SPACE)
 }
 
 @(private = "file")
 movement_update :: proc(player : ^Player) {
     assert(player_initialized(player))
-    using player.movement, player.input
     entity := entity_data(player.entity)
-    entity.position.xy += axis * speed * delta_seconds() 
+    entity.position.xy += player.axis * player.speed * delta_seconds() 
     
     emitter_data := emitter_data(entity.particle_emitter);
     emitter_data.velocity = (-entity.position + emitter_data.position) / delta_seconds();
@@ -115,7 +112,7 @@ weapons_update :: proc(player : ^Player) {
     assert(player_initialized(player))
     using player
     weapons.time_since_fired += delta_seconds()
-    if (input.fire && weapons.time_since_fired >= firerate) {
+    if (player.fire && weapons.time_since_fired >= firerate) {
         fire_projectile(player)
         player.weapons.time_since_fired = 0
     }
