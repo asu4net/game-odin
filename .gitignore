@@ -4,5 +4,4 @@
 **.code-workspace
 **.vscode
 **/ols.json
-/scripts/
 game/bin/game
