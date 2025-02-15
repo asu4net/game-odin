@@ -2,6 +2,7 @@ package game
 import "core:math"
 import "core:math/linalg"
 import "core:fmt"
+import "engine:global/interpolate"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Movement 2D
@@ -36,7 +37,7 @@ update_entity_movement :: proc() {
         speed_progress += delta_seconds()
         speed_progress = math.clamp(speed_progress, 0.0, time_to_max_speed)
         norm_speed_progress := speed_progress / time_to_max_speed
-        speed :=  interp_ease_in_expo(norm_speed_progress, speed_min, speed_max)
+        speed :=  interpolate.ease_in_expo(norm_speed_progress, speed_min, speed_max)
         delta_traslation := speed * delta_seconds()
         distance := linalg.distance(target, entity.position)
         

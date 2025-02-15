@@ -2,6 +2,26 @@ package game
 import "core:math"
 import "core:fmt"
 import "engine:global/color"
+import "engine:global/matrix4"
+import "engine:global/interpolate"
+
+/////////////////////////////
+//:Transform
+/////////////////////////////
+
+Transform :: struct {
+    position : v3,
+    rotation : v3,
+    scale    : v3
+}
+
+DEFAULT_TRANSFORM : Transform : {
+    ZERO_3D, ZERO_3D, ONE_3D
+}
+
+transform_to_m4 :: proc(transform : Transform) -> m4 {
+    return matrix4.transform(transform.position, transform.rotation, transform.scale)
+}
 
 /////////////////////////////
 //:Sprite
@@ -186,7 +206,7 @@ draw_entities :: proc() {
                 progress += delta_seconds()
                 progress = math.clamp(progress, 0.0, duration)
                 normalized_progress := progress / duration
-                entity.tint = interp_linear_v4(normalized_progress, start_tint, tint) 
+                entity.tint = interpolate.linear(normalized_progress, start_tint, tint) 
                 
                 if normalized_progress == 1 {
                     new_target := start_tint
