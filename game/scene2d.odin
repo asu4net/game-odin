@@ -69,6 +69,58 @@ DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
 }
 
 /////////////////////////////
+//:FlipBook
+/////////////////////////////
+
+FlipBookKey :: struct {
+    name : Texture_Name,
+    time : f32,
+}
+
+FlipBook :: struct {
+    keys        : [MAX_FLIPBOOK_KEYS] FlipBookKey,
+    key_count   : u32,
+    duration    : f32,
+    time        : f32,
+    current_key : u32,
+    playing     : bool,
+    loop        : bool,
+}
+
+flipbook_create :: proc(flipbook : ^FlipBook, duration : f32 = 1.0, loop := false, items : []Texture_Name = {}) {
+    assert(flipbook != nil)
+
+    flipbook.duration = duration
+    flipbook.loop = loop
+    
+    for item, i in items {
+        flipbook.keys[i].name = item
+        flipbook.key_count += 1
+    }
+    flipbook_adjust_to_duration(flipbook)
+}
+
+flipbook_adjust_to_duration :: proc(flipbook : ^FlipBook) {
+    assert(flipbook != nil)
+    using flipbook
+
+    if key_count == 0 || duration <= 0 do return
+    
+    if key_count == 1 {
+        keys[0].time = duration
+        return
+    }
+
+    key_duration := duration / cast(f32) (key_count)
+    acc_time : f32
+
+    for i in 0..<key_count {
+        acc_time += key_duration 
+        keys[i].time = acc_time
+    }
+}
+
+/////////////////////////////
 //:Circle
 /////////////////////////////
 
@@ -194,6 +246,24 @@ draw_entities :: proc() {
         
         entity := entity_data(handle)
         
+        // FlipBook handle
+        if .FLIPBOOK in entity.flags {
+            using entity.flipbook
+            if playing && key_count != 0 {
+                time += delta_seconds()
+                key := keys[current_key]
+                if time >= key.time {
+                    current_key += 1
+                    if current_key == key_count {
+                        time = 0
+                        current_key = 0
+                        if !loop do playing = false
+                    }
+                }
+                entity.item = key.name
+            }
+        }
+
         // VFX handle
         {
             using entity.blink

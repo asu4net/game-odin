@@ -32,7 +32,7 @@ player_initialized :: proc(player : ^Player) -> bool {
 player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
-    entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D, .DAMAGE_TARGET } + GROUP_FLAGS_SPRITE)
+    entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D, .DAMAGE_TARGET, .FLIPBOOK } + GROUP_FLAGS_SPRITE)
     entity = entity_handler
     data.item = .Player
     speed = PLAYER_SPEED 
@@ -45,6 +45,16 @@ player_init :: proc(player : ^Player) {
     data.particle_emitter = emitter_handle;
     emitter_data.position = data.position;
     emitter_data.scale = ONE_3D * 0.15
+
+    /*
+    flipbook_create(&data.flipbook, duration = 1, loop = true, items = {
+        Texture_Name.Kamikaze_Skull,
+        Texture_Name.Kazmikaze_Saw,
+        Texture_Name.Player,
+    })
+    */
+
+    data.flipbook.playing = true
 
     initialized = true
 }

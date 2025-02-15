@@ -33,6 +33,9 @@ PARTICLE_COLOR              :: color.LIGHT_GREEN
 PARTICLE_LIFETIME           :: 1      
 PARTICLE_SPAWN_TIME         :: 0.01
 
+// Flipbook
+MAX_FLIPBOOK_KEYS :: 10
+
 // Kamikaze
 KAMIKAZE_WAVE_0_AMOUNT :: 5   // not implemented
 KAMIKAZE_SPEED_MIN     :: 0   // min speed
@@ -65,7 +68,7 @@ NAME_HOMING_MISSILE  :: "HomingMissilePrefab"
 //:Debug
 /////////////////////////////
 
-DEBUG_AI_MOVEMENT_ENABLED      :: true
+DEBUG_AI_MOVEMENT_ENABLED      :: false
 DEBUG_DRAW_COLLIDERS           :: true
 DEBUG_PRINT_CREATED_ENTITIES   :: false
 DEBUG_PRINT_DESTROYED_ENTITIES :: false
