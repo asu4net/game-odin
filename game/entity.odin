@@ -3,6 +3,7 @@ import "core:strings"
 import "core:fmt"
 import "core:container/queue"
 import "engine:global/color"
+import "engine:global/sparse_set"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Entity flags
@@ -136,7 +137,7 @@ Entity :: struct {
     homing_missile     : HomingMissile,
 }
 
-NIL_ENTITY_ID :: SPARSE_SET_INVALID
+NIL_ENTITY_ID :: sparse_set.INVALID_VALUE
 
 DEFAULT_ENTITY : Entity : {
     common           = DEFAULT_ENTITY_COMMON,
@@ -167,7 +168,7 @@ Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
 
 Entity_Registry :: struct {
     entities             : [] Entity,
-    sparse_set           : Sparse_Set,
+    entity_used_ids      : sparse_set.Sparse_Set,
     entity_ids           : queue.Queue(u32),
     entity_count         : u32,
     entity_groups        : Entity_Group_Map, 
@@ -191,7 +192,7 @@ entity_registry_init :: proc(instance : ^Entity_Registry) {
     using entity_registry_instance
     
     entities = make([]Entity, MAX_ENTITIES)
-    sparse_init(&sparse_set, MAX_ENTITIES)
+    sparse_set.init(&entity_used_ids, MAX_ENTITIES)
     queue.init(&entity_ids, MAX_ENTITIES)
     for i in 0..<MAX_ENTITIES {
         queue.push_back(&entity_ids, u32(i))
@@ -208,7 +209,7 @@ entity_registry_finish :: proc() {
     }
     delete(entity_groups)
     delete_map(pending_destroy)
-    sparse_finish(&sparse_set)
+    sparse_set.finish(&entity_used_ids)
     queue.destroy(&entity_ids)
     entity_registry_instance^ = {}
 }
@@ -223,7 +224,7 @@ entity_valid :: proc(entity : Entity_Handle) -> bool {
 entity_exists :: proc(entity : Entity_Handle) -> bool {
     using entity_registry_instance
     assert(entity_registry_initialized())
-    return sparse_test(&sparse_set, entity.id)
+    return sparse_set.test(&entity_used_ids, entity.id)
 }
 
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (handle : Entity_Handle, entity : ^Entity) {
@@ -231,7 +232,7 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (hand
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
     handle = { queue.front(&entity_ids) }
     queue.pop_front(&entity_ids)
-    index := sparse_insert(&sparse_set, handle.id)
+    index := sparse_set.insert(&entity_used_ids, handle.id)
     entity = &entities[index]
     entity^ = DEFAULT_ENTITY
     entity.id = handle.id
@@ -288,7 +289,7 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     using entity_registry_instance
     assert(entity_registry_initialized())
     assert(entity_exists(entity), "Trying to access unexisting entity")
-    index := sparse_search(&sparse_set, entity.id)
+    index := sparse_set.search(&entity_used_ids, entity.id)
     return &entities[index]
 }
 
@@ -412,7 +413,7 @@ clean_destroyed_entities :: proc() {
         }
 
         entity_remove_from_all_groups(data)
-        deleted, last := sparse_remove(&sparse_set, data.id)
+        deleted, last := sparse_set.remove(&entity_used_ids, data.id)
         entity_count -= 1
 
         if deleted != last {

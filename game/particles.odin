@@ -5,6 +5,7 @@ import "core:math/linalg"
 import "core:math"
 import "core:strings"
 import "core:container/queue"
+import "engine:global/sparse_set"
 
 PARTICLE_ID    :: u32
 
@@ -12,7 +13,7 @@ PARTICLE_ID    :: u32
 //:Particle
 /////////////////////////////
 
-NIL_PARTICLE_ID :: SPARSE_SET_INVALID
+NIL_PARTICLE_ID :: sparse_set.INVALID_VALUE
 
 
 Particle_Handle :: struct {
@@ -45,7 +46,7 @@ DEFAULT_PARTICLE : Particle : {
 
 EMITTER_ID    :: u32
 
-NIL_EMITTER_ID :: SPARSE_SET_INVALID
+NIL_EMITTER_ID :: sparse_set.INVALID_VALUE
 
 Emitter_Handle :: struct {
     id : EMITTER_ID    
@@ -92,12 +93,12 @@ Emitter_Group :: [dynamic]Emitter_Handle
 Particle_Registry :: struct {
     particles            : [] Particle,
     particle_group       : Particle_Group,
-    particle_sparse_set  : Sparse_Set,
+    particle_sparse_set  : sparse_set.Sparse_Set,
     particle_ids         : queue.Queue(u32),
     particle_count       : u32,
     emitters             : [] ParticleEmitter,
     emitter_group        : Emitter_Group,
-    emitter_sparse_set   : Sparse_Set,
+    emitter_sparse_set   : sparse_set.Sparse_Set,
     emitter_ids          : queue.Queue(u32),
     emitter_count        : u32,
     initialized          : bool,
@@ -118,14 +119,14 @@ particle_registry_init :: proc(instance : ^Particle_Registry) {
     using particle_registry_instance
     
     particles = make([]Particle, MAX_PARTICLES)
-    sparse_init(&particle_sparse_set, MAX_PARTICLES)
+    sparse_set.init(&particle_sparse_set, MAX_PARTICLES)
     queue.init(&particle_ids, MAX_PARTICLES)
     for i in 0..<MAX_PARTICLES {
         queue.push_back(&particle_ids, u32(i))
     }
     
     emitters = make([]ParticleEmitter, MAX_EMITTERS)
-    sparse_init(&emitter_sparse_set, MAX_EMITTERS)
+    sparse_set.init(&emitter_sparse_set, MAX_EMITTERS)
     queue.init(&emitter_ids, MAX_EMITTERS)
     for i in 0..<MAX_EMITTERS {
         queue.push_back(&emitter_ids, u32(i))
@@ -143,12 +144,12 @@ particle_registry_finish :: proc() {
     }
     delete(particles)
     delete(particle_group)
-    sparse_finish(&particle_sparse_set)
+    sparse_set.finish(&particle_sparse_set)
     queue.destroy(&particle_ids)
     
     delete(emitters)
     delete(emitter_group)
-    sparse_finish(&emitter_sparse_set)
+    sparse_set.finish(&emitter_sparse_set)
     queue.destroy(&emitter_ids)
 
     particle_registry_instance^ = {}
@@ -157,7 +158,7 @@ particle_registry_finish :: proc() {
 particle_exists :: proc(particle : Particle_Handle) -> bool {
     using particle_registry_instance
     assert(particle_registry_initialized())
-    return sparse_test(&particle_sparse_set, particle.id)
+    return sparse_set.test(&particle_sparse_set, particle.id)
 }
 
 particle_add_to_groups :: proc(data : ^Particle) {
@@ -173,7 +174,7 @@ particle_create :: proc() -> (particle : Particle_Handle, data : ^Particle) {
     assert(particle_registry_initialized() && particle_count <= MAX_PARTICLES)
     particle = { queue.front(&particle_ids) }
     queue.pop_front(&particle_ids)
-    index := sparse_insert(&particle_sparse_set, particle.id)
+    index := sparse_set.insert(&particle_sparse_set, particle.id)
     data = &particles[index]
     data^ = DEFAULT_PARTICLE
     data.id = particle.id
@@ -205,7 +206,7 @@ particle_data :: proc(particle : Particle_Handle) -> ^Particle {
     using particle_registry_instance
     assert(particle_registry_initialized())
     assert(particle_exists(particle), "Trying to access unexisting particle")
-    index := sparse_search(&particle_sparse_set, particle.id)
+    index := sparse_set.search(&particle_sparse_set, particle.id)
     return &particles[index]
 }
 
@@ -236,7 +237,7 @@ particle_destroy :: proc(particle : Particle_Handle) {
             fmt.printf("Destroyed particle. Id[%v] \n", data.id)
         }
     }
-    deleted, last := sparse_remove(&particle_sparse_set, data.id)
+    deleted, last := sparse_set.remove(&particle_sparse_set, data.id)
     particle_count -= 1
 
     if deleted != last {
@@ -254,7 +255,7 @@ particle_get_group :: proc() -> Particle_Group {
 emitter_exists :: proc(emitter : Emitter_Handle) -> bool {
     using particle_registry_instance
     assert(particle_registry_initialized())
-    return sparse_test(&emitter_sparse_set, emitter.id)
+    return sparse_set.test(&emitter_sparse_set, emitter.id)
 }
 
 emitter_add_to_groups :: proc(data : ^ParticleEmitter) {
@@ -270,7 +271,7 @@ emitter_create :: proc() -> (emitter : Emitter_Handle, data : ^ParticleEmitter) 
     assert(particle_registry_initialized() && emitter_count <= MAX_EMITTERS)
     emitter = { queue.front(&emitter_ids) }
     queue.pop_front(&emitter_ids)
-    index := sparse_insert(&emitter_sparse_set, emitter.id)
+    index := sparse_set.insert(&emitter_sparse_set, emitter.id)
     data = &emitters[index]
     data^ = DEFAULT_EMITTER
     data.id = emitter.id
@@ -302,7 +303,7 @@ emitter_data :: proc(emitter : Emitter_Handle) -> ^ParticleEmitter {
     using particle_registry_instance
     assert(particle_registry_initialized())
     assert(emitter_exists(emitter), "Trying to access unexisting emitter")
-    index := sparse_search(&emitter_sparse_set, emitter.id)
+    index := sparse_set.search(&emitter_sparse_set, emitter.id)
     return &emitters[index]
 }
 
@@ -333,7 +334,7 @@ emitter_destroy :: proc(emitter : Emitter_Handle) {
             fmt.printf("Destroyed emitter. Id[%v] \n", data.id)
         }
     }
-    deleted, last := sparse_remove(&emitter_sparse_set, data.id)
+    deleted, last := sparse_set.remove(&emitter_sparse_set, data.id)
     emitter_count -= 1
 
     if deleted != last {

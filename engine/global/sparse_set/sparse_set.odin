@@ -11,7 +11,7 @@ Sparse_Set :: struct {
     capacity : u32,         
 }
 
-INVALID :: max(u32)
+INVALID_VALUE :: max(u32)
 
 initialized :: proc(sparse_set : ^Sparse_Set) -> bool {
     using sparse_set
@@ -25,14 +25,14 @@ init :: proc(sparse_set : ^Sparse_Set, cap : u32) {
     sparse = make([]u32, capacity)
     dense  = make([]u32, capacity)
     for &n in dense {
-        n = INVALID
+        n = INVALID_VALUE
     }
     for &n in sparse {
-        n = INVALID
+        n = INVALID_VALUE
     }
 }
 
-sparse_finish :: proc(sparse_set : ^Sparse_Set) {
+finish :: proc(sparse_set : ^Sparse_Set) {
     assert(initialized(sparse_set))
     using sparse_set
     delete(sparse)
@@ -40,32 +40,32 @@ sparse_finish :: proc(sparse_set : ^Sparse_Set) {
     sparse_set^ = {}
 }
 
-sparse_test :: proc(sparse_set : ^Sparse_Set, element : u32) -> bool {
+test :: proc(sparse_set : ^Sparse_Set, element : u32) -> bool {
     using sparse_set
     assert(initialized(sparse_set))
-    return element < capacity && sparse[element] < count && sparse[element] != INVALID
+    return element < capacity && sparse[element] < count && sparse[element] != INVALID_VALUE
 }
 
-sparse_search :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
+search :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
     using sparse_set
-    assert(initialized(sparse_set) && element != INVALID)
-    assert(sparse_test(sparse_set, element))
+    assert(initialized(sparse_set) && element != INVALID_VALUE)
+    assert(test(sparse_set, element))
     dense_index := sparse[element]
     return dense_index
 }
 
-sparse_is_full :: proc(sparse_set : ^Sparse_Set) -> bool {
+is_full :: proc(sparse_set : ^Sparse_Set) -> bool {
     using sparse_set
     assert(initialized(sparse_set))
     assert(count <= capacity)
     return count == capacity
 }
 
-sparse_insert :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
+insert :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
     using sparse_set
     assert(initialized(sparse_set))
-    assert(element < capacity && !sparse_test(sparse_set, element))
-    assert(!sparse_is_full(sparse_set))
+    assert(element < capacity && !test(sparse_set, element))
+    assert(!is_full(sparse_set))
     next_slot := count
     sparse[element] = next_slot
     dense[next_slot] = element
@@ -73,15 +73,15 @@ sparse_insert :: proc(sparse_set : ^Sparse_Set, element : u32) -> u32 {
     return next_slot
 }
 
-sparse_remove :: proc(sparse_set : ^Sparse_Set, element : u32) -> (deleted, last : u32) {
+remove :: proc(sparse_set : ^Sparse_Set, element : u32) -> (deleted, last : u32) {
     using sparse_set
     assert(initialized(sparse_set))
-    assert(element < capacity && sparse_test(sparse_set, element))
+    assert(element < capacity && test(sparse_set, element))
     
     deleted = sparse[element]
     last = count - 1
 
-    sparse[element] = INVALID
+    sparse[element] = INVALID_VALUE
     count -= 1
 
     if deleted != last {

@@ -6,6 +6,14 @@ import "engine:global/matrix4"
 import "engine:global/interpolate"
 
 /////////////////////////////
+//:Rect
+/////////////////////////////
+
+Rect :: struct {
+    x, y : f32, width, height : int
+}
+
+/////////////////////////////
 //:Transform
 /////////////////////////////
 
