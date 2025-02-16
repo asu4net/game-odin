@@ -3,7 +3,6 @@ package entity
 import "base:intrinsics"
 import "engine:global/sparse_set"
 import "core:container/queue"
-import "core:fmt"
 
 /*
 
@@ -50,10 +49,12 @@ Grupo (A, B, C) → { Start: 0, End: 2 }
 
 */
 
-Entity_ID      :: u32
-NIL_ENTITY_ID  :: sparse_set.INVALID_VALUE 
-MAX_ENTITIES   :: 10000 //TODO: Hacer el sparse set resizeable
-Raw_Data_Array :: Data_Array(struct{})
+Entity_ID        :: u32
+NIL_ENTITY_ID    :: sparse_set.INVALID_VALUE 
+CLEANUP_INTERVAL :: 2 // Zero means each frame
+MAX_NAME_LENGTH  :: 10
+MAX_ENTITIES     :: 10000 //TODO: Hacer el sparse set resizeable
+Raw_Data_Array   :: Data_Array(struct{})
 
 //TODO: Es esto una pool? Mover funcionalidad a un fichero separado
 // - antes de mover tener en cuenta el sistema de grupos
@@ -65,31 +66,33 @@ Data_Array :: struct($T : typeid) {
     occupied_ids  : sparse_set.Sparse_Set,
 }
 
-Registry :: struct {
-    data_array_map : map[typeid] Raw_Data_Array,
-    avaliable_ids  : queue.Queue(Entity_ID),
-    last_id        : Entity_ID
+//name_to_string -> string(data[:len])
+Name :: struct {
+    data : [MAX_NAME_LENGTH] u8,
+    len  : u32
 }
 
-test :: proc() {
+name_init :: proc(name : ^Name, s : string) {
+    name.len = u32(len(s))
+    assert(name.len <= MAX_NAME_LENGTH)
+    copy(name.data[:], s)
+}
 
-    A :: struct {
-        name : string
-    }
-    
-    B :: struct {
-        
-    }
+Info :: struct {
+    id    : Entity_ID,    
+    name  : Name,
+    //TODO: children list
+    valid : bool
+}
 
-    reg : Registry
-    init(&reg)
-    e := create()
-    add(e, A{ name = "alex" })
-    add(e, B)
-    fmt.print(get(e, A).name)
-    remove(e, B)
-    remove(e, A)
-    finish()
+Registry :: struct {
+    data_array_map       : map[typeid] Raw_Data_Array,
+    avaliable_ids        : queue.Queue(Entity_ID),
+    last_id              : Entity_ID,
+    pending_destroy      : map[Entity_ID] struct{}, 
+    occupied_ids         : sparse_set.Sparse_Set,
+    infos                : [dynamic] Info, 
+    cycles_since_cleaned : u32
 }
 
 initialized :: proc() -> bool {
@@ -102,8 +105,11 @@ init :: proc(instance : ^Registry) {
     registry = instance
     using registry
 
-    data_array_map = make(map[typeid] Raw_Data_Array)
+    data_array_map  = make(map[typeid] Raw_Data_Array)
+    pending_destroy = make(map[Entity_ID] struct{});
     queue.init(&avaliable_ids)
+    sparse_set.init(&occupied_ids, MAX_ENTITIES)
+    infos = make([dynamic] Info)
 }
 
 finish :: proc() {
@@ -115,9 +121,11 @@ finish :: proc() {
     }
     delete(data_array_map)
     queue.destroy(&avaliable_ids)
+    sparse_set.finish(&occupied_ids)
+    delete(infos)
 }
 
-create :: proc() -> (id : Entity_ID) {
+create :: proc(name := "") -> (id : Entity_ID) {
     assert(initialized())
     using registry
     
@@ -128,11 +136,68 @@ create :: proc() -> (id : Entity_ID) {
         id = queue.front(&avaliable_ids)
         queue.pop_front(&avaliable_ids)
     }
+
+    register_info(id, name)
     return
+}
+
+exists :: proc(id : Entity_ID) -> bool {
+    assert(initialized())
+    return sparse_set.test(&registry.occupied_ids, id)
+}
+
+valid :: proc(id : Entity_ID) -> bool {
+    assert(initialized())
+    assert(exists(id))
+    return get_info(id).valid
+}
+
+name :: proc(id : Entity_ID) -> ^Name {
+    assert(initialized())
+    assert(exists(id))
+    return &get_info(id).name
+}
+
+destroy :: proc(id : Entity_ID) {
+    assert(initialized())
+    assert(valid(id))
+    assert(id not_in registry.pending_destroy)
+    get_info(id).valid = false
+    registry.pending_destroy[id] = {}
+    //TODO: Para cuando los grupos hay que ver cómo hacer que no se ordene
+}
+
+clean_destroyed :: proc() {
+    assert(initialized())
+    using registry
+    
+    if cycles_since_cleaned < CLEANUP_INTERVAL {
+        cycles_since_cleaned += 1
+        return 
+    }
+
+    cycles_since_cleaned = 0
+
+    for entity, _  in pending_destroy {
+        
+        for _, &data_array in data_array_map {
+            if sparse_set.test(&data_array.occupied_ids, entity) {
+                deleted, last := sparse_set.remove(&data_array.occupied_ids, entity)
+                if deleted != last {
+                    data_array.elements[deleted] = data_array.elements[last]
+                }
+            }
+        }
+
+        unregister_info(entity)
+    }
+
+    clear(&pending_destroy)
 }
 
 has :: proc(entity : Entity_ID, $T : typeid) -> bool {
     assert(initialized())
+    assert(exists(entity))
     using registry
     data_type := typeid_of(T)
     if data_type in data_array_map {
@@ -147,6 +212,7 @@ add :: proc{ add_data, add_empty }
 add_data :: proc(entity : Entity_ID, data : $T) -> ^T {
     #assert(intrinsics.type_is_struct(T))
     assert(initialized())
+    assert(exists(entity))
     assert(!has(entity, T))
     using registry
     data_array := get_data_array(T) if typeid_of(T) in data_array_map else register(T)
@@ -159,12 +225,14 @@ add_empty :: proc(entity : Entity_ID, $T : typeid) -> ^T {
 
 remove :: proc(entity : Entity_ID, $T : typeid) {
     assert(initialized())
+    assert(exists(entity))
     assert(has(entity, T))
     data_array_remove(entity, get_data_array(T))
 }
 
 get :: proc(entity : Entity_ID, $T : typeid) -> ^T {
     assert(initialized())
+    assert(exists(entity))
     assert(has(entity, T))
     return data_array_get(entity, get_data_array(T))
 }
@@ -186,6 +254,44 @@ register :: proc($T : typeid) -> (data_array : ^Data_Array(T)) {
 
 @(private="file")
 registry : ^Registry
+
+@(private = "file")
+register_info :: proc(entity : Entity_ID, name : string) {
+    assert(initialized())
+    using registry
+
+    info : Info
+    name_init(&info.name, name)
+    info.id = entity
+    info.valid = true
+
+    // Hacemos lo mismo que con el data array :p
+    dense_index := sparse_set.insert(&occupied_ids, entity)
+    if len(infos) <= cast(int) dense_index {
+        append_elem(&infos, info)
+    } else {
+        infos[dense_index] = info
+    }
+}
+
+@(private = "file")
+unregister_info :: proc(entity : Entity_ID) {
+    assert(initialized())
+    using registry
+    deleted, last := sparse_set.remove(&occupied_ids, entity)
+    if deleted != last {
+        infos[deleted] = infos[last]
+    }
+}
+
+@(private = "file")
+get_info :: proc(id : Entity_ID) -> ^Info {
+    assert(initialized())
+    using registry
+    assert(exists(id))
+    dense_index := sparse_set.search(&occupied_ids, id)
+    return &infos[dense_index]
+}
 
 @(private = "file")
 data_array_initialized :: proc(data_array : ^Data_Array($T)) -> bool {
