@@ -12,19 +12,19 @@ test :: proc() {
     }
 
     reg : Entity_Registry
-    init_registry(&reg)
-    e := create_entity()
+    init(&reg)
+    e := create()
     add_component(e, A{ name = "alex" })
     add_component(e, B)
     
     fmt.print(get_component(e, A).name)
     remove_component(e, B)
-    destroy_entity(e)
-    clean_destroyed_entities()
+    destroy(e)
+    clean_destroyed()
     fmt.print(get_component(e, A).name)
-    clean_destroyed_entities()
+    clean_destroyed()
     fmt.print(get_component(e, A).name)
-    clean_destroyed_entities()
+    clean_destroyed()
     //fmt.print(get(e, A).name)
-    finish_registry()
+    finish()
 }
