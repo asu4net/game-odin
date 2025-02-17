@@ -3,7 +3,7 @@ import "core:mem"
 import "core:fmt"
 import "engine:window"
 import "engine:input"
-import "engine:entity"
+import "engine:ecs"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Game
@@ -194,7 +194,7 @@ finish :: proc() {
 game : Game
 
 main :: proc() {
-    //entity.test()
+    //ecs.test()
     game_init(&game)
 }
 
