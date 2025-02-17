@@ -11,7 +11,7 @@ test :: proc() {
         
     }
 
-    reg : Registry
+    reg : Entity_Registry
     init_registry(&reg)
     e := create_entity()
     add_component(e, A{ name = "alex" })
