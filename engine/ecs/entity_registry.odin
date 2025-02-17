@@ -23,7 +23,7 @@ registry_initialized :: proc() -> bool {
     return registry != nil
 }
 
-init_registry :: proc(instance : ^Entity_Registry) {
+init :: proc(instance : ^Entity_Registry) {
     assert(!registry_initialized())
     assert(instance != nil)
     registry = instance
@@ -34,7 +34,7 @@ init_registry :: proc(instance : ^Entity_Registry) {
     init_info_array(&info_array)
 }
 
-finish_registry :: proc() {
+finish :: proc() {
     assert(registry_initialized())
     using registry
     queue.destroy(&avaliable_ids)
@@ -43,7 +43,7 @@ finish_registry :: proc() {
     registry^ = {}
 }
 
-create_entity :: proc(name := "") -> (id : Entity_ID) {
+create :: proc(name := "") -> (id : Entity_ID) {
     assert(registry_initialized())
     using registry
     
@@ -59,37 +59,37 @@ create_entity :: proc(name := "") -> (id : Entity_ID) {
     return
 }
 
-entity_exists :: proc(id : Entity_ID) -> bool {
+exists :: proc(id : Entity_ID) -> bool {
     assert(registry_initialized())
     using registry
     return sparse_set.test(&registry.info_array.occupied_ids, id)
 }
 
-entity_is_valid :: proc(id : Entity_ID) -> bool {
+is_valid :: proc(id : Entity_ID) -> bool {
     assert(registry_initialized())
-    assert(entity_exists(id))
+    assert(exists(id))
     using registry
-    return get_entity_info(&info_array, id).valid
+    return get_info(&info_array, id).valid
 }
 
-entity_name :: proc(id : Entity_ID) -> ^Name {
+get_name :: proc(id : Entity_ID) -> ^Name {
     assert(registry_initialized())
-    assert(entity_exists(id))
+    assert(exists(id))
     using registry
-    return &get_entity_info(&info_array, id).name
+    return &get_info(&info_array, id).name
 }
 
-destroy_entity :: proc(id : Entity_ID) {
+destroy :: proc(id : Entity_ID) {
     assert(registry_initialized())
-    assert(entity_is_valid(id))
+    assert(is_valid(id))
     using registry
     assert(id not_in pending_destroy)
-    get_entity_info(&info_array, id).valid = false
+    get_info(&info_array, id).valid = false
     pending_destroy[id] = {}
     //TODO: Para cuando los grupos hay que ver cómo hacer que no se ordene
 }
 
-clean_destroyed_entities :: proc() {
+clean_destroyed :: proc() {
     assert(registry_initialized())
     using registry
     
@@ -110,10 +110,10 @@ clean_destroyed_entities :: proc() {
 
 has_component :: proc(entity : Entity_ID, $T : typeid) -> bool {
     assert(registry_initialized())
-    assert(entity_exists(entity))
+    assert(exists(entity))
     using registry
     type_index := get_component_type_index(&component_registry, T)
-    info := get_entity_info(entity)
+    info := get_info(entity)
     return type_index in info.signature
 }
 
@@ -122,10 +122,10 @@ add_component :: proc{ add_component_with_data, add_component_default }
 add_component_with_data :: proc(entity : Entity_ID, data : $T) -> ^T {
     #assert(intrinsics.type_is_struct(T))
     assert(registry_initialized())
-    assert(entity_exists(entity))
+    assert(exists(entity))
     using registry
     data_ptr, type_index := add_component_data(&component_registry, entity, data)
-    get_entity_info(&info_array, entity).signature += { type_index } 
+    get_info(&info_array, entity).signature += { type_index } 
     return data_ptr
 }
 
@@ -135,15 +135,15 @@ add_component_default :: proc(entity : Entity_ID, $T : typeid) -> ^T {
 
 remove_component :: proc(entity : Entity_ID, $T : typeid) {
     assert(registry_initialized())
-    assert(entity_exists(entity))
+    assert(exists(entity))
     using registry
     type_index := remove_component_data(&component_registry, entity, T)
-    get_entity_info(&info_array, entity).signature -= { type_index }
+    get_info(&info_array, entity).signature -= { type_index }
 }
 
 get_component :: proc(entity : Entity_ID, $T : typeid) -> ^T {
     assert(registry_initialized())
-    assert(entity_exists(entity))
+    assert(exists(entity))
     return get_component_data(&registry.component_registry, entity, T)
 }
 

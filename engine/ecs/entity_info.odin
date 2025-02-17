@@ -71,10 +71,10 @@ unregister_info :: proc(arr : ^Entity_Info_Array, entity : Entity_ID) {
     }
 }
 
-get_entity_info :: proc(arr : ^Entity_Info_Array, id : Entity_ID) -> ^Entity_Info {
+get_info :: proc(arr : ^Entity_Info_Array, id : Entity_ID) -> ^Entity_Info {
     assert(arr != nil)
     using arr
-    assert(entity_exists(id))
+    assert(sparse_set.test(&occupied_ids, id)) // entity exists
     dense_index := sparse_set.search(&occupied_ids, id)
     return &infos[dense_index]
 }
