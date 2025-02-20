@@ -75,7 +75,8 @@ init :: proc(instance : ^Entity_Registry) {
     using registry
     pending_destroy = make(map[Entity_ID] struct{});
     queue.init(&avaliable_ids)
-    init_info_array(&info_array)
+    info_array.infos = make([dynamic] Entity_Info)
+    sparse_set.init(&info_array.occupied_ids, MAX_ENTITIES)
 }
 
 finish :: proc() {
@@ -88,7 +89,8 @@ finish :: proc() {
         free(array)
     }
     delete(component_arrays)
-    finish_info_array(&info_array)
+    delete(info_array.infos)
+    sparse_set.finish(&info_array.occupied_ids)
     registry^ = {}
 }
 
@@ -104,7 +106,7 @@ create :: proc(name := "") -> (id : Entity_ID) {
         queue.pop_front(&avaliable_ids)
     }
 
-    register_info(&info_array, id, name)
+    register_info(id, name)
     return
 }
 
@@ -118,14 +120,14 @@ is_valid :: proc(id : Entity_ID) -> bool {
     assert(registry_initialized())
     assert(exists(id))
     using registry
-    return get_info(&info_array, id).valid
+    return get_info(id).valid
 }
 
 get_name :: proc(id : Entity_ID) -> ^Name {
     assert(registry_initialized())
     assert(exists(id))
     using registry
-    return &get_info(&info_array, id).name
+    return &get_info(id).name
 }
 
 destroy :: proc(id : Entity_ID) {
@@ -133,7 +135,7 @@ destroy :: proc(id : Entity_ID) {
     assert(is_valid(id))
     using registry
     assert(id not_in pending_destroy)
-    get_info(&info_array, id).valid = false
+    get_info(id).valid = false
     pending_destroy[id] = {}
     //TODO: Para cuando los grupos hay que ver cómo hacer que no se ordene
 }
@@ -151,17 +153,17 @@ clean_destroyed :: proc() {
 
     for entity, _  in pending_destroy {
         remove_all_component_data(entity)
-        unregister_info(&info_array, entity)
+        unregister_info(entity)
     }
 
     clear(&pending_destroy)
 }
 
-has_component :: proc(entity : Entity_ID, $T : typeid) -> bool {
+has_component :: proc(entity : Entity_ID, type : typeid) -> bool {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
-    type_index := get_component_type_index(T)
+    type_index := get_component_type_index(type)
     info := get_info(entity)
     return type_index in info.signature
 }
@@ -218,7 +220,6 @@ add_component_with_data :: proc(entity : Entity_ID, data : $T) -> ^T {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
-    assert(registry_initialized())
     component_array := get_component_array(T) if is_component_type_registered(T) else register_component_type(T)
     assert(!sparse_set.test(&component_array.occupied_ids, entity)) // assert not has component
     dense_index := sparse_set.insert(&component_array.occupied_ids, entity)
@@ -229,7 +230,7 @@ add_component_with_data :: proc(entity : Entity_ID, data : $T) -> ^T {
     }
     data_ptr   := &component_array.elements[dense_index]
     type_index := component_array.type_index
-    get_info(&info_array, entity).signature += { type_index } 
+    get_info(entity).signature += { type_index } 
     return data_ptr
 }
 
@@ -237,13 +238,12 @@ remove_component :: proc(entity : Entity_ID, $T : typeid) {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
-    assert(registry_initialized())
     assert(is_component_type_registered(T))
     component_array := get_component_array(T)
     assert(sparse_set.test(&component_array.occupied_ids, entity)) // assert has component
     deleted, last := sparse_set.remove(&component_array.occupied_ids, entity)
     if deleted != last do component_array.elements[deleted] = component_array.elements[last]
-    get_info(&info_array, entity).signature -= { component_array.type_index }
+    get_info(entity).signature -= { component_array.type_index }
 }
 
 get_component_array :: proc($T : typeid) -> ^Component_Array(T) {
@@ -268,51 +268,37 @@ get_component :: proc(entity : Entity_ID, $T : typeid) -> ^T {
     return &component_array.elements[dense_index]
 }
 
-init_info_array :: proc(arr : ^Entity_Info_Array) {
-    assert(arr != nil)
-    using arr
-    infos = make([dynamic] Entity_Info)
-    sparse_set.init(&occupied_ids, MAX_ENTITIES)
-}
-
-finish_info_array :: proc(arr : ^Entity_Info_Array) {
-    assert(arr != nil)
-    using arr
-    delete(infos)
-    sparse_set.finish(&occupied_ids)
-}
-
-register_info :: proc(arr : ^Entity_Info_Array, entity : Entity_ID, name : string) {
-    assert(arr != nil)
-    using arr
+register_info :: proc(entity : Entity_ID, name : string) {
+    assert(registry_initialized())
+    using registry
     info : Entity_Info
     name_init(&info.name, name)
     info.id = entity
     info.valid = true
 
-    dense_index := sparse_set.insert(&occupied_ids, entity)
-    if len(infos) <= cast(int) dense_index {
-        append_elem(&infos, info)
+    dense_index := sparse_set.insert(&info_array.occupied_ids, entity)
+    if len(info_array.infos) <= cast(int) dense_index {
+        append_elem(&info_array.infos, info)
     } else {
-        infos[dense_index] = info
+        info_array.infos[dense_index] = info
     }
 }
 
-unregister_info :: proc(arr : ^Entity_Info_Array, entity : Entity_ID) {
-    assert(arr != nil)
-    using arr
-    deleted, last := sparse_set.remove(&occupied_ids, entity)
+unregister_info :: proc(entity : Entity_ID) {
+    assert(registry_initialized())
+    using registry
+    deleted, last := sparse_set.remove(&info_array.occupied_ids, entity)
     if deleted != last {
-        infos[deleted] = infos[last]
+        info_array.infos[deleted] = info_array.infos[last]
     }
 }
 
-get_info :: proc(arr : ^Entity_Info_Array, id : Entity_ID) -> ^Entity_Info {
-    assert(arr != nil)
-    using arr
-    assert(sparse_set.test(&occupied_ids, id)) // entity exists
-    dense_index := sparse_set.search(&occupied_ids, id)
-    return &infos[dense_index]
+get_info :: proc(id : Entity_ID) -> ^Entity_Info {
+    assert(registry_initialized())
+    using registry
+    assert(sparse_set.test(&info_array.occupied_ids, id)) // entity exists
+    dense_index := sparse_set.search(&info_array.occupied_ids, id)
+    return &info_array.infos[dense_index]
 }
 
 /*
