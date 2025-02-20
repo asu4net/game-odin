@@ -16,7 +16,8 @@ test :: proc() {
     e := create()
     add_component(e, A{ name = "alex" })
     add_component(e, B)
-    
+
+    //get_entity_group(A, B)
     fmt.print(get_component(e, A).name)
     remove_component(e, B)
     destroy(e)
