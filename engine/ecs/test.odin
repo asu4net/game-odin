@@ -19,6 +19,7 @@ test :: proc() {
 
     //get_entity_group(A, B)
     fmt.print(get_component(e, A).name)
+    get_group(A, B)
     remove_component(e, B)
     destroy(e)
     clean_destroyed()

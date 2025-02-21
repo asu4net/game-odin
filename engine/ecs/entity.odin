@@ -3,6 +3,7 @@ package ecs
 import "base:intrinsics"
 import "engine:global/sparse_set"
 import "core:container/queue"
+import "core:fmt"
 
 // TODO: Add transform and name to global. Then add to the entity info.
 // TODO: Encapsulate entity info
@@ -316,56 +317,57 @@ GroupRange :: struct {
 
 }
 
-get_group :: proc(types: ..typeid) {
+get_group :: proc { get_group_by_types, get_group_by_signature }
 
+get_group_by_types :: proc(types: ..typeid) {
+    signature := get_group_signature(..types)
+    assert(registry_initialized())
+    get_group_by_signature(signature)
 }
 
-//TODO: Revisar en qué estructura van a guardarse los grupos y si valdría más la pena que estén centralizados
-//TODO: Revisar el criterio de búsqueda para encontrar las entidades que pertenecen al grupo.
-// - quizás sí que habría que buscar los component array coincidentes en la signature y comprobar cada entidad de ellos
-// - entonces, aquí quizás no sirve la signature? Y hay que usar los typeids directamente...
-// - Plantear tener los component array en un array, y que los índices coincidan con la signature del componente
-// - Luego tener un mapa que relacione el índice
-// - y así teniendo la signature de una entidad se puede acceder rápido a sus component arrays
-// - además, se puede reducir el número de funciones templatizadas...?
-// - incluso si el usuario se guarda los índices de los componentes podría acceder a ellos saltándose la búsqueda por mapa
+get_group_by_signature :: proc(signature : Signature) {
+    assert(registry_initialized())
+    using registry
+    for array in component_arrays  {
+        if signature in array.groups {
+            // TODO: save the group info
+            continue
+        }
+        // group does not exist
+        create_group(signature)
+        //get_group_by_signature(signature)
+        break
+    }  
+}
 
 create_group :: proc(signature : Signature) {
   assert(registry_initialized())
   using registry
-  for _, array in component_arrays {
-    //assert(signature not_in array.groups)
-    //map_insert(&array.groups,  )
+  for index in signature {
+    fmt.print(index)
+    //TODO: insert group info in the maps
+    //TODO: re-arrange the components
   }
 }
 
-try_get_group_signature :: proc{ try_get_group_signature_by_type, try_get_group_signature_by_index }
+get_group_signature :: proc{ get_group_signature_by_type, get_group_signature_by_index }
 
-try_get_group_signature_by_type :: proc(types: ..typeid) -> (success : bool, signature : Signature) {
+get_group_signature_by_type :: proc(types: ..typeid) -> (signature : Signature) {
     assert(registry_initialized())
     using registry
-
     for type in types {
-      if !is_component_type_registered(type) {
-        success = false
-        return
-      }
+      assert(is_component_type_registered(type))
       signature += { get_component_type_index(type) }
     }
-    success = true
     return
 }
 
-try_get_group_signature_by_index :: proc(types: ..u32) -> (success : bool, signature : Signature) {
+get_group_signature_by_index :: proc(types: ..u32) -> (signature : Signature) {
   assert(registry_initialized())
   using registry
   for type in types {
-    if type > cast(u32) len(component_arrays) {
-      success = false
-      return
-    }
+    assert(type < cast(u32) len(component_arrays))
     signature += { type }
   }
-  success = true
   return
 }
