@@ -48,7 +48,6 @@ Component_Array :: struct($T : typeid) {
     type_index    : u32,
     elements      : [dynamic] T,
     occupied_ids  : sparse_set.Sparse_Set,
-    groups        : map[Signature]u32 
 }
 
 Entity_Registry :: struct {
@@ -60,6 +59,7 @@ Entity_Registry :: struct {
     component_arrays     : [dynamic] ^Raw_Component_Array,
     last_type_index      : u32,
     info_array           : Entity_Info_Array, 
+    groups               : map[Signature] [dynamic] Entity_ID
 }
 
 @(private)
@@ -78,6 +78,7 @@ init :: proc(instance : ^Entity_Registry) {
     queue.init(&avaliable_ids)
     info_array.infos = make([dynamic] Entity_Info)
     sparse_set.init(&info_array.occupied_ids, MAX_ENTITIES)
+    groups = make(map[Signature] [dynamic] Entity_ID)
 }
 
 finish :: proc() {
@@ -92,6 +93,8 @@ finish :: proc() {
     delete(component_arrays)
     delete(info_array.infos)
     sparse_set.finish(&info_array.occupied_ids)
+    for _, group in groups do delete(group)
+    delete(groups)
     registry^ = {}
 }
 
@@ -319,35 +322,47 @@ GroupRange :: struct {
 
 get_group :: proc { get_group_by_types, get_group_by_signature }
 
-get_group_by_types :: proc(types: ..typeid) {
+get_group_by_types :: proc(types: ..typeid) -> [dynamic] Entity_ID {
     signature := get_group_signature(..types)
     assert(registry_initialized())
-    get_group_by_signature(signature)
+    return get_group_by_signature(signature)
 }
 
-get_group_by_signature :: proc(signature : Signature) {
+get_group_by_signature :: proc(signature : Signature) -> [dynamic] Entity_ID {
     assert(registry_initialized())
     using registry
-    for array in component_arrays  {
-        if signature in array.groups {
-            // TODO: save the group info
-            continue
-        }
-        // group does not exist
-        create_group(signature)
-        //get_group_by_signature(signature)
-        break
-    }  
+    if signature in groups do return groups[signature]
+    return create_group(signature)
 }
 
-create_group :: proc(signature : Signature) {
+create_group :: proc(signature : Signature) -> (group : [dynamic] Entity_ID) {
   assert(registry_initialized())
   using registry
+  shorter_array_count := max(int)
+  shorter_array_index := -1 
   for index in signature {
-    fmt.print(index)
-    //TODO: insert group info in the maps
-    //TODO: re-arrange the components
+    assert(index <= u32(len(component_arrays)))
+    array := component_arrays[index]
+    count := int(array.occupied_ids.count) 
+    if count < shorter_array_count {
+        shorter_array_index = int(index)
+        shorter_array_count = count
+    }
   }
+  assert(shorter_array_index >= 0)
+  shorter_array := component_arrays[shorter_array_index]
+  dense := shorter_array.occupied_ids.dense
+  count := shorter_array.occupied_ids.count
+  assert(signature not_in groups)
+  group = make([dynamic] Entity_ID)
+  map_insert(&groups, signature, group)
+  for i in 0..<count {
+    entity_info := get_info(dense[i])
+    if entity_info.valid && signature - entity_info.signature == nil {
+        append_elem(&group,entity_info.id)
+    }
+  }
+  return
 }
 
 get_group_signature :: proc{ get_group_signature_by_type, get_group_signature_by_index }
