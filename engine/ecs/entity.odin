@@ -98,6 +98,7 @@ finish :: proc() {
     registry^ = {}
 }
 
+//TODO: add overload with variadic component types, and data..? I guess that overload should return all data
 create :: proc(name := "") -> (id : Entity_ID) {
     assert(registry_initialized())
     using registry

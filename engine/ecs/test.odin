@@ -15,9 +15,14 @@ test :: proc() {
     init(&reg)
     e := create()
     e0 := create()
-    add_component(e, A{ name = "alex" })
-    add_component(e, B)
-    add_component(e0, A)
+
+    // think of removing the _component. too long func
+    
+    add :: add_component
+
+    add(e, A{ name = "alex" })
+    add(e, B)
+    add(e0, A)
 
     //get_entity_group(A, B)
     fmt.print(get_component(e, A).name)
