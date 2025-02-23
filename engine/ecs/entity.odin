@@ -2,6 +2,8 @@ package ecs
 
 import "base:intrinsics"
 import "engine:global/sparse_set"
+import "engine:global/transform"
+import "engine:global/vector"
 import "core:container/queue"
 import "core:fmt"
 
@@ -37,6 +39,7 @@ Entity_Info :: struct {
     name      : Name,
     valid     : bool,
     enabled   : bool,
+    transform : transform.Transform
     //TODO: children list
 }
 
@@ -139,6 +142,38 @@ set_enabled :: proc(entity : Entity_ID, enabled := true) {
     if enabled do add_to_groups(entity)
     else do remove_from_groups(entity)
 }
+
+get_transform :: proc(entity : Entity_ID) -> ^transform.Transform {
+    assert(registry_initialized())
+    assert(exists(entity))
+    using registry
+    return &get_info(entity).transform
+}
+
+set_position :: proc(entity : Entity_ID, position : vector.v3) {
+    get_transform(entity).position = position
+}
+
+get_position :: proc(entity : Entity_ID) -> vector.v3 {
+    return get_transform(entity).position
+}
+
+set_rotation :: proc(entity : Entity_ID, rotation : vector.v3) {
+    get_transform(entity).rotation = rotation
+}
+
+get_rotation :: proc(entity : Entity_ID) -> vector.v3 {
+    return get_transform(entity).rotation
+}
+
+set_scale :: proc(entity : Entity_ID, scale : vector.v3) {
+    get_transform(entity).scale = scale
+}
+
+get_scale :: proc(entity : Entity_ID) -> vector.v3 {
+    return get_transform(entity).scale
+}
+
 
 get_name :: proc(entity : Entity_ID) -> ^Name {
     assert(registry_initialized())
@@ -307,6 +342,7 @@ register_info :: proc(entity : Entity_ID, name : string) {
     info.id = entity
     info.valid = true
     info.enabled = true
+    info.transform = transform.DEFAULT_TRANSFORM
 
     dense_index := sparse_set.insert(&info_array.occupied_ids, entity)
     if len(info_array.infos) <= cast(int) dense_index {

@@ -4,25 +4,8 @@ import "core:fmt"
 import "engine:global/color"
 import "engine:global/matrix4"
 import "engine:global/interpolate"
+import "engine:global/transform"
 import gfx "engine:graphics"
-
-/////////////////////////////
-//:Transform
-/////////////////////////////
-
-Transform :: struct {
-    position : v3,
-    rotation : v3,
-    scale    : v3
-}
-
-DEFAULT_TRANSFORM : Transform : {
-    ZERO_3D, ZERO_3D, ONE_3D
-}
-
-transform_to_m4 :: proc(transform : Transform) -> m4 {
-    return matrix4.transform(transform.position, transform.rotation, transform.scale)
-}
 
 /////////////////////////////
 //:Sprite
@@ -200,7 +183,7 @@ draw_scene_2d :: proc() {
 @(private = "file")
 draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := color.WHITE, entity_id : u32 = 0) {
     gfx.draw_circle(
-        transform = transform_to_m4(transform),
+        transform = get_matrix(transform),
         radius    = circle.radius,
         thickness = circle.thickness,
         fade      = circle.fade,
@@ -228,7 +211,7 @@ draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT
     }
 
     gfx.draw_quad(
-        transform    = transform_to_m4(transform),
+        transform    = get_matrix(transform),
         texture      = texture,
         tiling       = sprite.tiling,
         blending     = sprite.blending,

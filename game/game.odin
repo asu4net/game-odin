@@ -194,7 +194,6 @@ finish :: proc() {
 game : Game
 
 main :: proc() {
-    //ecs.test()
     game_init(&game)
 }
 
