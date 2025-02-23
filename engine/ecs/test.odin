@@ -28,6 +28,7 @@ test :: proc() {
     fmt.print(get_component(e, A).name)
     group := get_group(A, B)
     remove_component(e, B)
+    group = get_group(A, B)
     destroy(e)
     clean_destroyed()
     fmt.print(get_component(e, A).name)
