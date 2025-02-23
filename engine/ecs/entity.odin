@@ -112,7 +112,7 @@ create_add :: proc(name := "", components: ..typeid) -> (entity : Entity) {
     entity = create_empty(name)
 
     for component in components {
-        add(component, entity)
+        //add(component, entity)
     }
 
     return
@@ -268,6 +268,28 @@ add_component_default :: proc($T : typeid, entity : Entity) -> ^T {
     return add_component_with_data(T{}, entity)
 }
 
+add_component_with_data :: proc(data : $T, entity : Entity) -> ^T {
+    #assert(intrinsics.type_is_struct(T))
+    assert(registry_initialized())
+    assert(exists(entity))
+    using registry
+    component_array := get_component_array(T) if is_component_type_registered(T) else register_component_type(T)
+    assert(!sparse_set.test(&component_array.occupied_ids, entity)) // assert not has component
+    dense_index := sparse_set.insert(&component_array.occupied_ids, entity)
+    if len(component_array.elements) <= cast(int) dense_index {
+        append_elem(&component_array.elements, data)
+    } else {
+        component_array.elements[dense_index] = data
+    }
+    data_ptr   := &component_array.elements[dense_index]
+    type_index := component_array.type_index
+    info := get_info(entity)
+    info.signature += { type_index }
+    if !info.enabled do return data_ptr
+    add_to_groups(entity)
+    return data_ptr
+}
+
 is_component_type_registered :: proc(type : typeid) -> bool {
     assert(registry_initialized())
     using registry
@@ -307,28 +329,6 @@ remove_all_component_data :: proc(entity : Entity) {
             if deleted != last do component_array.elements[deleted] = component_array.elements[last]
         }
     }
-}
-
-add_component_with_data :: proc(data : $T, entity : Entity) -> ^T {
-    #assert(intrinsics.type_is_struct(T))
-    assert(registry_initialized())
-    assert(exists(entity))
-    using registry
-    component_array := get_component_array(T) if is_component_type_registered(T) else register_component_type(T)
-    assert(!sparse_set.test(&component_array.occupied_ids, entity)) // assert not has component
-    dense_index := sparse_set.insert(&component_array.occupied_ids, entity)
-    if len(component_array.elements) <= cast(int) dense_index {
-        append_elem(&component_array.elements, data)
-    } else {
-        component_array.elements[dense_index] = data
-    }
-    data_ptr   := &component_array.elements[dense_index]
-    type_index := component_array.type_index
-    info := get_info(entity)
-    info.signature += { type_index }
-    if !info.enabled do return data_ptr
-    add_to_groups(entity)
-    return data_ptr
 }
 
 remove_component :: proc(entity : Entity, $T : typeid) {

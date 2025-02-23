@@ -28,7 +28,7 @@ DEFAULT_TRANSFORM :: transform.DEFAULT_TRANSFORM
 get_matrix        :: transform.get_matrix
 
 // Entity
-Entity            :: ecs.Entity
+//Entity            :: ecs.Entity
 add               :: ecs.add
 get               :: ecs.get
 has               :: ecs.has
