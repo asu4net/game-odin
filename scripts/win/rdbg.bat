@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-cd ../game/bin/
+cd ../../game/bin/
 
 echo ext debugger opened!
 remedybg debug.rdbg
