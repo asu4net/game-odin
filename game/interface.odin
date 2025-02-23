@@ -3,6 +3,7 @@ import "engine:global/vector"
 import "engine:global/matrix4"
 import "engine:global/transform"
 import "engine:graphics"
+import "engine:ecs"
 
 v2                :: vector.v2
 v3                :: vector.v3
@@ -25,3 +26,24 @@ Blending_Mode     :: graphics.Blending_Mode
 Transform         :: transform.Transform
 DEFAULT_TRANSFORM :: transform.DEFAULT_TRANSFORM
 get_matrix        :: transform.get_matrix
+
+// Entity
+Entity            :: ecs.Entity
+add               :: ecs.add
+get               :: ecs.get
+has               :: ecs.has
+create            :: ecs.create
+destroy           :: ecs.destroy
+get_group         :: ecs.get_group
+get_position      :: ecs.get_position
+get_rotation      :: ecs.get_rotation
+get_scale         :: ecs.get_scale
+get_tint          :: ecs.get_tint
+set_position      :: ecs.set_position
+set_rotation      :: ecs.set_rotation
+set_scale         :: ecs.set_scale
+set_tint          :: ecs.set_tint
+is_enabled        :: ecs.is_enabled
+set_enabled       :: ecs.set_enabled
+is_valid          :: ecs.is_valid
+exists            :: ecs.exists

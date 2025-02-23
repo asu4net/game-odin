@@ -11,7 +11,7 @@ import "core:fmt"
 // TODO: Encapsulate entity info
 // TODO: Use slices to return component groups
 
-Entity_ID           :: u32
+Entity           :: u32
 NIL_ENTITY_ID       :: sparse_set.INVALID_VALUE 
 CLEANUP_INTERVAL    :: 2 // Zero means each frame
 MAX_ENTITIES        :: 10000 //TODO: Hacer el sparse set resizeable
@@ -34,12 +34,13 @@ init_name :: proc(name : ^Name, s : string) {
 Signature :: bit_set[0..=MAX_DATA_TYPES]
 
 Entity_Info :: struct {
-    id        : Entity_ID,
+    id        : Entity,
     signature : Signature,
     name      : Name,
     valid     : bool,
     enabled   : bool,
-    transform : transform.Transform
+    transform : transform.Transform,
+    tint      : vector.v4
     //TODO: children list
 }
 
@@ -55,15 +56,15 @@ Component_Array :: struct($T : typeid) {
 }
 
 Entity_Registry :: struct {
-    avaliable_ids        : queue.Queue(Entity_ID),
-    last_id              : Entity_ID,
-    pending_destroy      : map[Entity_ID] struct{}, 
+    avaliable_ids        : queue.Queue(Entity),
+    last_id              : Entity,
+    pending_destroy      : map[Entity] struct{}, 
     cycles_since_cleaned : u32,  
     typeid_to_index_map  : map[typeid] u32,
     component_arrays     : [dynamic] ^Raw_Component_Array,
     last_type_index      : u32,
     info_array           : Entity_Info_Array, 
-    groups               : map[Signature] [dynamic] Entity_ID
+    groups               : map[Signature] [dynamic] Entity
 }
 
 @(private)
@@ -78,11 +79,11 @@ init :: proc(instance : ^Entity_Registry) {
     assert(instance != nil)
     registry = instance
     using registry
-    pending_destroy = make(map[Entity_ID] struct{});
+    pending_destroy = make(map[Entity] struct{});
     queue.init(&avaliable_ids)
     info_array.infos = make([dynamic] Entity_Info)
     sparse_set.init(&info_array.occupied_ids, MAX_ENTITIES)
-    groups = make(map[Signature] [dynamic] Entity_ID)
+    groups = make(map[Signature] [dynamic] Entity)
 }
 
 finish :: proc() {
@@ -102,8 +103,21 @@ finish :: proc() {
     registry^ = {}
 }
 
-//TODO: add overload with variadic component types, and data..? I guess that overload should return all data
-create :: proc(name := "") -> (entity : Entity_ID) {
+create :: proc{ create_add, create_empty }
+
+create_add :: proc(name := "", components: ..typeid) -> (entity : Entity) {
+    assert(registry_initialized())
+    using registry
+    
+    entity = create_empty(name)
+
+    for component in components {
+        add(component, entity)
+    }
+
+    return
+}
+create_empty :: proc(name := "") -> (entity : Entity) {
     assert(registry_initialized())
     using registry
     
@@ -119,20 +133,33 @@ create :: proc(name := "") -> (entity : Entity_ID) {
     return
 }
 
-exists :: proc(entity : Entity_ID) -> bool {
+exists :: proc(entity : Entity) -> bool {
     assert(registry_initialized())
     using registry
     return sparse_set.test(&registry.info_array.occupied_ids, entity)
 }
 
-is_valid :: proc(entity : Entity_ID) -> bool {
+is_valid :: proc(entity : Entity) -> bool {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
     return get_info(entity).valid
 }
 
-set_enabled :: proc(entity : Entity_ID, enabled := true) {
+is_enabled :: proc(entity : Entity) -> bool {
+    assert(registry_initialized())
+    assert(exists(entity))
+    using registry
+    return get_info(entity).enabled
+}
+
+set_enabled :: proc { set_enabled_short, set_enabled_default }
+
+set_enabled_short :: proc(entity : Entity) {
+    set_enabled_default(true, entity)
+}
+
+set_enabled_default :: proc(enabled : bool, entity : Entity) {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
@@ -143,46 +170,53 @@ set_enabled :: proc(entity : Entity_ID, enabled := true) {
     else do remove_from_groups(entity)
 }
 
-get_transform :: proc(entity : Entity_ID) -> ^transform.Transform {
+get_transform :: proc(entity : Entity) -> ^transform.Transform {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
     return &get_info(entity).transform
 }
 
-set_position :: proc(entity : Entity_ID, position : vector.v3) {
+set_position :: proc(position : vector.v3, entity : Entity) {
     get_transform(entity).position = position
 }
 
-get_position :: proc(entity : Entity_ID) -> vector.v3 {
+get_position :: proc(entity : Entity) -> vector.v3 {
     return get_transform(entity).position
 }
 
-set_rotation :: proc(entity : Entity_ID, rotation : vector.v3) {
+set_rotation :: proc(rotation : vector.v3, entity : Entity) {
     get_transform(entity).rotation = rotation
 }
 
-get_rotation :: proc(entity : Entity_ID) -> vector.v3 {
+get_rotation :: proc(entity : Entity) -> vector.v3 {
     return get_transform(entity).rotation
 }
 
-set_scale :: proc(entity : Entity_ID, scale : vector.v3) {
+set_scale :: proc(scale : vector.v3, entity : Entity) {
     get_transform(entity).scale = scale
 }
 
-get_scale :: proc(entity : Entity_ID) -> vector.v3 {
+get_scale :: proc(entity : Entity) -> vector.v3 {
     return get_transform(entity).scale
 }
 
+set_tint :: proc(tint : vector.v4, entity : Entity) {
+    get_info(entity).tint = tint
+}
 
-get_name :: proc(entity : Entity_ID) -> ^Name {
+get_tint :: proc(entity : Entity) -> vector.v4 {
+    return get_info(entity).tint
+}
+
+get_name :: proc(entity : Entity) -> ^Name {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
     return &get_info(entity).name
 }
 
-set_name :: proc(entity : Entity_ID, name : string) {
+set_name :: proc(name : string, entity : Entity) {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
@@ -190,7 +224,7 @@ set_name :: proc(entity : Entity_ID, name : string) {
     init_name(&info.name, name)
 }
 
-destroy :: proc(entity : Entity_ID) {
+destroy :: proc(entity : Entity) {
     assert(registry_initialized())
     assert(is_valid(entity))
     using registry
@@ -219,7 +253,7 @@ clean_destroyed :: proc() {
     clear(&pending_destroy)
 }
 
-has_component :: proc(entity : Entity_ID, type : typeid) -> bool {
+has :: proc(type : typeid, entity : Entity) -> bool {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
@@ -228,10 +262,10 @@ has_component :: proc(entity : Entity_ID, type : typeid) -> bool {
     return type_index in info.signature
 }
 
-add_component :: proc{ add_component_with_data, add_component_default }
+add :: proc{ add_component_with_data, add_component_default }
 
-add_component_default :: proc(entity : Entity_ID, $T : typeid) -> ^T {
-    return add_component_with_data(entity, T{})
+add_component_default :: proc($T : typeid, entity : Entity) -> ^T {
+    return add_component_with_data(T{}, entity)
 }
 
 is_component_type_registered :: proc(type : typeid) -> bool {
@@ -263,7 +297,7 @@ register_component_type :: proc($T : typeid) -> (component_array : ^Component_Ar
     return
 }
 
-remove_all_component_data :: proc(entity : Entity_ID) {
+remove_all_component_data :: proc(entity : Entity) {
     assert(registry_initialized())
     using registry
     for &component_array in component_arrays {
@@ -275,7 +309,7 @@ remove_all_component_data :: proc(entity : Entity_ID) {
     }
 }
 
-add_component_with_data :: proc(entity : Entity_ID, data : $T) -> ^T {
+add_component_with_data :: proc(data : $T, entity : Entity) -> ^T {
     #assert(intrinsics.type_is_struct(T))
     assert(registry_initialized())
     assert(exists(entity))
@@ -297,7 +331,7 @@ add_component_with_data :: proc(entity : Entity_ID, data : $T) -> ^T {
     return data_ptr
 }
 
-remove_component :: proc(entity : Entity_ID, $T : typeid) {
+remove_component :: proc(entity : Entity, $T : typeid) {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
@@ -323,7 +357,7 @@ get_component_array :: proc($T : typeid) -> ^Component_Array(T) {
     return cast(^Component_Array(T)) component_array
 }
 
-get_component :: proc(entity : Entity_ID, $T : typeid) -> ^T {
+get :: proc($T : typeid, entity : Entity) -> ^T {
     assert(registry_initialized())
     assert(exists(entity))
     using registry
@@ -334,7 +368,7 @@ get_component :: proc(entity : Entity_ID, $T : typeid) -> ^T {
     return &component_array.elements[dense_index]
 }
 
-register_info :: proc(entity : Entity_ID, name : string) {
+register_info :: proc(entity : Entity, name : string) {
     assert(registry_initialized())
     using registry
     info : Entity_Info
@@ -343,6 +377,7 @@ register_info :: proc(entity : Entity_ID, name : string) {
     info.valid = true
     info.enabled = true
     info.transform = transform.DEFAULT_TRANSFORM
+    info.tint = { 1, 1, 1, 1 }
 
     dense_index := sparse_set.insert(&info_array.occupied_ids, entity)
     if len(info_array.infos) <= cast(int) dense_index {
@@ -352,7 +387,7 @@ register_info :: proc(entity : Entity_ID, name : string) {
     }
 }
 
-unregister_info :: proc(entity : Entity_ID) {
+unregister_info :: proc(entity : Entity) {
     assert(registry_initialized())
     using registry
     deleted, last := sparse_set.remove(&info_array.occupied_ids, entity)
@@ -361,7 +396,7 @@ unregister_info :: proc(entity : Entity_ID) {
     }
 }
 
-get_info :: proc(id : Entity_ID) -> ^Entity_Info {
+get_info :: proc(id : Entity) -> ^Entity_Info {
     assert(registry_initialized())
     using registry
     assert(sparse_set.test(&info_array.occupied_ids, id)) // entity exists
@@ -371,20 +406,20 @@ get_info :: proc(id : Entity_ID) -> ^Entity_Info {
 
 get_group :: proc { get_group_by_types, get_group_by_signature }
 
-get_group_by_types :: proc(types: ..typeid) -> [dynamic] Entity_ID {
+get_group_by_types :: proc(types: ..typeid) -> [dynamic] Entity {
     signature := get_group_signature(..types)
     assert(registry_initialized())
     return get_group_by_signature(signature)
 }
 
-get_group_by_signature :: proc(signature : Signature) -> [dynamic] Entity_ID {
+get_group_by_signature :: proc(signature : Signature) -> [dynamic] Entity {
     assert(registry_initialized())
     using registry
     if signature in groups do return groups[signature]
     return create_group(signature)
 }
 
-create_group :: proc(signature : Signature) -> (group : [dynamic] Entity_ID) {
+create_group :: proc(signature : Signature) -> (group : [dynamic] Entity) {
   assert(registry_initialized())
   using registry
   shorter_array_count := max(int)
@@ -403,7 +438,7 @@ create_group :: proc(signature : Signature) -> (group : [dynamic] Entity_ID) {
   dense := shorter_array.occupied_ids.dense
   count := shorter_array.occupied_ids.count
   assert(signature not_in groups)
-  group = make([dynamic] Entity_ID)
+  group = make([dynamic] Entity)
   map_insert(&groups, signature, group)
   for i in 0..<count {
     entity_info := get_info(dense[i])
@@ -414,7 +449,7 @@ create_group :: proc(signature : Signature) -> (group : [dynamic] Entity_ID) {
   return
 }
 
-remove_from_groups :: proc(entity : Entity_ID) {
+remove_from_groups :: proc(entity : Entity) {
     assert(registry_initialized())
     using registry
     info := get_info(entity)
@@ -432,7 +467,7 @@ remove_from_groups :: proc(entity : Entity_ID) {
     }
 }
 
-add_to_groups :: proc(entity : Entity_ID) {
+add_to_groups :: proc(entity : Entity) {
     assert(registry_initialized())
     using registry
     info := get_info(entity)
