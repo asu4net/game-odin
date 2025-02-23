@@ -23,7 +23,7 @@ Name :: struct {
     len  : u32
 }
 
-name_init :: proc(name : ^Name, s : string) {
+init_name :: proc(name : ^Name, s : string) {
     name.len = u32(len(s))
     assert(name.len <= MAX_NAME_LENGTH)
     copy(name.data[:], s)
@@ -36,6 +36,7 @@ Entity_Info :: struct {
     signature : Signature,
     name      : Name,
     valid     : bool,
+    enabled   : bool,
     //TODO: children list
 }
 
@@ -99,50 +100,69 @@ finish :: proc() {
 }
 
 //TODO: add overload with variadic component types, and data..? I guess that overload should return all data
-create :: proc(name := "") -> (id : Entity_ID) {
+create :: proc(name := "") -> (entity : Entity_ID) {
     assert(registry_initialized())
     using registry
     
     if queue.len(avaliable_ids) == 0 {
-        id = last_id
+        entity = last_id
         last_id += 1
     } else {
-        id = queue.front(&avaliable_ids)
+        entity = queue.front(&avaliable_ids)
         queue.pop_front(&avaliable_ids)
     }
 
-    register_info(id, name)
+    register_info(entity, name)
     return
 }
 
-exists :: proc(id : Entity_ID) -> bool {
+exists :: proc(entity : Entity_ID) -> bool {
     assert(registry_initialized())
     using registry
-    return sparse_set.test(&registry.info_array.occupied_ids, id)
+    return sparse_set.test(&registry.info_array.occupied_ids, entity)
 }
 
-is_valid :: proc(id : Entity_ID) -> bool {
+is_valid :: proc(entity : Entity_ID) -> bool {
     assert(registry_initialized())
-    assert(exists(id))
+    assert(exists(entity))
     using registry
-    return get_info(id).valid
+    return get_info(entity).valid
 }
 
-get_name :: proc(id : Entity_ID) -> ^Name {
+set_enabled :: proc(entity : Entity_ID, enabled := true) {
     assert(registry_initialized())
-    assert(exists(id))
+    assert(exists(entity))
     using registry
-    return &get_info(id).name
+    info := get_info(entity)
+    if info.enabled == enabled do return
+    info.enabled = enabled
+    if enabled do add_to_groups(entity)
+    else do remove_from_groups(entity)
 }
 
-destroy :: proc(id : Entity_ID) {
+get_name :: proc(entity : Entity_ID) -> ^Name {
     assert(registry_initialized())
-    assert(is_valid(id))
+    assert(exists(entity))
     using registry
-    assert(id not_in pending_destroy)
-    get_info(id).valid = false
-    pending_destroy[id] = {}
-    //TODO: Para cuando los grupos hay que ver cómo hacer que no se ordene
+    return &get_info(entity).name
+}
+
+set_name :: proc(entity : Entity_ID, name : string) {
+    assert(registry_initialized())
+    assert(exists(entity))
+    using registry
+    info := get_info(entity)
+    init_name(&info.name, name)
+}
+
+destroy :: proc(entity : Entity_ID) {
+    assert(registry_initialized())
+    assert(is_valid(entity))
+    using registry
+    assert(entity not_in pending_destroy)
+    get_info(entity).valid = false
+    pending_destroy[entity] = {}
+    remove_from_groups(entity)
 }
 
 clean_destroyed :: proc() {
@@ -235,7 +255,10 @@ add_component_with_data :: proc(entity : Entity_ID, data : $T) -> ^T {
     }
     data_ptr   := &component_array.elements[dense_index]
     type_index := component_array.type_index
-    get_info(entity).signature += { type_index } 
+    info := get_info(entity)
+    info.signature += { type_index }
+    if !info.enabled do return data_ptr
+    add_to_groups(entity)
     return data_ptr
 }
 
@@ -248,7 +271,10 @@ remove_component :: proc(entity : Entity_ID, $T : typeid) {
     assert(sparse_set.test(&component_array.occupied_ids, entity)) // assert has component
     deleted, last := sparse_set.remove(&component_array.occupied_ids, entity)
     if deleted != last do component_array.elements[deleted] = component_array.elements[last]
-    get_info(entity).signature -= { component_array.type_index }
+    info := get_info(entity)
+    info.signature -= { component_array.type_index }
+    if !info.enabled do return
+    remove_from_groups(entity)
 }
 
 get_component_array :: proc($T : typeid) -> ^Component_Array(T) {
@@ -277,9 +303,10 @@ register_info :: proc(entity : Entity_ID, name : string) {
     assert(registry_initialized())
     using registry
     info : Entity_Info
-    name_init(&info.name, name)
+    init_name(&info.name, name)
     info.id = entity
     info.valid = true
+    info.enabled = true
 
     dense_index := sparse_set.insert(&info_array.occupied_ids, entity)
     if len(info_array.infos) <= cast(int) dense_index {
@@ -304,21 +331,6 @@ get_info :: proc(id : Entity_ID) -> ^Entity_Info {
     assert(sparse_set.test(&info_array.occupied_ids, id)) // entity exists
     dense_index := sparse_set.search(&info_array.occupied_ids, id)
     return &info_array.infos[dense_index]
-}
-
-/*
-Position :: struct { /* ... */ }
-Velocity :: struct { /* ... */ }
-Rigidbody :: struct { /* ... */ }
-get_entity_group :: proc (types: ..typeid) {
-  // types is a []typeid
-}
-
-get_entity_group(Position, Velocity, Rigidbody)
-*/
-
-GroupRange :: struct { 
-
 }
 
 get_group :: proc { get_group_by_types, get_group_by_signature }
@@ -364,6 +376,42 @@ create_group :: proc(signature : Signature) -> (group : [dynamic] Entity_ID) {
     }
   }
   return
+}
+
+remove_from_groups :: proc(entity : Entity_ID) {
+    assert(registry_initialized())
+    using registry
+    info := get_info(entity)
+    for signature, &group in groups {
+        if signature - info.signature == nil {
+            in_group := false
+            for e in group {
+                if e == entity {
+                    in_group = true
+                    break
+                }
+            }
+            if in_group do unordered_remove(&group, entity)
+        }
+    }
+}
+
+add_to_groups :: proc(entity : Entity_ID) {
+    assert(registry_initialized())
+    using registry
+    info := get_info(entity)
+    for signature, &group in groups {
+        if signature - info.signature == nil {
+            in_group := false
+            for e in group {
+                if e == entity {
+                    in_group = true
+                    break
+                }
+            }
+            if !in_group do append_elem(&group, entity)
+        }
+    }
 }
 
 get_group_signature :: proc{ get_group_signature_by_type, get_group_signature_by_index }
