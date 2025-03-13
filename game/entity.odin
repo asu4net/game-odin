@@ -13,6 +13,7 @@ Entity_Flag :: enum {
     // Engine stuff
     VALID,
     ENABLED,
+    GLOBAL_ENABLED,
     VISIBLE,
     SPRITE,
     FLIPBOOK,
@@ -131,11 +132,12 @@ Entity :: struct {
     particle_emitter   : Emitter_Handle,
     damage_source      : DamageSource,
     damage_target      : DamageTarget,
+    parent             : Entity_Handle,
+    children           : [dynamic] Entity_Handle,
 
     // Game specific
     projectile         : Projectile,
     kamikaze           : KamikazeSkull,
-    kamikaze_saw       : KamikazeSaw,
     homing_missile     : HomingMissile,
 }
 
@@ -154,7 +156,8 @@ DEFAULT_ENTITY : Entity : {
     kamikaze         = DEFAULT_KAMIKAZE_SKULL,
     homing_missile   = DEFAULT_HOMING_MISSILE,
     damage_source    = DEFAULT_DAMAGE_SOURCE,
-    damage_target    = DEFAULT_DAMAGE_TARGET
+    damage_target    = DEFAULT_DAMAGE_TARGET,
+    parent           = {NIL_ENTITY_ID},
 }
 
 Entity_Handle :: struct {
@@ -205,6 +208,11 @@ entity_registry_init :: proc(instance : ^Entity_Registry) {
 entity_registry_finish :: proc() {
     using entity_registry_instance
     assert(entity_registry_initialized())
+    for entity in entities {
+        if(entity_exists({entity.id})) {
+            delete(entity.children)
+        }
+    }
     delete(entities)
     for _, group in entity_groups {
         delete(group)
@@ -216,17 +224,27 @@ entity_registry_finish :: proc() {
     entity_registry_instance^ = {}
 }
 
-entity_valid :: proc(entity : Entity_Handle) -> bool {
-    using entity_registry_instance
-    assert(entity_registry_initialized())
-    assert(entity_exists(entity))
-    return .VALID in entity_data(entity).flags 
-}
-
 entity_exists :: proc(entity : Entity_Handle) -> bool {
     using entity_registry_instance
     assert(entity_registry_initialized())
     return sparse_set.test(&entity_used_ids, entity.id)
+}
+
+entity_valid :: proc(entity : Entity_Handle) -> bool {
+    using entity_registry_instance
+    assert(entity_exists(entity))
+    return .VALID in entity_data(entity).flags 
+}
+
+entity_enabled :: proc(entity : Entity_Handle) -> bool {
+    using entity_registry_instance
+    return entity_valid(entity) && .ENABLED in entity_data(entity).flags 
+}
+
+// Alex chequea este truco
+entity_global_enabled :: proc(entity : Entity_Handle) -> bool {
+    using entity_registry_instance
+    return entity_enabled(entity) && .GLOBAL_ENABLED in entity_data(entity).flags 
 }
 
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (handle : Entity_Handle, entity : ^Entity) {
@@ -277,11 +295,19 @@ entity_clone :: proc(template : Entity_Handle) -> (handle : Entity_Handle, entit
     }
 
     //We need to clone the saw too
+    /*
     if .KAMIKAZE in entity.flags {
         saw_handle, saw_entity := entity_clone(entity.kamikaze.saw)    
         saw_entity.position = entity.position
         entity.kamikaze.saw = saw_handle
         saw_entity.kamikaze_saw.kamikaze_skull = handle
+    }
+    */
+    // I have a better idea watch this
+    entity.children = nil;
+    for child in template_entity.children {
+        cloned_child, child_entity := entity_clone(child);
+        entity_set_parent(cloned_child, handle);
     }
 
     return
@@ -354,8 +380,15 @@ entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (da
     assert(entity_registry_initialized())
     assert(entity_exists(entity))
     data = entity_data(entity)
+    prev_flags := data.flags;
     data.flags += flags
-    entity_add_to_groups(data)
+
+    if .ENABLED in flags != .ENABLED in prev_flags {
+        compute_enabled_iterative(entity);
+    }
+    if prev_flags != data.flags {
+        entity_add_to_groups(data)
+    }
     return
 }
 
@@ -364,7 +397,12 @@ entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> 
     assert(entity_registry_initialized())
     assert(entity_exists(entity))
     data = entity_data(entity)
+    prev_flags := data.flags;
     data.flags -= flags
+
+    if .ENABLED in flags != .ENABLED in prev_flags {
+        compute_enabled_iterative(entity);
+    }
     entity_remove_from_groups(data)
     return
 }
@@ -381,6 +419,10 @@ entity_destroy :: proc(entity : Entity_Handle) {
     if(emitter_exists(data.particle_emitter)) {
         emitter := emitter_data(data.particle_emitter)
         emitter.active = false;
+    }
+
+    for child in data.children {
+        entity_destroy(child);
     }
 
     pending_destroy[entity] = {}
@@ -402,6 +444,8 @@ clean_destroyed_entities :: proc() {
 
         data := entity_data(handle)
         
+        delete(data.children);
+
         if(emitter_exists(data.particle_emitter)) {
             emitter_destroy(data.particle_emitter)
         }
@@ -448,4 +492,85 @@ entity_print_groups :: proc() {
     using entity_registry_instance
     assert(entity_registry_initialized())
     fmt.println(entity_groups)
+}
+
+entity_add_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
+    using entity_registry_instance;
+    assert(entity_registry_initialized());
+    data := entity_data(entity);
+    for handle in data.children {
+        if handle == child { return; }
+    }
+
+    append_elem(&data.children, child);
+    compute_enabled_iterative(child);
+}
+
+entity_get_children :: proc(entity : Entity_Handle) -> ([dynamic]Entity_Handle) {
+    using entity_registry_instance;
+    assert(entity_registry_initialized());
+    data := entity_data(entity);
+    return data.children;
+}
+
+entity_remove_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
+    using entity_registry_instance;
+    assert(entity_registry_initialized());
+    data := entity_data(entity);
+    i := -1;
+    found := false;
+    for current_child in data.children { 
+        if child == current_child { 
+            found = true;
+            break; 
+        }
+        i += 1;
+    }
+    if(found) { unordered_remove(&data.children, i); }
+    compute_enabled_iterative(child);
+}
+
+entity_set_parent :: proc(entity : Entity_Handle, parent : Entity_Handle) {
+    using entity_registry_instance;
+    assert(entity_registry_initialized());
+    data := entity_data(entity);
+    if entity_exists(data.parent) && entity_valid(data.parent) {
+        entity_remove_child(data.parent, entity);
+    }
+    data.parent = parent;
+    entity_add_child(parent, entity);
+}
+
+entity_get_parent :: proc(entity : Entity_Handle) -> (Entity_Handle) {
+    using entity_registry_instance;
+    assert(entity_registry_initialized());
+    data := entity_data(entity);
+    return data.parent;
+}
+
+compute_enabled_iterative :: proc(entity : Entity_Handle) { 
+    stack : [dynamic]Entity_Handle;
+    append_elem(&stack, entity);
+
+    for len(&stack) > 0 {
+        current := pop(&stack);
+        data := entity_data(current);
+        parent := data.parent;
+
+        parent_enabled := entity_exists(parent) && entity_valid(parent) ? entity_global_enabled(parent) : true;
+        new_global_enabled := .ENABLED in data.flags && parent_enabled;
+        
+        if(.GLOBAL_ENABLED in data.flags != new_global_enabled) {
+
+            for child in data.children {
+                append_elem(&stack, child);
+            } 
+        
+        }
+
+        //if new_global_enabled && !(.GLOBAL_ENABLED in data.flags) { entity_add_flags(current, { .GLOBAL_ENABLED }); } 
+        //else if !new_global_enabled && .GLOBAL_ENABLED in data.flags { entity_remove_flags(current, { .GLOBAL_ENABLED }); }
+    
+    }
+    delete(stack);
 }

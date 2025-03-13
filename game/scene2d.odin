@@ -2,10 +2,54 @@ package game
 import "core:math"
 import "core:fmt"
 import "engine:global/color"
+import "engine:global/vector"
 import "engine:global/matrix4"
 import "engine:global/interpolate"
 import "engine:global/transform"
 import gfx "engine:graphics"
+
+
+/////////////////////////////
+//:Transform
+/////////////////////////////
+
+transform_to_m4 :: proc(transform : Transform, entity : Entity_Handle = { NIL_ENTITY_ID }) -> matrix4.m4 {
+    child_matrix := matrix4.transform(transform.position, transform.rotation, transform.scale);
+    if !entity_exists(entity) || !entity_valid(entity) {
+        return child_matrix;
+    }
+
+    parent := entity_get_parent(entity);
+
+    if !entity_exists(entity) || !entity_valid(entity) { 
+        return child_matrix;
+    }
+
+    child_pos := transform.position;
+    child_rot := transform.rotation;
+    child_scl := transform.scale;
+
+    entity_handle := entity;
+    for entity_exists(entity_get_parent(entity_handle)) && entity_valid(entity_get_parent(entity_handle)) {
+        parent = entity_get_parent(entity_handle);
+
+        if(!entity_exists(parent) || !entity_valid(parent)) {
+            break;
+        }
+        parent_data := entity_data(parent);
+
+        child_pos = child_pos + parent_data.position;
+        // doesn't work lol wip
+        //child_pos.xy = vector.rotate_around(parent_data.position.xy, parent_data.rotation.z, child_pos.xy);
+
+        child_rot = child_rot + parent_data.rotation;
+        child_scl = child_scl * parent_data.scale;
+        
+        entity_handle = parent; 
+    }
+
+    return matrix4.transform(child_pos, child_rot, child_scl);
+}
 
 /////////////////////////////
 //:Sprite
@@ -181,9 +225,9 @@ draw_scene_2d :: proc() {
 }
 
 @(private = "file")
-draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := color.WHITE, entity_id : u32 = 0) {
+draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_CIRCLE, tint := color.WHITE, entity_id : u32 = NIL_ENTITY_ID) {
     gfx.draw_circle(
-        transform = get_matrix(transform),
+        transform = transform_to_m4(transform, { entity_id }),
         radius    = circle.radius,
         thickness = circle.thickness,
         fade      = circle.fade,
@@ -193,7 +237,7 @@ draw_circle_internal :: proc(transform := DEFAULT_TRANSFORM, circle := DEFAULT_C
 }
 
 @(private = "file")
-draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT_SPRITE_ATLAS_ITEM, tint := color.WHITE, entity_id : u32 = 0) {
+draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT_SPRITE_ATLAS_ITEM, tint := color.WHITE, entity_id : u32 = NIL_ENTITY_ID) {
 
     rect : Rect
     quad_flags := gfx.DEFAULT_QUAD_FLAGS
@@ -211,7 +255,7 @@ draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT
     }
 
     gfx.draw_quad(
-        transform    = get_matrix(transform),
+        transform    = transform_to_m4(transform, { entity_id }),
         texture      = texture,
         tiling       = sprite.tiling,
         blending     = sprite.blending,
@@ -287,7 +331,7 @@ draw_particles :: proc() {
     for handle in particle_get_group() {
         
         particle := particle_data(handle)
-        draw_sprite_atlas_item(particle.transform, particle.sprite, particle.color, particle.id)
+        draw_sprite_atlas_item(particle.transform, particle.sprite, particle.color)
     }
 }
 

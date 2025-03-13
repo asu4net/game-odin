@@ -61,7 +61,7 @@ homing_missile_init :: proc() {
     }
 
     spawner_init(&homing_missile_spawner, homing_missile_prefab, UP_3D * 5);
-    spawn(&homing_missile_spawner);
+    //spawn(&homing_missile_spawner);
 } 
 
 homing_missile_finish :: proc() {

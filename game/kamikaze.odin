@@ -13,11 +13,6 @@ KamikazeSkull :: struct {
     idle_time     : f32,
     attack_target : v3, 
     attack_cd     : f32,
-    saw           : Entity_Handle,
-}
-
-KamikazeSaw :: struct {
-    kamikaze_skull : Entity_Handle
 }
 
 DEFAULT_KAMIKAZE_SKULL : KamikazeSkull : {
@@ -77,13 +72,13 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
     {
         handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
         saw_prefab = handle
-        entity.transform.position = UP_3D
+        entity.transform.position = ZERO_3D
         entity.sprite.item = .Kazmikaze_Saw
-        entity.kamikaze_saw.kamikaze_skull = skull_prefab
-        entity_data(skull_prefab).kamikaze.saw = handle
         entity_remove_flags(handle, {.ENABLED})
+
     }
 
+    entity_add_child(skull_prefab, saw_prefab);
     spawner_init(&spawner, skull_prefab, UP_3D * 3)
     spawn(&spawner)
 }
@@ -104,25 +99,17 @@ kamikaze_manager_update :: proc() {
     assert(kamikaze_manager_instance != nil)
     using kamikaze_manager_instance
 
-    // Saw follows skull
     for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE_SAW) {
         entity := entity_data(handle)
         entity.rotation.z -= KAMIKAZE_SAW_SPEED * delta_seconds()
-        skull := entity.kamikaze_saw.kamikaze_skull
-        
-        if !entity_exists(skull) || !entity_valid(skull) {
-            entity_destroy(handle)
-            continue
-        }
-        
-        entity.transform.position = entity_data(entity.kamikaze_saw.kamikaze_skull).transform.position
     }
 
     if !DEBUG_AI_MOVEMENT_ENABLED {
         return
     }
 
-    for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE) {
+    kamikaze_group := entity_get_group(GROUP_FLAGS_KAMIKAZE);
+    for handle in kamikaze_group {
         
         entity := entity_data(handle)
 
