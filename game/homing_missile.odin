@@ -1,4 +1,5 @@
 package game
+import "core:math"
 import "core:math/linalg"
 
 HomingState :: enum {
@@ -61,7 +62,7 @@ homing_missile_init :: proc() {
     }
 
     spawner_init(&homing_missile_spawner, homing_missile_prefab, UP_3D * 5);
-    //spawn(&homing_missile_spawner);
+    spawn(&homing_missile_spawner);
 } 
 
 homing_missile_finish :: proc() {
@@ -101,8 +102,11 @@ homing_missile_update :: proc() {
                 movement_2d.start = true;
                 movement_2d.target = entity_data(game.player.entity).position;
                 
-                distance : f32 = linalg.vector_length(player_position - position);
-
+                dir := player_position - position;
+                distance : f32 = linalg.vector_length(dir);
+                angle := -math.to_degrees(linalg.atan2(dir.y, dir.x)) - 90;
+                
+                rotation.z = angle;
                 if distance <= homing_missile.distance_to_attack { 
                     homing_missile.state = HomingState.WAITING;
                 }
@@ -114,6 +118,11 @@ homing_missile_update :: proc() {
             }
             case HomingState.WAITING: {
                 movement_2d.start = false;
+
+                dir := player_position - position;
+                angle := -math.to_degrees(linalg.atan2(dir.y, dir.x)) - 90;
+                rotation.z = angle;
+
                 homing_missile.wait_timer += delta_seconds();
                 if homing_missile.wait_timer >= homing_missile.wait_time {
                     homing_missile.attack_dir = linalg.vector_normalize(player_position - transform.position);
