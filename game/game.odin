@@ -142,10 +142,12 @@ start :: proc() {
     entity_create_group(GROUP_FLAGS_KAMIKAZE)
     entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
     entity_create_group(GROUP_FLAGS_HOMING_MISSILE);
+    entity_create_group(GROUP_FLAGS_POINTER_LINE);
 
     player_init(&player)
     kamikaze_manager_init(&kamikaze_manager)
     homing_missile_init();
+    pointer_line_init();
 }
 
 @(private = "file")
@@ -155,6 +157,7 @@ update :: proc() {
     projectile_update()
     kamikaze_manager_update()
     homing_missile_update();
+    pointer_line_update();
 }
 
 @(private = "file")
@@ -185,6 +188,7 @@ finish :: proc() {
     player_finish(&player)
     kamikaze_finish()
     homing_missile_finish();
+    pointer_line_finish();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

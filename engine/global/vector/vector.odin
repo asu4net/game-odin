@@ -13,8 +13,9 @@ UP_2D    : v2 : { 0, 1 }
 RIGHT_2D : v2 : { 1, 0 }
 
 rotate_around :: proc(pivot : v2, angle : f32, point : v2) -> (v2) {
-    s := math.sin_f32(math.to_radians(angle));
-    c := math.cos(math.to_radians(angle));
+    
+    s := math.sin_f32(math.to_radians(-angle));
+    c := math.cos_f32(math.to_radians(-angle));
 
     // translate point back to origin:
     new_point := point;
@@ -26,8 +27,8 @@ rotate_around :: proc(pivot : v2, angle : f32, point : v2) -> (v2) {
     y_new := new_point.x * s + new_point.y * c;
 
     // translate point back:
-    new_point.x = x_new + new_point.x;
-    new_point.y = y_new + new_point.y;
+    new_point.x = x_new + pivot.x;
+    new_point.y = y_new + pivot.y;
     return new_point;
 }
 

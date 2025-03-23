@@ -74,11 +74,11 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
         saw_prefab = handle
         entity.transform.position = ZERO_3D
         entity.sprite.item = .Kazmikaze_Saw
-        entity_remove_flags(handle, {.ENABLED})
+        entity_remove_flags(handle, {.GLOBAL_ENABLED})
 
     }
 
-    entity_add_child(skull_prefab, saw_prefab);
+    entity_set_parent(saw_prefab, skull_prefab);
     spawner_init(&spawner, skull_prefab, UP_3D * 3)
     //spawn(&spawner)
 }

@@ -31,10 +31,12 @@ Entity_Flag :: enum {
     KAMIKAZE,
     KAMIKAZE_SAW,
     HOMING_MISSILE,
+    POINTER_LINE,
 }
 
 GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .VISIBLE,
     .SPRITE,
@@ -42,6 +44,7 @@ GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
 
 GROUP_FLAGS_CIRCLE : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .VISIBLE,
     .CIRCLE,
@@ -49,6 +52,7 @@ GROUP_FLAGS_CIRCLE : Entity_Flag_Set : {
 
 GROUP_FLAGS_COLLIDER_2D : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .VISIBLE,
     .COLLIDER_2D,
@@ -56,6 +60,7 @@ GROUP_FLAGS_COLLIDER_2D : Entity_Flag_Set : {
 
 GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .SPRITE,
     .COLLIDER_2D,
@@ -67,6 +72,7 @@ GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
 
 GROUP_FLAGS_HOMING_MISSILE : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .SPRITE,
     .COLLIDER_2D,
@@ -76,14 +82,24 @@ GROUP_FLAGS_HOMING_MISSILE : Entity_Flag_Set : {
     .DAMAGE_SOURCE,
 }
 
+GROUP_FLAGS_POINTER_LINE : Entity_Flag_Set : {
+    .VALID,
+    .GLOBAL_ENABLED,
+    .ENABLED,
+    .SPRITE,
+    .POINTER_LINE,
+}
+
 GROUP_FLAGS_MOVEMENT_2D : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .MOVEMENT_2D,
 }
 
 GROUP_FLAGS_KAMIKAZE_SAW : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .SPRITE,
     .KAMIKAZE_SAW,
@@ -91,6 +107,7 @@ GROUP_FLAGS_KAMIKAZE_SAW : Entity_Flag_Set : {
 
 GROUP_FLAGS_PROJECTILE : Entity_Flag_Set : {
     .VALID,
+    .GLOBAL_ENABLED,
     .ENABLED,
     .COLLIDER_2D,
     .PROJECTILE,
@@ -115,7 +132,7 @@ EntityCommon :: struct {
 }
 
 DEFAULT_ENTITY_COMMON : EntityCommon : {
-    flags = { .VALID, .ENABLED, .VISIBLE },
+    flags = { .VALID, .GLOBAL_ENABLED, .ENABLED, .VISIBLE },
     id    = NIL_ENTITY_ID,
     tint  = color.WHITE
 }
@@ -139,6 +156,7 @@ Entity :: struct {
     projectile         : Projectile,
     kamikaze           : KamikazeSkull,
     homing_missile     : HomingMissile,
+    pointer_line       : PointerLine,
 }
 
 NIL_ENTITY_ID :: sparse_set.INVALID_VALUE
@@ -155,6 +173,7 @@ DEFAULT_ENTITY : Entity : {
     projectile       = DEFAULT_PROJECTILE,
     kamikaze         = DEFAULT_KAMIKAZE_SKULL,
     homing_missile   = DEFAULT_HOMING_MISSILE,
+    pointer_line     = DEFAULT_POINTER_LINE,
     damage_source    = DEFAULT_DAMAGE_SOURCE,
     damage_target    = DEFAULT_DAMAGE_TARGET,
     parent           = {NIL_ENTITY_ID},
@@ -168,6 +187,7 @@ Entity_Handle :: struct {
 //:Entity Registry
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// change entity group from dynamic to unordered set
 Entity_Group :: [dynamic]Entity_Handle
 Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
 
@@ -382,8 +402,8 @@ entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (da
     data = entity_data(entity)
     prev_flags := data.flags;
     data.flags += flags
-
-    if .ENABLED in flags != .ENABLED in prev_flags {
+    
+    if .ENABLED in data.flags != .ENABLED in prev_flags {
         compute_enabled_iterative(entity);
     }
     if prev_flags != data.flags {
@@ -400,7 +420,7 @@ entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> 
     prev_flags := data.flags;
     data.flags -= flags
 
-    if .ENABLED in flags != .ENABLED in prev_flags {
+    if .ENABLED in data.flags != .ENABLED in prev_flags {
         compute_enabled_iterative(entity);
     }
     entity_remove_from_groups(data)
@@ -568,8 +588,8 @@ compute_enabled_iterative :: proc(entity : Entity_Handle) {
         
         }
 
-        //if new_global_enabled && !(.GLOBAL_ENABLED in data.flags) { entity_add_flags(current, { .GLOBAL_ENABLED }); } 
-        //else if !new_global_enabled && .GLOBAL_ENABLED in data.flags { entity_remove_flags(current, { .GLOBAL_ENABLED }); }
+        if new_global_enabled && !(.GLOBAL_ENABLED in data.flags) { entity_add_flags(current, { .GLOBAL_ENABLED }); } 
+        else if !new_global_enabled && .GLOBAL_ENABLED in data.flags { entity_remove_flags(current, { .GLOBAL_ENABLED }); }
     
     }
     delete(stack);

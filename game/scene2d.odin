@@ -33,14 +33,11 @@ transform_to_m4 :: proc(transform : Transform, entity : Entity_Handle = { NIL_EN
     for entity_exists(entity_get_parent(entity_handle)) && entity_valid(entity_get_parent(entity_handle)) {
         parent = entity_get_parent(entity_handle);
 
-        if(!entity_exists(parent) || !entity_valid(parent)) {
-            break;
-        }
         parent_data := entity_data(parent);
 
         child_pos = child_pos + parent_data.position;
-        // doesn't work lol wip
-        //child_pos.xy = vector.rotate_around(parent_data.position.xy, parent_data.rotation.z, child_pos.xy);
+        
+        child_pos.xy = vector.rotate_around(parent_data.position.xy, parent_data.rotation.z, child_pos.xy);
 
         child_rot = child_rot + parent_data.rotation;
         child_scl = child_scl * parent_data.scale;
