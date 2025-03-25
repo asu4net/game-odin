@@ -24,6 +24,11 @@ HomingMissile :: struct {
     line_end_color     : v4,
 }
 
+is_homing_missile :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.homing_missile.distance_to_attack > 0;
+}
+
 DEFAULT_HOMING_MISSILE : HomingMissile : {
     state              = HomingState.IDLE,
     attack_dir         = ZERO_3D, 
@@ -45,9 +50,17 @@ homing_missile_spawner : Spawner;
 homing_missile_init :: proc() {
     
     // MISSILE
-    handle, entity := entity_create(NAME_HOMING_MISSILE, GROUP_FLAGS_HOMING_MISSILE);
+
+    handle, entity := entity_create(NAME_HOMING_MISSILE);
     {
         using entity;
+        sprite             = DEFAULT_SPRITE_ATLAS_ITEM;
+        collider           = DEFAULT_COLLIDER_2D;
+        homing_missile     = DEFAULT_HOMING_MISSILE;
+        movement_2d        = DEFAULT_MOVEMENT_2D;
+        damage_target      = DEFAULT_DAMAGE_TARGET;
+        damage_source      = DEFAULT_DAMAGE_SOURCE;
+
         sprite.item                   = .Kamikaze_Skull;
         collision_radius              = HOMING_MISSILE_RADIUS;
         movement_2d.speed_min         = HOMING_MISSILE_APPROACH_SPEED;
@@ -71,9 +84,14 @@ homing_missile_init :: proc() {
     }
     
     // POINTER LINE
-    line_handle, line_entity := entity_create("NAME_POINTER_LINE", GROUP_FLAGS_POINTER_LINE);
+    line_handle, line_entity := entity_create("NAME_POINTER_LINE");
     {
         using line_entity;
+        
+        sprite             = DEFAULT_SPRITE_ATLAS_ITEM;
+        collider           = DEFAULT_COLLIDER_2D;
+        pointer_line       = DEFAULT_POINTER_LINE;
+
         sprite.item         = nil; // appear white
         scale.y             = 0.05;
         tint                = entity.homing_missile.line_start_color
@@ -108,12 +126,15 @@ homing_missile_update :: proc() {
     if !DEBUG_AI_MOVEMENT_ENABLED {
         return;
     }
-    for handle in entity_get_group(GROUP_FLAGS_HOMING_MISSILE) { 
 
-        if !entity_valid(handle) {
+    for i in 0..< entity_count() {
+
+        entity := entity_at_index(i);
+
+        if !is_homing_missile(entity) {
             continue;
         }
-        entity := entity_data(handle);
+
         using entity;
 
         player_position := entity_data(game.player.entity).position;

@@ -15,6 +15,11 @@ KamikazeSkull :: struct {
     attack_cd     : f32,
 }
 
+is_kamikaze :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.kamikaze.attack_cd > 0;
+}
+
 DEFAULT_KAMIKAZE_SKULL : KamikazeSkull : {
     attack_cd = KAMIKAZE_ATTACK_CD
 }
@@ -38,23 +43,29 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
     assert(kamikaze_manager_instance == nil)
     kamikaze_manager_instance = instance
     using kamikaze_manager_instance
-    
+
     // SKULL
     {
-        handle, entity := entity_create(NAME_KAMIKAZE, GROUP_FLAGS_KAMIKAZE)
+        handle, entity := entity_create(NAME_KAMIKAZE);
         {
             using entity
-            sprite.item                   = .Kamikaze_Skull
-            kamikaze.attack_cd            = KAMIKAZE_ATTACK_CD
-            movement_2d.speed_min         = KAMIKAZE_SPEED_MIN
-            movement_2d.speed_max         = KAMIKAZE_SPEED_MAX
-            movement_2d.time_to_max_speed = KAMIKAZE_ACC
+            sprite                        = DEFAULT_SPRITE_ATLAS_ITEM;
+            kamikaze                      = DEFAULT_KAMIKAZE_SKULL;
+            movement_2d                   = DEFAULT_MOVEMENT_2D;
+            damage_target                 = DEFAULT_DAMAGE_TARGET;
+            damage_source                 = DEFAULT_DAMAGE_SOURCE;
+            collider                      = DEFAULT_COLLIDER_2D;
+            
+            sprite.item                   = .Kamikaze_Skull;
+            kamikaze.attack_cd            = KAMIKAZE_ATTACK_CD;
+            movement_2d.speed_min         = KAMIKAZE_SPEED_MIN;
+            movement_2d.speed_max         = KAMIKAZE_SPEED_MAX;
+            movement_2d.time_to_max_speed = KAMIKAZE_ACC;
             collision_flag                = CollisionFlag.enemy;
             collides_with                 = { .player, .player_bullet };
-            damage_target.life            = KAMIKAZE_LIFE
-            skull_prefab                  = handle
+            damage_target.life            = KAMIKAZE_LIFE;
+            skull_prefab                  = handle;
 
-            
             emitter_handle, emitter_data := emitter_create();
             entity.particle_emitter = emitter_handle;
             emitter_data.position = entity.position;
@@ -70,12 +81,12 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
     
     // SAW
     {
-        handle, entity := entity_create(NAME_KAMIKAZE_SAW, GROUP_FLAGS_KAMIKAZE_SAW)
+        handle, entity := entity_create(NAME_KAMIKAZE_SAW)
+        entity.sprite = DEFAULT_SPRITE_ATLAS_ITEM;
         saw_prefab = handle
         entity.transform.position = ZERO_3D
         entity.sprite.item = .Kazmikaze_Saw
         entity_remove_flags(handle, {.GLOBAL_ENABLED})
-
     }
 
     entity_set_parent(saw_prefab, skull_prefab);
@@ -99,27 +110,28 @@ kamikaze_manager_update :: proc() {
     assert(kamikaze_manager_instance != nil)
     using kamikaze_manager_instance
 
-    for handle in entity_get_group(GROUP_FLAGS_KAMIKAZE_SAW) {
-        entity := entity_data(handle)
-        entity.rotation.z -= KAMIKAZE_SAW_SPEED * delta_seconds()
-    }
-
     if !DEBUG_AI_MOVEMENT_ENABLED {
         return
     }
 
-    kamikaze_group := entity_get_group(GROUP_FLAGS_KAMIKAZE);
-    for handle in kamikaze_group {
+    for i in 0..< entity_count() {
         
-        entity := entity_data(handle)
+        entity := entity_at_index(i);
+        if !is_kamikaze(entity) {
+            continue;
+        }
+        
+        // saw management
+        children := entity_get_children({entity.id});
+        assert(len(children) > 0);
+        saw := entity_data(children[0]);
+        saw.rotation.z -= KAMIKAZE_SAW_SPEED * delta_seconds()
 
-        
         emitter_data := emitter_data(entity.particle_emitter);
         // no () on purpose, effect goes hard
         emitter_data.velocity = entity.position - emitter_data.position * 2;
         emitter_data.active = emitter_data.velocity != ZERO_3D;
         emitter_data.position = entity.position;
-        
         
         switch entity.kamikaze.state {
             

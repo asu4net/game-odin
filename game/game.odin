@@ -3,7 +3,6 @@ import "core:mem"
 import "core:fmt"
 import "engine:window"
 import "engine:input"
-import "engine:ecs"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Game
@@ -79,12 +78,6 @@ game_init :: proc(instance : ^Game) {
     collisions_2d_init(&collisions_2d)
     defer collisions_2d_finish()
     
-    // Engine groups
-    entity_create_group(GROUP_FLAGS_SPRITE)
-    entity_create_group(GROUP_FLAGS_CIRCLE)
-    entity_create_group(GROUP_FLAGS_COLLIDER_2D)
-    entity_create_group(GROUP_FLAGS_MOVEMENT_2D)
-
     start()
     defer finish()
 
@@ -137,13 +130,6 @@ can_update :: proc() -> bool {
 start :: proc() {
     using game_instance
     
-    // Game groups
-    entity_create_group(GROUP_FLAGS_PROJECTILE)
-    entity_create_group(GROUP_FLAGS_KAMIKAZE)
-    entity_create_group(GROUP_FLAGS_KAMIKAZE_SAW)
-    entity_create_group(GROUP_FLAGS_HOMING_MISSILE);
-    entity_create_group(GROUP_FLAGS_POINTER_LINE);
-
     player_init(&player)
     kamikaze_manager_init(&kamikaze_manager)
     homing_missile_init();
@@ -169,14 +155,14 @@ post_collisions_update :: proc() {
         source := entity_data(enter_event.source) 
         target := entity_data(enter_event.target)  
 
-        if .KAMIKAZE in target.flags {
+        if is_kamikaze(target) {
             //kamikaze_collision(source, target)    
-        } else if .PROJECTILE in target.flags {
+        } else if is_projectile(target) {
             //projectile_collision(source, target)
         } else if target.id == player.entity.id {
             //player_collision(source, target)
-        } 
-        if .DAMAGE_TARGET in target.flags && .DAMAGE_SOURCE in source.flags {
+        }
+        if is_damage_target(target) && is_damage_source(source) {
             damage_collision(source, target)
         }
     }

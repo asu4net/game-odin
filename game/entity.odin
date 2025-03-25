@@ -15,104 +15,11 @@ Entity_Flag :: enum {
     ENABLED,
     GLOBAL_ENABLED,
     VISIBLE,
-    SPRITE,
-    FLIPBOOK,
     CIRCLE,
-    COLLIDER_2D,
-    BLINK,
-    MOVEMENT_2D,
-    DAMAGE_SOURCE,
-    DAMAGE_TARGET,
-
+    
     // Gameplay stuff
-    PROJECTILE,
     PLAYER,
     ENEMY,
-    KAMIKAZE,
-    KAMIKAZE_SAW,
-    HOMING_MISSILE,
-    POINTER_LINE,
-}
-
-GROUP_FLAGS_SPRITE : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .VISIBLE,
-    .SPRITE,
-}
-
-GROUP_FLAGS_CIRCLE : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .VISIBLE,
-    .CIRCLE,
-}
-
-GROUP_FLAGS_COLLIDER_2D : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .VISIBLE,
-    .COLLIDER_2D,
-}
-
-GROUP_FLAGS_KAMIKAZE : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .SPRITE,
-    .COLLIDER_2D,
-    .KAMIKAZE,
-    .MOVEMENT_2D,
-    .DAMAGE_TARGET,
-    .DAMAGE_SOURCE,
-}
-
-GROUP_FLAGS_HOMING_MISSILE : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .SPRITE,
-    .COLLIDER_2D,
-    .HOMING_MISSILE,
-    .MOVEMENT_2D,
-    .DAMAGE_TARGET,
-    .DAMAGE_SOURCE,
-}
-
-GROUP_FLAGS_POINTER_LINE : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .SPRITE,
-    .POINTER_LINE,
-}
-
-GROUP_FLAGS_MOVEMENT_2D : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .MOVEMENT_2D,
-}
-
-GROUP_FLAGS_KAMIKAZE_SAW : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .SPRITE,
-    .KAMIKAZE_SAW,
-}
-
-GROUP_FLAGS_PROJECTILE : Entity_Flag_Set : {
-    .VALID,
-    .GLOBAL_ENABLED,
-    .ENABLED,
-    .COLLIDER_2D,
-    .PROJECTILE,
-    .DAMAGE_SOURCE,
-    .DAMAGE_TARGET
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,24 +67,6 @@ Entity :: struct {
 }
 
 NIL_ENTITY_ID :: sparse_set.INVALID_VALUE
-
-DEFAULT_ENTITY : Entity : {
-    common           = DEFAULT_ENTITY_COMMON,
-    transform        = DEFAULT_TRANSFORM,
-    sprite           = DEFAULT_SPRITE_ATLAS_ITEM,
-    circle           = DEFAULT_CIRCLE,
-    collider         = DEFAULT_COLLIDER_2D,
-    blink            = DEFAULT_BLINK,
-    movement_2d      = DEFAULT_MOVEMENT_2D,
-    particle_emitter = {NIL_EMITTER_ID},
-    projectile       = DEFAULT_PROJECTILE,
-    kamikaze         = DEFAULT_KAMIKAZE_SKULL,
-    homing_missile   = DEFAULT_HOMING_MISSILE,
-    pointer_line     = DEFAULT_POINTER_LINE,
-    damage_source    = DEFAULT_DAMAGE_SOURCE,
-    damage_target    = DEFAULT_DAMAGE_TARGET,
-    parent           = {NIL_ENTITY_ID},
-}
 
 Entity_Handle :: struct {
     id : ENTITY_ID    
@@ -285,10 +174,10 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (hand
     queue.pop_front(&entity_ids)
     index := sparse_set.insert(&entity_used_ids, handle.id)
     entity = &entities[index]
-    entity^ = DEFAULT_ENTITY
+    entity.common = DEFAULT_ENTITY_COMMON;
     entity.id = handle.id
     entity.name = len(name) == 0 ? "Entity" : name
-
+    
     /*if len(data.name) == 0 {
         builder : strings.Builder
         strings.builder_init(&builder)

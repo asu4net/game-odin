@@ -37,6 +37,11 @@ Collider2D :: struct {
     collision_tint   : v4,
 }
 
+is_collider :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.collider.collision_radius > 0;
+}
+
 DEFAULT_COLLIDER_2D : Collider2D : {
     collision_flag   = nil,
     collides_with    = nil,
@@ -79,13 +84,16 @@ query_2d_collisions :: proc() {
     copy(prev_collisions[:], collisions_in_last_frame[:])
     clear(&collisions_in_last_frame)
 
-    circle_group := entity_get_group(GROUP_FLAGS_COLLIDER_2D);
-    
-    // Collision enter handle
-    for i in 0..<len(circle_group) {
-        entity_A := entity_data(circle_group[i]);
-        for j in (i + 1) ..< len(circle_group){
-            entity_B := entity_data(circle_group[j]);
+    for i in 0..< entity_count() {
+        entity_A := entity_at_index(i);
+        if !is_collider(entity_A) {
+            continue;
+        }
+        for j in (i + 1) ..< entity_count() {
+            entity_B := entity_at_index(j);
+            if !is_collider(entity_B) {
+                continue;
+            }
             handle_collision_enter(entity_A, entity_B);
             handle_collision_enter(entity_B, entity_A);
         } 

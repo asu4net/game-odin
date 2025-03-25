@@ -16,20 +16,25 @@ DEFAULT_PROJECTILE : Projectile : {
     max_lifetime = 1.0,
 }
 
+is_projectile :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.projectile.max_lifetime > 0;
+}
+
 projectile_collision :: proc(source : ^Entity, target : ^Entity) {
     entity_destroy({ id = target.id })
 }
 
 projectile_update :: proc() {
-
-    for handle in entity_get_group(GROUP_FLAGS_PROJECTILE) {
-        entity := entity_data(handle)
-        
-        using entity.projectile, entity.transform
-        curr_lifetime += delta_seconds()
-        if curr_lifetime >= max_lifetime {
-            entity_destroy(handle)
+    for i in 0..< entity_count() {
+        entity := entity_at_index(i);
+        if is_projectile(entity) {
+            continue;
         }
-        position += dir * speed * delta_seconds()
+        entity.projectile.curr_lifetime += delta_seconds();
+        if entity.projectile.curr_lifetime >= entity.projectile.max_lifetime {
+            entity_destroy({entity.id});
+        }
+        entity.position += entity.projectile.dir * entity.projectile.speed * delta_seconds();
     }
 }

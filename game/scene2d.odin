@@ -49,32 +49,11 @@ transform_to_m4 :: proc(transform : Transform, entity : Entity_Handle = { NIL_EN
 }
 
 /////////////////////////////
-//:Sprite
-/////////////////////////////
-
-Sprite :: struct {
-    texture   : ^Texture2D    ,
-    tiling    : v2                ,
-    flip_x    : bool              ,
-    flip_y    : bool              ,
-    autosize  : bool              ,
-    blending  : Blending_Mode ,
-}
-
-DEFAULT_SPRITE : Sprite : {
-    texture   = nil,
-    tiling    = ONE_2D,
-    flip_x    = false,
-    flip_y    = false,
-    autosize  = true,
-    blending  = .ALPHA
-}
-
-/////////////////////////////
 //:Sprite Atlas Item
 /////////////////////////////
 
 Sprite_Atlas_Item :: struct {
+    enabled   : bool,
     item      : Texture_Name           ,
     tiling    : v2                     ,
     flip_x    : bool                   ,
@@ -84,6 +63,7 @@ Sprite_Atlas_Item :: struct {
 }
 
 DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {
+    enabled  = true, 
     item     = nil,
     tiling   = ONE_2D,
     flip_x   = false,
@@ -109,6 +89,11 @@ FlipBook :: struct {
     current_key : u32,
     playing     : bool,
     loop        : bool,
+}
+
+is_flipbook :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.flipbook.duration > 0;
 }
 
 flipbook_create :: proc(flipbook : ^FlipBook, duration : f32 = 1.0, loop := false, items : []Texture_Name = {}) {
@@ -175,6 +160,11 @@ Blink :: struct {
 DEFAULT_BLINK : Blink : {
     duration   = 0.25,
     end_tint   = color.RED,
+}
+
+is_blink :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.blink.duration > 0;
 }
 
 Scene2D :: struct {
@@ -266,12 +256,12 @@ draw_sprite_atlas_item :: proc(transform := DEFAULT_TRANSFORM, sprite := DEFAULT
 @(private = "file")
 draw_entities :: proc() {
 
-    for handle in entity_get_group(GROUP_FLAGS_SPRITE) {
-        
-        entity := entity_data(handle)
+    for i in 0..< entity_count() {
+        entity := entity_at_index(i);
         
         // FlipBook handle
-        if .FLIPBOOK in entity.flags {
+        if entity.sprite.enabled && is_flipbook(entity) {
+
             using entity.flipbook
             if playing && key_count != 0 {
                 time += delta_seconds()
@@ -313,13 +303,16 @@ draw_entities :: proc() {
         }
 
         rect : Rect
-        draw_sprite_atlas_item(entity.transform, entity.sprite, entity.tint, entity.id)
+        if entity.sprite.enabled {
+            draw_sprite_atlas_item(entity.transform, entity.sprite, entity.tint, entity.id)
+        }
     }
-
-    for handle in entity_get_group(GROUP_FLAGS_CIRCLE) {
-        
-        entity := entity_data(handle)
-        draw_circle_internal(entity.transform, entity.circle, entity.tint, entity.id)
+    
+    for i in 0..< entity_count() {
+        entity := entity_at_index(i);
+        if entity.circle.radius > 0 {
+            draw_circle_internal(entity.transform, entity.circle, entity.tint, entity.id)
+        }
     }
 }
 
@@ -341,6 +334,8 @@ draw_collisions :: proc() {
         return
     }
 
+    // move this to normal draw when it works!!!
+    /*
     for handle in entity_get_group(GROUP_FLAGS_COLLIDER_2D) {
         
         entity := entity_data(handle)
@@ -357,4 +352,5 @@ draw_collisions :: proc() {
             }
         }
     }
+    */
 }

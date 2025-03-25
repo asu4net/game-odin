@@ -18,6 +18,11 @@ Movement2D :: struct {
     //TODO: add function ptr to specify interp proc (probablemente esto te lo comas tú, Fer :3)
 }
 
+is_movable :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.movement_2d.speed_max > 0;
+}
+
 DEFAULT_MOVEMENT_2D : Movement2D : {
     speed_max = 8,
     time_to_max_speed = 0.7
@@ -25,9 +30,9 @@ DEFAULT_MOVEMENT_2D : Movement2D : {
 
 update_entity_movement :: proc() {
 
-    for handle in entity_get_group(GROUP_FLAGS_MOVEMENT_2D) {
+    for i in 0..< entity_count() {
+        entity := entity_at_index(i);
         
-        entity := entity_data(handle)
         using entity.movement_2d
 
         if !start {
@@ -119,6 +124,11 @@ DamageSource :: struct {
     damage  : f32    
 }
 
+is_damage_source :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.damage_source.damage > 0;
+}
+
 DEFAULT_DAMAGE_SOURCE : DamageSource : {
     damage  = 10,
 }
@@ -126,6 +136,11 @@ DEFAULT_DAMAGE_SOURCE : DamageSource : {
 DamageTarget :: struct {
     max_life : f32,
     life     : f32,
+}
+
+is_damage_target :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.damage_target.max_life > 0;
 }
 
 DEFAULT_DAMAGE_TARGET : DamageTarget : {

@@ -32,7 +32,7 @@ player_initialized :: proc(player : ^Player) -> bool {
 player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
     using player
-    entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER, .COLLIDER_2D, .DAMAGE_TARGET, .FLIPBOOK } + GROUP_FLAGS_SPRITE)
+    entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER })
     entity = entity_handler
     data.item = .Player
     speed = PLAYER_SPEED 
@@ -134,15 +134,20 @@ projectiles := 0
 fire_projectile :: proc(player : ^Player) {
     // placeholder projectile
 
-    handle, entity := entity_create(name = "Bullet", flags = GROUP_FLAGS_PROJECTILE + GROUP_FLAGS_CIRCLE)
-    player_entity := entity_data(player.entity)
-    entity.position = player_entity.position
-    entity.radius = 0.1
-    entity.collision_radius = 0.15
-    entity.thickness = 1
-    entity.tint = color.LIGHT_RED
+    handle, entity := entity_create(name = "Bullet");
+    player_entity := entity_data(player.entity);
+    entity.collider       = DEFAULT_COLLIDER_2D;
+    entity.circle         = DEFAULT_CIRCLE;
+    entity.damage_source  = DEFAULT_DAMAGE_SOURCE;
+    entity.damage_target  = DEFAULT_DAMAGE_TARGET;
+
+    entity.position = player_entity.position;
+    entity.radius = 0.1;
+    entity.collision_radius = 0.15;
+    entity.thickness = 1;
+    entity.tint = color.LIGHT_RED;
     entity.collision_flag = CollisionFlag.player_bullet;
     entity.collides_with = { .enemy };
-    entity.damage_target.life = 1
-    entity.damage_source.damage = PLAYER_DAMAGE
+    entity.damage_target.life = 1;
+    entity.damage_source.damage = PLAYER_DAMAGE;
 }

@@ -8,6 +8,11 @@ PointerLine :: struct {
     dir        : v3
 }
 
+is_pointer_line :: proc(entity : ^Entity) -> bool {
+    assert(entity_valid({entity.id}));
+    return entity.pointer_line.dir != ZERO_3D;
+}
+
 DEFAULT_POINTER_LINE : PointerLine : {
     origin_pos = ZERO_3D,
     dir        = RIGHT_3D
@@ -37,13 +42,14 @@ pointer_line_finish :: proc() {
 
 pointer_line_update :: proc() {
 
-    for handle in entity_get_group(GROUP_FLAGS_POINTER_LINE) { 
+    for i in 0..< entity_count() {
+        
+        entity := entity_at_index(i);
+        using entity;
 
-        if !entity_valid(handle) {
+        if !is_pointer_line(entity) {
             continue;
         }
-        entity := entity_data(handle);
-        using entity;
 
         // right is 0º
         if (linalg.vector_length2(pointer_line.dir) > 0) {
