@@ -76,16 +76,11 @@ Entity_Handle :: struct {
 //:Entity Registry
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// change entity group from dynamic to unordered set
-Entity_Group :: [dynamic]Entity_Handle
-Entity_Group_Map :: map[Entity_Flag_Set] Entity_Group
-
 Entity_Registry :: struct {
     entities             : [] Entity,
     entity_used_ids      : sparse_set.Sparse_Set,
     entity_ids           : queue.Queue(u32),
     entity_count         : u32,
-    entity_groups        : Entity_Group_Map, 
     initialized          : bool,
     pending_destroy      : map[Entity_Handle]struct{},
     frames_since_cleaned : u32
@@ -134,10 +129,6 @@ entity_registry_finish :: proc() {
         }
     }
     delete(entities)
-    for _, group in entity_groups {
-        delete(group)
-    }
-    delete(entity_groups)
     delete_map(pending_destroy)
     sparse_set.finish(&entity_used_ids)
     queue.destroy(&entity_ids)
@@ -241,60 +232,6 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
     return &entities[index]
 }
 
-@(private = "file")
-entity_remove_from_groups :: proc(data : ^Entity) {
-    using state
-    assert(entity_registry_initialized() && data != nil)    
-    for group_flags, &group in entity_groups {
-        if group_flags - data.flags != nil {
-            rm_idx := -1
-            // find the entity and remove it from the group
-            for i in 0..<len(group) {
-                entity := group[i]
-                if entity.id == data.id {
-                    rm_idx = i
-                    break
-                }
-            }
-            if rm_idx >= 0 {
-                unordered_remove(&group, rm_idx)
-            }
-        }
-    }
-}
-
-@(private = "file")
-entity_remove_from_all_groups :: proc(data : ^Entity) {
-    using state
-    assert(entity_registry_initialized() && data != nil)    
-    for group_flags, &group in entity_groups {
-        rm_idx := -1
-        // find the entity and remove it from the group
-        for i in 0..<len(group) {
-            entity := group[i]
-            if entity.id == data.id {
-                rm_idx = i
-                break
-            }
-        }
-        if rm_idx >= 0 {
-            unordered_remove(&group, rm_idx)
-        }
-    }
-}
-
-@(private = "file")
-entity_add_to_groups :: proc(data : ^Entity) {
-    using state
-    assert(entity_registry_initialized() && data != nil)    
-    for group_flags, &group in entity_groups {
-        if group_flags - data.flags == nil {
-            entity : Entity_Handle = { data.id }
-            append_elem(&group, entity)
-        }
-    }
-}
-
 entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
     using state
     assert(entity_registry_initialized())
@@ -306,9 +243,7 @@ entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (da
     if .ENABLED in data.flags != .ENABLED in prev_flags {
         compute_enabled_iterative(entity);
     }
-    if prev_flags != data.flags {
-        entity_add_to_groups(data)
-    }
+
     return
 }
 
@@ -323,7 +258,6 @@ entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> 
     if .ENABLED in data.flags != .ENABLED in prev_flags {
         compute_enabled_iterative(entity);
     }
-    entity_remove_from_groups(data)
     return
 }
 
@@ -378,7 +312,6 @@ clean_destroyed_entities :: proc() {
             }
         }
 
-        entity_remove_from_all_groups(data)
         deleted, last := sparse_set.remove(&entity_used_ids, data.id)
         entity_count -= 1
 
@@ -388,30 +321,6 @@ clean_destroyed_entities :: proc() {
     }
 
     clear(&pending_destroy)
-}
-
-entity_get_group :: proc(flags : Entity_Flag_Set) -> Entity_Group {
-
-    using state
-    assert(entity_registry_initialized() && flags in entity_groups)
-    return entity_groups[flags];
-}
-
-entity_create_group :: proc(flags : Entity_Flag_Set) -> (group : Entity_Group) {
-    using state
-    assert(entity_registry_initialized() && entity_count == 0)
-    if flags in entity_groups {
-        return entity_get_group(flags)
-    }
-    group = make(Entity_Group)
-    state.entity_groups[flags] = group
-    return
-}
-
-entity_print_groups :: proc() {
-    using state
-    assert(entity_registry_initialized())
-    fmt.println(entity_groups)
 }
 
 entity_add_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
