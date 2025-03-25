@@ -203,18 +203,29 @@ Entity_Registry :: struct {
 }
 
 @(private = "file")
-entity_registry_instance : ^Entity_Registry = nil
+state : ^Entity_Registry = nil
+
+entity_count :: proc() -> u32 {
+    assert(entity_registry_initialized());
+    return state.entity_count;
+}
+
+entity_at_index :: proc(index : u32) -> ^Entity  {
+    assert(entity_registry_initialized());
+    assert(index < state.entity_count);
+    return &state.entities[index];
+}
 
 entity_registry_initialized :: proc() -> bool {
-    using entity_registry_instance
-    return entity_registry_instance != nil && initialized
+    using state
+    return state != nil && initialized
 }
 
 entity_registry_init :: proc(instance : ^Entity_Registry) {
     assert(!entity_registry_initialized())
     assert(instance != nil)
-    entity_registry_instance = instance
-    using entity_registry_instance
+    state = instance
+    using state
     
     entities = make([]Entity, MAX_ENTITIES)
     sparse_set.init(&entity_used_ids, MAX_ENTITIES)
@@ -226,7 +237,7 @@ entity_registry_init :: proc(instance : ^Entity_Registry) {
 }
 
 entity_registry_finish :: proc() {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized())
     for entity in entities {
         if(entity_exists({entity.id})) {
@@ -241,34 +252,34 @@ entity_registry_finish :: proc() {
     delete_map(pending_destroy)
     sparse_set.finish(&entity_used_ids)
     queue.destroy(&entity_ids)
-    entity_registry_instance^ = {}
+    state^ = {}
 }
 
 entity_exists :: proc(entity : Entity_Handle) -> bool {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized())
     return sparse_set.test(&entity_used_ids, entity.id)
 }
 
 entity_valid :: proc(entity : Entity_Handle) -> bool {
-    using entity_registry_instance
+    using state
     assert(entity_exists(entity))
     return .VALID in entity_data(entity).flags 
 }
 
 entity_enabled :: proc(entity : Entity_Handle) -> bool {
-    using entity_registry_instance
+    using state
     return entity_valid(entity) && .ENABLED in entity_data(entity).flags 
 }
 
 // Alex chequea este truco
 entity_global_enabled :: proc(entity : Entity_Handle) -> bool {
-    using entity_registry_instance
+    using state
     return entity_enabled(entity) && .GLOBAL_ENABLED in entity_data(entity).flags 
 }
 
 entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (handle : Entity_Handle, entity : ^Entity) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized() && entity_count <= MAX_ENTITIES)
     handle = { queue.front(&entity_ids) }
     queue.pop_front(&entity_ids)
@@ -334,7 +345,7 @@ entity_clone :: proc(template : Entity_Handle) -> (handle : Entity_Handle, entit
 }
 
 entity_data :: proc(entity : Entity_Handle) -> ^Entity {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized())
     assert(entity_exists(entity), "Trying to access unexisting entity")
     index := sparse_set.search(&entity_used_ids, entity.id)
@@ -343,7 +354,7 @@ entity_data :: proc(entity : Entity_Handle) -> ^Entity {
 
 @(private = "file")
 entity_remove_from_groups :: proc(data : ^Entity) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized() && data != nil)    
     for group_flags, &group in entity_groups {
         if group_flags - data.flags != nil {
@@ -365,7 +376,7 @@ entity_remove_from_groups :: proc(data : ^Entity) {
 
 @(private = "file")
 entity_remove_from_all_groups :: proc(data : ^Entity) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized() && data != nil)    
     for group_flags, &group in entity_groups {
         rm_idx := -1
@@ -385,7 +396,7 @@ entity_remove_from_all_groups :: proc(data : ^Entity) {
 
 @(private = "file")
 entity_add_to_groups :: proc(data : ^Entity) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized() && data != nil)    
     for group_flags, &group in entity_groups {
         if group_flags - data.flags == nil {
@@ -396,7 +407,7 @@ entity_add_to_groups :: proc(data : ^Entity) {
 }
 
 entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized())
     assert(entity_exists(entity))
     data = entity_data(entity)
@@ -413,7 +424,7 @@ entity_add_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (da
 }
 
 entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> (data : ^Entity) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized())
     assert(entity_exists(entity))
     data = entity_data(entity)
@@ -428,7 +439,7 @@ entity_remove_flags :: proc(entity : Entity_Handle, flags : Entity_Flag_Set) -> 
 }
 
 entity_destroy :: proc(entity : Entity_Handle) {
-    using entity_registry_instance
+    using state
 
     assert(entity_registry_initialized() && entity_count > 0)
     assert(entity_exists(entity))
@@ -451,7 +462,7 @@ entity_destroy :: proc(entity : Entity_Handle) {
 clean_destroyed_entities :: proc() {
 
     assert(entity_registry_initialized());
-    using entity_registry_instance
+    using state
 
     if frames_since_cleaned < ENTITY_CLEANUP_INTERVAL {
         frames_since_cleaned += 1
@@ -492,30 +503,30 @@ clean_destroyed_entities :: proc() {
 
 entity_get_group :: proc(flags : Entity_Flag_Set) -> Entity_Group {
 
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized() && flags in entity_groups)
     return entity_groups[flags];
 }
 
 entity_create_group :: proc(flags : Entity_Flag_Set) -> (group : Entity_Group) {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized() && entity_count == 0)
     if flags in entity_groups {
         return entity_get_group(flags)
     }
     group = make(Entity_Group)
-    entity_registry_instance.entity_groups[flags] = group
+    state.entity_groups[flags] = group
     return
 }
 
 entity_print_groups :: proc() {
-    using entity_registry_instance
+    using state
     assert(entity_registry_initialized())
     fmt.println(entity_groups)
 }
 
 entity_add_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
-    using entity_registry_instance;
+    using state;
     assert(entity_registry_initialized());
     data := entity_data(entity);
     for handle in data.children {
@@ -527,14 +538,14 @@ entity_add_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
 }
 
 entity_get_children :: proc(entity : Entity_Handle) -> ([dynamic]Entity_Handle) {
-    using entity_registry_instance;
+    using state;
     assert(entity_registry_initialized());
     data := entity_data(entity);
     return data.children;
 }
 
 entity_remove_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
-    using entity_registry_instance;
+    using state;
     assert(entity_registry_initialized());
     data := entity_data(entity);
     i := -1;
@@ -551,7 +562,7 @@ entity_remove_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
 }
 
 entity_set_parent :: proc(entity : Entity_Handle, parent : Entity_Handle) {
-    using entity_registry_instance;
+    using state;
     assert(entity_registry_initialized());
     data := entity_data(entity);
     if entity_exists(data.parent) && entity_valid(data.parent) {
@@ -562,7 +573,7 @@ entity_set_parent :: proc(entity : Entity_Handle, parent : Entity_Handle) {
 }
 
 entity_get_parent :: proc(entity : Entity_Handle) -> (Entity_Handle) {
-    using entity_registry_instance;
+    using state;
     assert(entity_registry_initialized());
     data := entity_data(entity);
     return data.parent;
