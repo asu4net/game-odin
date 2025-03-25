@@ -28,7 +28,8 @@ projectile_collision :: proc(source : ^Entity, target : ^Entity) {
 projectile_update :: proc() {
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
-        if is_projectile(entity) {
+if .VALID not_in entity.flags do continue;
+        if !is_projectile(entity) {
             continue;
         }
         entity.projectile.curr_lifetime += delta_seconds();

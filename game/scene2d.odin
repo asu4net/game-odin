@@ -258,6 +258,7 @@ draw_entities :: proc() {
 
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
+if .VALID not_in entity.flags do continue;
         
         // FlipBook handle
         if entity.sprite.enabled && is_flipbook(entity) {
@@ -310,6 +311,7 @@ draw_entities :: proc() {
     
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
+if .VALID not_in entity.flags do continue;
         if entity.circle.radius > 0 {
             draw_circle_internal(entity.transform, entity.circle, entity.tint, entity.id)
         }

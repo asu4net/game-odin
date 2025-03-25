@@ -45,6 +45,7 @@ pointer_line_update :: proc() {
     for i in 0..< entity_count() {
         
         entity := entity_at_index(i);
+if .VALID not_in entity.flags do continue;
         using entity;
 
         if !is_pointer_line(entity) {

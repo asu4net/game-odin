@@ -86,12 +86,12 @@ query_2d_collisions :: proc() {
 
     for i in 0..< entity_count() {
         entity_A := entity_at_index(i);
-        if !is_collider(entity_A) {
+        if .VALID not_in entity_A.flags || !is_collider(entity_A) {
             continue;
         }
         for j in (i + 1) ..< entity_count() {
             entity_B := entity_at_index(j);
-            if !is_collider(entity_B) {
+            if .VALID not_in entity_B.flags || !is_collider(entity_B) {
                 continue;
             }
             handle_collision_enter(entity_A, entity_B);

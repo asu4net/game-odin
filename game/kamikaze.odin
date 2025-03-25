@@ -117,6 +117,7 @@ kamikaze_manager_update :: proc() {
     for i in 0..< entity_count() {
         
         entity := entity_at_index(i);
+if .VALID not_in entity.flags do continue;
         if !is_kamikaze(entity) {
             continue;
         }
