@@ -167,14 +167,14 @@ DEFAULT_CIRCLE : Circle : {
 Blink :: struct {
     enabled    : bool,
     duration   : f32,
-    tint       : v4,
+    end_tint   : v4,
     progress   : f32,
     start_tint : v4,
 }
 
 DEFAULT_BLINK : Blink : {
     duration   = 0.25,
-    tint       = color.RED,
+    end_tint   = color.RED,
 }
 
 Scene2D :: struct {
@@ -301,12 +301,12 @@ draw_entities :: proc() {
                 progress += delta_seconds()
                 progress = math.clamp(progress, 0.0, duration)
                 normalized_progress := progress / duration
-                entity.tint = interpolate.linear(normalized_progress, start_tint, tint) 
+                entity.tint = interpolate.linear(normalized_progress, start_tint, end_tint) 
                 
                 if normalized_progress == 1 {
                     new_target := start_tint
-                    start_tint = tint 
-                    tint       = new_target
+                    start_tint = end_tint 
+                    end_tint   = new_target
                     progress   = 0
                 }
             }

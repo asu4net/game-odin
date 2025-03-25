@@ -11,29 +11,31 @@ HomingState :: enum {
 }
 
 HomingMissile :: struct {
-    state               : HomingState,
-    attack_dir          : v3, 
-    wait_timer          : f32,
-    blink_timer         : f32,
+    state              : HomingState,
+    attack_dir         : v3, 
+    wait_timer         : f32,
 
-    distance_to_attack  : f32,
-    wait_time           : f32, 
-    blink_time          : f32, 
-    approach_speed      : f32, 
-    attack_speed        : f32, 
+    distance_to_attack : f32,
+    wait_time          : f32, 
+    blink_time         : f32, 
+    approach_speed     : f32, 
+    attack_speed       : f32,
+    line_start_color   : v4,
+    line_end_color     : v4,
 }
 
 DEFAULT_HOMING_MISSILE : HomingMissile : {
     state              = HomingState.IDLE,
     attack_dir         = ZERO_3D, 
     wait_timer         = 0,
-    blink_timer        = 0,
 
     distance_to_attack = HOMING_MISSILE_DISTANCE_TO_ATTACK,
     wait_time          = HOMING_MISSILE_WAIT_TIME,
     blink_time         = HOMING_MISSILE_BLINK_TIME,
     approach_speed     = HOMING_MISSILE_APPROACH_SPEED, 
     attack_speed       = HOMING_MISSILE_ATTACK_SPEED, 
+    line_start_color   = HOMING_MISSILE_LINE_START_COLOR,
+    line_end_color     = HOMING_MISSILE_LINE_END_COLOR,
 
 }
 
@@ -43,8 +45,8 @@ homing_missile_spawner : Spawner;
 homing_missile_init :: proc() {
     
     // MISSILE
+    handle, entity := entity_create(NAME_HOMING_MISSILE, GROUP_FLAGS_HOMING_MISSILE);
     {
-        handle, entity := entity_create(NAME_HOMING_MISSILE, GROUP_FLAGS_HOMING_MISSILE);
         using entity;
         sprite.item                   = .Kamikaze_Skull;
         collision_radius              = HOMING_MISSILE_RADIUS;
@@ -56,7 +58,6 @@ homing_missile_init :: proc() {
         collides_with                 = { .player, .player_bullet };
         damage_target.life            = HOMING_MISSILE_LIFE;
         homing_missile_prefab         = handle;
-        blink.tint                    = color.WHITE;
 
         emitter_handle, emitter_data := emitter_create();
         entity.particle_emitter       = emitter_handle;
@@ -75,7 +76,10 @@ homing_missile_init :: proc() {
         using line_entity;
         sprite.item         = nil; // appear white
         scale.y             = 0.05;
-        tint                = color.RED;
+        tint                = entity.homing_missile.line_start_color
+        blink.end_tint      = entity.homing_missile.line_end_color;
+        blink.duration      = entity.homing_missile.blink_time;
+        blink.enabled       = true;
 
         entity_remove_flags(line_handle, { .GLOBAL_ENABLED });
     
@@ -140,18 +144,6 @@ homing_missile_update :: proc() {
                 emitter_data.position = position;
                 
                 if entity_valid(children[0]) {
-                    // doesn't really work yet, group shenanigans
-                    homing_missile.blink_timer += delta_seconds();
-                    if(homing_missile.blink_timer > homing_missile.blink_time) {
-                        homing_missile.blink_timer = 0;
-                        if(.ENABLED in pointer_data.flags) {
-                            entity_remove_flags(children[0], { .ENABLED }); 
-                        } 
-                        else {
-                            entity_add_flags(children[0], { .ENABLED }); 
-                        }
-                    }
-                    
                     pointer_data.scale.x = distance;
                 }
             }
@@ -170,12 +162,14 @@ homing_missile_update :: proc() {
                 
                 if entity_valid(children[0]) {
                     distance : f32 = linalg.vector_length(dir);
-                    pointer_data.scale.x = distance;
+                    
+                    pointer_data.scale.x       = distance;
+                    pointer_data.tint          = color.RED;
+                    pointer_data.blink.enabled = false;
                 }
                 
             }
             case HomingState.ATTACK: {
-                blink.enabled = false;
                 position += homing_missile.attack_dir * homing_missile.attack_speed * delta_seconds();
 
                 emitter_data := emitter_data(particle_emitter);
@@ -185,7 +179,9 @@ homing_missile_update :: proc() {
                 // Explode after a set time?
                 
                 if entity_valid(children[0]) {
-                    pointer_data.scale.x = 1000;
+                    pointer_data.scale.x       = 1000;
+                    pointer_data.tint          = color.RED;
+                    pointer_data.blink.enabled = false;
                 }
             }
         }
