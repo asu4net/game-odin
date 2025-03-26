@@ -205,9 +205,9 @@ draw_scene_2d :: proc() {
     window_size : v2 = { f32(width), f32(height) }
 
     gfx.draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
-    //draw_particles()
+    draw_particles()
     draw_entities()
-    //draw_collisions()
+    draw_collisions()
     gfx.draw_2d_end()
 }
 
@@ -259,7 +259,7 @@ draw_entities :: proc() {
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
         
-if .VALID not_in entity.flags do continue;
+        if .VALID not_in entity.flags do continue;
         
         // FlipBook handle
         if entity.sprite.enabled && is_flipbook(entity) {
@@ -311,11 +311,15 @@ if .VALID not_in entity.flags do continue;
     }
     
     for i in 0..< entity_count() {
+
         entity := entity_at_index(i);
-if .VALID not_in entity.flags do continue;
+        
+        if .VALID not_in entity.flags do continue;
+        
         if entity.circle.radius > 0 {
             draw_circle_internal(entity.transform, entity.circle, entity.tint, entity.id)
         }
+
     }
 }
 
@@ -337,15 +341,18 @@ draw_collisions :: proc() {
         return
     }
 
-    // move this to normal draw when it works!!!
-    /*
-    for handle in entity_get_group(GROUP_FLAGS_COLLIDER_2D) {
+    for i in 0..< entity_count() {
+        entity := entity_at_index(i);
         
-        entity := entity_data(handle)
+        if .VALID not_in entity.flags do continue;
         
+        if !is_collider(entity) {
+            return;
+        }
+
         circle : Circle = DEFAULT_CIRCLE
         circle.radius = entity.collision_radius
-        
+        handle := Entity_Handle{entity.id};
         if handle in collisions_map {
             collides_with := collisions_map[handle] 
             if len(collides_with) == 0 {
@@ -355,5 +362,4 @@ draw_collisions :: proc() {
             }
         }
     }
-    */
 }

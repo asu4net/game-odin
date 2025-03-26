@@ -35,21 +35,21 @@ player_init :: proc(player : ^Player) {
 
     entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER })
     entity = entity_handler
-    data.sprite        = DEFAULT_SPRITE_ATLAS_ITEM;
-    data.damage_source = DEFAULT_DAMAGE_SOURCE;
-    data.collider      = DEFAULT_COLLIDER_2D;
+    data.sprite = DEFAULT_SPRITE_ATLAS_ITEM;
+    data.damage_target = DEFAULT_DAMAGE_TARGET;
+    data.collider = DEFAULT_COLLIDER_2D;
 
-    firerate = PLAYER_FIRERATE
-    speed = PLAYER_SPEED 
-    data.item          = .Player
+    firerate = PLAYER_FIRERATE;
+    speed = PLAYER_SPEED; 
+    data.item = .Player;
     data.collision_flag = CollisionFlag.player;
     data.collides_with = { .enemy, .enemy_bullet };
-    data.damage_target.life = 1
+    data.damage_target.life = 1;
     emitter_handle, emitter_data := emitter_create();
     data.particle_emitter = emitter_handle;
     emitter_data.position = data.position;
-    emitter_data.scale = ONE_3D * 0.15
-
+    emitter_data.scale = ONE_3D * 0.15;
+    
     /*
     flipbook_create(&data.flipbook, duration = 1, loop = true, items = {
         Texture_Name.Kamikaze_Skull,

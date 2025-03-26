@@ -73,7 +73,7 @@ NAME_POINTER_LINE    :: "PointerLinePrefab"
 /////////////////////////////
 
 DEBUG_AI_MOVEMENT_ENABLED      :: true
-DEBUG_DRAW_COLLIDERS           :: false
+DEBUG_DRAW_COLLIDERS           :: true
 DEBUG_PRINT_CREATED_ENTITIES   :: false
 DEBUG_PRINT_DESTROYED_ENTITIES :: false
 DEBUG_PRINT_DAMAGE             :: true

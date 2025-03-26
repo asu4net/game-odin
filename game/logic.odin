@@ -32,7 +32,8 @@ update_entity_movement :: proc() {
 
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
-if .VALID not_in entity.flags do continue;
+        
+        if !entity_enabled({entity.id}) do continue;
         
         using entity.movement_2d
 
