@@ -149,8 +149,8 @@ entity_valid :: proc(entity : Entity_Handle) -> bool {
 }
 
 entity_enabled :: proc(entity : Entity_Handle) -> bool {
-    using state
-    return entity_valid(entity) && .ENABLED in entity_data(entity).flags 
+    using state;
+    return entity_valid(entity) && .ENABLED in entity_data(entity).flags && .GLOBAL_ENABLED in entity_data(entity).flags;  
 }
 
 // Alex chequea este truco

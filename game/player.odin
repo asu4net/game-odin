@@ -49,7 +49,7 @@ player_init :: proc(player : ^Player) {
     data.particle_emitter = emitter_handle;
     emitter_data.position = data.position;
     emitter_data.scale = ONE_3D * 0.15;
-    
+
     /*
     flipbook_create(&data.flipbook, duration = 1, loop = true, items = {
         Texture_Name.Kamikaze_Skull,
@@ -146,7 +146,8 @@ fire_projectile :: proc(player : ^Player) {
     entity.circle         = DEFAULT_CIRCLE;
     entity.damage_source  = DEFAULT_DAMAGE_SOURCE;
     entity.damage_target  = DEFAULT_DAMAGE_TARGET;
-
+    entity.projectile     = DEFAULT_PROJECTILE;
+    
     entity.position = player_entity.position;
     entity.radius = 0.1;
     entity.collision_radius = 0.15;

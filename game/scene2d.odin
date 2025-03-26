@@ -303,9 +303,10 @@ draw_entities :: proc() {
                 }
             }
         }
-
+        
         rect : Rect
-        if entity.sprite.enabled {
+        if !entity_enabled({entity.id}) do continue;
+        if  entity.sprite.enabled {
             draw_sprite_atlas_item(entity.transform, entity.sprite, entity.tint, entity.id)
         }
     }
