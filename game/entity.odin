@@ -36,12 +36,15 @@ EntityCommon :: struct {
     id             : ENTITY_ID,
     name           : string,
     tint           : v4,
+    parent         : Entity_Handle,
+    children       : [dynamic] Entity_Handle,
 }
 
 DEFAULT_ENTITY_COMMON : EntityCommon : {
-    flags = { .VALID, .GLOBAL_ENABLED, .ENABLED, .VISIBLE },
-    id    = NIL_ENTITY_ID,
-    tint  = color.WHITE
+    flags  = { .VALID, .GLOBAL_ENABLED, .ENABLED, .VISIBLE },
+    id     = NIL_ENTITY_ID,
+    tint   = color.WHITE,
+    parent = { NIL_ENTITY_ID },
 }
 
 Entity :: struct {
@@ -56,8 +59,6 @@ Entity :: struct {
     particle_emitter   : Emitter_Handle,
     damage_source      : DamageSource,
     damage_target      : DamageTarget,
-    parent             : Entity_Handle,
-    children           : [dynamic] Entity_Handle,
 
     // Game specific
     projectile         : Projectile,
