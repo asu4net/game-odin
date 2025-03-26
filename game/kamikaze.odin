@@ -55,7 +55,7 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
             damage_target                 = DEFAULT_DAMAGE_TARGET;
             damage_source                 = DEFAULT_DAMAGE_SOURCE;
             collider                      = DEFAULT_COLLIDER_2D;
-            
+
             sprite.item                   = .Kamikaze_Skull;
             kamikaze.attack_cd            = KAMIKAZE_ATTACK_CD;
             movement_2d.speed_min         = KAMIKAZE_SPEED_MIN;

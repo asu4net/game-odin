@@ -31,13 +31,17 @@ player_initialized :: proc(player : ^Player) -> bool {
 
 player_init :: proc(player : ^Player) {
     assert(!player_initialized(player))
-    using player
+    using player;
+
     entity_handler, data := entity_create(NAME_PLAYER, { .PLAYER })
     entity = entity_handler
-    data.item = .Player
-    speed = PLAYER_SPEED 
+    data.sprite        = DEFAULT_SPRITE_ATLAS_ITEM;
+    data.damage_source = DEFAULT_DAMAGE_SOURCE;
+    data.collider      = DEFAULT_COLLIDER_2D;
+
     firerate = PLAYER_FIRERATE
-    
+    speed = PLAYER_SPEED 
+    data.item          = .Player
     data.collision_flag = CollisionFlag.player;
     data.collides_with = { .enemy, .enemy_bullet };
     data.damage_target.life = 1
@@ -111,10 +115,12 @@ movement_update :: proc(player : ^Player) {
     entity := entity_data(player.entity)
     entity.position.xy += player.axis * player.speed * delta_seconds() 
     
-    emitter_data := emitter_data(entity.particle_emitter);
-    emitter_data.velocity = (-entity.position + emitter_data.position) / delta_seconds();
-    emitter_data.active = emitter_data.velocity != ZERO_3D;
-    emitter_data.position = entity.position;
+    if emitter_exists(entity.particle_emitter) {
+        emitter_data := emitter_data(entity.particle_emitter);
+        emitter_data.velocity = (-entity.position + emitter_data.position) / delta_seconds();
+        emitter_data.active = emitter_data.velocity != ZERO_3D;
+        emitter_data.position = entity.position;
+    }
 }
 
 @(private = "file")

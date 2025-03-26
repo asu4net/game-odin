@@ -167,6 +167,7 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (hand
     index := sparse_set.insert(&entity_used_ids, handle.id)
     entity = &entities[index]
     entity.common = DEFAULT_ENTITY_COMMON;
+    entity.transform = DEFAULT_TRANSFORM;
     entity.id = handle.id
     entity.name = len(name) == 0 ? "Entity" : name
     

@@ -205,9 +205,9 @@ draw_scene_2d :: proc() {
     window_size : v2 = { f32(width), f32(height) }
 
     gfx.draw_2d_begin(viewport = window_size, size = CAMERA_SIZE)
-    draw_particles()
+    //draw_particles()
     draw_entities()
-    draw_collisions()
+    //draw_collisions()
     gfx.draw_2d_end()
 }
 
@@ -258,6 +258,7 @@ draw_entities :: proc() {
 
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
+        
 if .VALID not_in entity.flags do continue;
         
         // FlipBook handle
