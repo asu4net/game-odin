@@ -141,7 +141,7 @@ fire_projectile :: proc(player : ^Player) {
     entity.damage_source  = DEFAULT_DAMAGE_SOURCE;
     entity.projectile     = DEFAULT_PROJECTILE;
     
-    entity.position = player_entity.position;
+    entity.position  = player_entity.position;
     entity.radius = 0.1;
     entity.collision_radius = 0.15;
     entity.thickness = 1;

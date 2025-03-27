@@ -130,7 +130,7 @@ homing_missile_update :: proc() {
     for i in 0..< entity_count() {
 
         entity := entity_at_index(i);
-        
+
         if !entity_enabled({entity.id}) ||  !is_homing_missile(entity) {
             continue;
         }

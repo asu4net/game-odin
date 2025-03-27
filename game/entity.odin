@@ -287,39 +287,43 @@ entity_destroy :: proc(entity : Entity_Handle) {
 clean_destroyed_entities :: proc() {
 
     assert(entity_registry_initialized());
-    using state
+    using state;
 
     if frames_since_cleaned < ENTITY_CLEANUP_INTERVAL {
-        frames_since_cleaned += 1
-        return 
+        frames_since_cleaned += 1;
+        return; 
     }
-
-    frames_since_cleaned = 0
+    
+    frames_since_cleaned = 0;
 
     for handle, _ in pending_destroy {
 
-        data := entity_data(handle)
+        data := entity_data(handle);
         
         delete(data.children);
 
         if(emitter_exists(data.particle_emitter)) {
-            emitter_destroy(data.particle_emitter)
+            emitter_destroy(data.particle_emitter);
         }
         
-        queue.push(&entity_ids, data.id)
-
         when ODIN_DEBUG {
             if (DEBUG_PRINT_DESTROYED_ENTITIES) {
-                fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id)
+                fmt.printf("Destroyed entity. Name[%v], Id[%v] \n", data.name, data.id);
             }
         }
-
-        deleted, last := sparse_set.remove(&entity_used_ids, data.id)
-        entity_count -= 1
-
+        
+        queue.push(&entity_ids, data.id);
+        deleted, last := sparse_set.remove(&entity_used_ids, data.id);
+        
+        entity_count -= 1;
+        
         if deleted != last {
-            entities[deleted] = entities[last]
+            entities[deleted] = entities[last];
+            entities[last] = {};
+        } else {
+            entities[deleted] = {};
         }
+        
     }
 
     clear(&pending_destroy)
