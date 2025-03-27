@@ -75,12 +75,6 @@ player_update :: proc(player : ^Player) {
     weapons_update(player)
 }
 
-player_collision :: proc(source : ^Entity, target : ^Entity) {
-    if source.collision_flag == .enemy {
-        game_quit()
-    }
-}
-
 @(private = "file")
 input_update :: proc(player : ^Player) {
     using player
@@ -145,7 +139,6 @@ fire_projectile :: proc(player : ^Player) {
     entity.collider       = DEFAULT_COLLIDER_2D;
     entity.circle         = DEFAULT_CIRCLE;
     entity.damage_source  = DEFAULT_DAMAGE_SOURCE;
-    entity.damage_target  = DEFAULT_DAMAGE_TARGET;
     entity.projectile     = DEFAULT_PROJECTILE;
     
     entity.position = player_entity.position;
@@ -155,6 +148,5 @@ fire_projectile :: proc(player : ^Player) {
     entity.tint = color.LIGHT_RED;
     entity.collision_flag = CollisionFlag.player_bullet;
     entity.collides_with = { .enemy };
-    entity.damage_target.life = 1;
     entity.damage_source.damage = PLAYER_DAMAGE;
 }

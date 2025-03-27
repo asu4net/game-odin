@@ -99,12 +99,6 @@ kamikaze_finish :: proc() {
     spawner_finish(&kamikaze_manager_instance.spawner)
 }
 
-kamikaze_collision :: proc(source : ^Entity, target : ^Entity) {
-    if .player_bullet == source.collision_flag {
-        entity_destroy({ id = target.id })
-    }
-}
-
 kamikaze_manager_update :: proc() {
     
     assert(kamikaze_manager_instance != nil)

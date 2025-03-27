@@ -148,22 +148,20 @@ update :: proc() {
 
 @(private = "file")
 post_collisions_update :: proc() {
-    using game_instance
+    using game_instance;
 
     for enter_event in collisions_2d.collision_enter_events {
         
-        source := entity_data(enter_event.source) 
-        target := entity_data(enter_event.target)  
-
-        if is_kamikaze(target) {
-            //kamikaze_collision(source, target)    
-        } else if is_projectile(target) {
-            //projectile_collision(source, target)
-        } else if target.id == player.entity.id {
-            //player_collision(source, target)
-        }
+        source := entity_data(enter_event.source);
+        target := entity_data(enter_event.target);  
+        
         if is_damage_target(target) && is_damage_source(source) {
-            damage_collision(source, target)
+            damage_collision(source, target);
+            
+            //#REVIEW_asuarez Maybe we should poll the collision events from the projectile class
+            if is_projectile(source) {
+                entity_destroy({source.id});
+            }
         }
     }
 }

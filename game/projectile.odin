@@ -21,10 +21,6 @@ is_projectile :: proc(entity : ^Entity) -> bool {
     return entity.projectile.max_lifetime > 0;
 }
 
-projectile_collision :: proc(source : ^Entity, target : ^Entity) {
-    entity_destroy({ id = target.id })
-}
-
 projectile_update :: proc() {
     for i in 0..< entity_count() {
         entity := entity_at_index(i);

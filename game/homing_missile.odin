@@ -141,11 +141,11 @@ homing_missile_update :: proc() {
         player_position := entity_data(game.player.entity).position;
 
         pointer_data : ^Entity = nil;
-        if(entity_valid(children[0])) { 
+        if len(children) > 0 && entity_valid(children[0]) { 
             pointer_data = entity_data(children[0]);
             pointer_data.pointer_line.dir = -UP_3D;
         }
-
+        
         switch homing_missile.state {
             case HomingState.IDLE: {
                 movement_2d.start = true;
