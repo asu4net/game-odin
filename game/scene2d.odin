@@ -345,10 +345,8 @@ draw_collisions :: proc() {
     for i in 0..< entity_count() {
         entity := entity_at_index(i);
         
-        if .VALID not_in entity.flags do continue;
-        
-        if !is_collider(entity) {
-            return;
+        if !entity_valid({entity.id}) || !is_collider(entity) {
+            continue;
         }
 
         circle : Circle = DEFAULT_CIRCLE
