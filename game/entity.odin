@@ -138,7 +138,7 @@ entity_registry_finish :: proc() {
 
 entity_exists :: proc(entity : Entity_Handle) -> bool {
     using state
-    asserwwt(entity_registry_initialized())
+    assert(entity_registry_initialized())
     return sparse_set.test(&entity_used_ids, entity.id)
 }
 
