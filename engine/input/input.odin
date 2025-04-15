@@ -15,17 +15,17 @@ get_mouse_position :: proc() -> (x, y : f32) {
     return
 }
 
-is_mouse_button_pressed :: proc(button : i32) -> i32 {
+is_mouse_button_pressed :: proc(button : i32) -> bool {
     assert(window.instance != nil)
     return glfw.GetMouseButton(window.instance.handle, button) == glfw.PRESS
 }
 
-is_mouse_button_released :: proc(button : i32) -> i32 {
+is_mouse_button_released :: proc(button : i32) -> bool {
     assert(window.instance != nil)
     return glfw.GetMouseButton(window.instance.handle, button) == glfw.RELEASE
 }
 
-is_mouse_button_repeated :: proc(button : i32) -> i32 {
+is_mouse_button_repeated :: proc(button : i32) -> bool {
     assert(window.instance != nil)
     return glfw.GetMouseButton(window.instance.handle, button) == glfw.REPEAT
 }

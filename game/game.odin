@@ -91,6 +91,7 @@ game_init :: proc(instance : ^Game) {
 
         if can_update() {
             update()
+            update_pickup_movement();
             update_entity_movement()
             query_2d_collisions()
             post_collisions_update()
@@ -159,9 +160,13 @@ post_collisions_update :: proc() {
             damage_collision(source, target);
             
             //#REVIEW_asuarez Maybe we should poll the collision events from the projectile class
+            // hello, this is Ferdom-M, I agree
             if is_projectile(source) {
                 entity_destroy({source.id});
             }
+        }
+        if .PICK_UP in source.flags && .PLAYER in target.flags { 
+            pickup_collision(source, target);
         }
     }
 }

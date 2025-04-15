@@ -11,8 +11,10 @@ Player_Movement :: struct {
 }
 
 Player_Weapons :: struct { 
-    firerate : f32,
+    firerate         : f32,
     time_since_fired : f32,
+    level            : u8,
+    ammo             : u16,
 }
 
 Player :: struct {
@@ -40,10 +42,12 @@ player_init :: proc(player : ^Player) {
     data.collider = DEFAULT_COLLIDER_2D;
 
     firerate = PLAYER_FIRERATE;
-    speed = PLAYER_SPEED; 
+    speed    = PLAYER_SPEED; 
+    ammo     = 0;
+    level    = 1;
     data.item = .Player;
     data.collision_flag = CollisionFlag.player;
-    data.collides_with = { .enemy, .enemy_bullet };
+    data.collides_with = { .enemy, .enemy_bullet, .pick_up };
     data.damage_target.life = 1;
     emitter_handle, emitter_data := emitter_create();
     data.particle_emitter = emitter_handle;
@@ -73,6 +77,21 @@ player_update :: proc(player : ^Player) {
     input_update(player)
     movement_update(player)
     weapons_update(player)
+}
+
+player_set_ammo :: proc(player : ^Player, new_ammo : u16) { 
+    assert(player_initialized(player));
+    player.ammo = new_ammo;
+    
+    if(new_ammo >= AMMO_LV3) {   
+        player.level = 3;
+    }
+    else if(new_ammo >= AMMO_LV2) {   
+        player.level = 2;
+    }
+    else {
+        player.level = 1;
+    }
 }
 
 @(private = "file")
@@ -123,7 +142,16 @@ weapons_update :: proc(player : ^Player) {
     using player
     weapons.time_since_fired += delta_seconds()
     if (player.fire && weapons.time_since_fired >= firerate) {
-        fire_projectile(player)
+        player_pos := entity_data(player.entity).position;
+        switch(player.level) {
+            case 1:
+                fire_projectile(player, player_pos);
+                break;
+            case 2, 3:
+                fire_projectile(player, { player_pos.x - 0.1, player_pos.y, player_pos.z });
+                fire_projectile(player, { player_pos.x + 0.1, player_pos.y, player_pos.z });
+                break;
+        }
         player.weapons.time_since_fired = 0
     }
 }
@@ -131,22 +159,24 @@ weapons_update :: proc(player : ^Player) {
 projectiles := 0
 
 @(private = "file")
-fire_projectile :: proc(player : ^Player) {
+fire_projectile :: proc(player : ^Player, position : v3) {
     // placeholder projectile
 
     handle, entity := entity_create(name = "Bullet");
-    player_entity := entity_data(player.entity);
-    entity.collider       = DEFAULT_COLLIDER_2D;
-    entity.circle         = DEFAULT_CIRCLE;
-    entity.damage_source  = DEFAULT_DAMAGE_SOURCE;
-    entity.projectile     = DEFAULT_PROJECTILE;
+    player_entity  := entity_data(player.entity);
+
+    entity.collider         = DEFAULT_COLLIDER_2D;
+    entity.circle           = DEFAULT_CIRCLE;
+    entity.damage_source    = DEFAULT_DAMAGE_SOURCE;
+    entity.projectile       = DEFAULT_PROJECTILE;
+    entity.projectile.speed = PLAYER_BULLET_LV1_SPEED;
     
-    entity.position  = player_entity.position;
-    entity.radius = 0.1;
-    entity.collision_radius = 0.15;
-    entity.thickness = 1;
-    entity.tint = color.LIGHT_RED;
-    entity.collision_flag = CollisionFlag.player_bullet;
-    entity.collides_with = { .enemy };
+    entity.position             = position;
+    entity.radius               = 0.1;
+    entity.collision_radius     = 0.15;
+    entity.thickness            = 1;
+    entity.tint                 = color.LIGHT_RED;
+    entity.collision_flag       = CollisionFlag.player_bullet;
+    entity.collides_with        = { .enemy };
     entity.damage_source.damage = PLAYER_DAMAGE;
 }

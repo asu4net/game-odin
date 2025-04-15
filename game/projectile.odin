@@ -12,7 +12,7 @@ Projectile :: struct {
 
 DEFAULT_PROJECTILE : Projectile : {
     dir          = UP_3D,
-    speed        = 7,
+    speed        = PLAYER_BULLET_LV1_SPEED,
     max_lifetime = 1.0,
 }
 

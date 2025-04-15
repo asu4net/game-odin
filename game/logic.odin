@@ -3,6 +3,7 @@ import "core:math"
 import "core:math/linalg"
 import "core:fmt"
 import "engine:global/interpolate"
+import "engine:global/color"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //:Movement 2D
@@ -164,6 +165,94 @@ damage_collision :: proc(source, target : ^Entity) {
             return
         }
 
+        spawn_ammo({target.position.x + 0.1, target.position.y - 0.05, target.position.z});
+        spawn_ammo({target.position.x - 0.1, target.position.y - 0.05, target.position.z});
+        spawn_ammo({target.position.x,       target.position.y + 0.05, target.position.z});
         entity_destroy({target.id})
     }
 }
+
+PickUpType :: enum {
+    AMMO,
+}
+
+PickUp :: struct {
+    magnet_radius : f32,
+    type          : PickUpType,
+    amount        : u16,
+
+    entity_target : Entity_Handle,
+}
+
+DEFAULT_PICK_UP : PickUp : {
+    magnet_radius = 2,
+    type          = PickUpType.AMMO,
+    amount        = AMMO_AMOUNT_PICK_UP,
+
+    entity_target = {NIL_ENTITY_ID},
+}
+
+update_pickup_movement :: proc() {
+
+    for i in 0..< entity_count() {
+        entity := entity_at_index(i);
+        
+        if !entity_enabled({entity.id}) do continue;
+        if entity.pick_up.magnet_radius <= 0 do continue;
+        
+        using entity.pick_up;
+
+        if entity.movement_2d.start {
+            // after some time destroy
+
+            if(entity_exists(entity_target))
+            {
+                entity.movement_2d.target = entity_data(entity_target).position;
+                continue;
+            }
+            entity.movement_2d.start = false;
+        }
+        
+        // if multiple players just use the closest one lol
+        sqr_distance := linalg.vector_length2(entity_data(game.player.entity).position - entity.position);
+        if(sqr_distance < magnet_radius * magnet_radius)
+        {
+            entity.movement_2d.start = true;
+            entity_target = game.player.entity;
+        }
+    }
+}
+
+pickup_collision :: proc(source, target : ^Entity){
+    // what the fuck
+    if target.id == game.player.entity.id {
+        switch(source.pick_up.type)
+        {
+            case PickUpType.AMMO:
+                player_set_ammo(&game.player, game.player.ammo + source.pick_up.amount);
+                break;
+        }
+        entity_destroy({source.id});
+    }
+}
+
+spawn_ammo :: proc(position : v3) {
+    handle, entity := entity_create("Ammo PickUp", { .PICK_UP });
+
+    entity.collider         = DEFAULT_COLLIDER_2D;
+    entity.circle           = DEFAULT_CIRCLE;
+    entity.pick_up          = DEFAULT_PICK_UP;
+    entity.pick_up.type     = PickUpType.AMMO;
+
+    entity.position         = position;
+    entity.radius           = AMMO_RADIUS;
+    entity.collision_radius = AMMO_COLLISION_RADIUS;
+    entity.thickness        = 1;
+    entity.tint             = color.YELLOW;
+    entity.collision_flag   = CollisionFlag.pick_up;
+    entity.collides_with    = { .player };
+    entity.movement_2d.speed_min         = KAMIKAZE_SPEED_MIN;
+    entity.movement_2d.speed_max         = KAMIKAZE_SPEED_MAX;
+    entity.movement_2d.time_to_max_speed = KAMIKAZE_ACC;
+}
+

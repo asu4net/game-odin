@@ -9,6 +9,7 @@ CollisionFlag :: enum {
     player_bullet,
     enemy,
     enemy_bullet,
+    pick_up,
 }
 
 CollisionFlagSet :: bit_set[CollisionFlag]

@@ -20,6 +20,7 @@ Entity_Flag :: enum {
     // Gameplay stuff
     PLAYER,
     ENEMY,
+    PICK_UP,
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -59,12 +60,14 @@ Entity :: struct {
     particle_emitter   : Emitter_Handle,
     damage_source      : DamageSource,
     damage_target      : DamageTarget,
+    pick_up            : PickUp,
 
     // Game specific
     projectile         : Projectile,
     kamikaze           : KamikazeSkull,
     homing_missile     : HomingMissile,
     pointer_line       : PointerLine,
+
 }
 
 NIL_ENTITY_ID :: sparse_set.INVALID_VALUE
