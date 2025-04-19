@@ -22,10 +22,12 @@ PLAYER_BULLET_LV1_RADIUS    :: 0.1
 AMMO_LV1                    :: 0
 AMMO_LV2                    :: 30
 AMMO_LV3                    :: 100
-MAX_AMMO                    :: 100
+MAX_AMMO                    :: 10
+
+POSITION_HISTORY_AMOUNT     :: 1000
 
 // Player Minion
-MINION_MOVEMENT_DELAY       :: 5 // Units is 1/60 of a second (my fg rotted brain can only count in frames)
+MINION_MOVEMENT_DELAY       :: 0.2
 MINION_SPEED                :: 3
 MINION_BULLET_LV1_DAMAGE    :: 4
 

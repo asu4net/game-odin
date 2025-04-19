@@ -6,6 +6,7 @@ import "core:fmt"
 import "engine:global/color"
 import "engine:input"
 import "core:math/rand"
+import "engine:global/interpolate"
 
 Player_Movement :: struct {
     speed : f32,
@@ -43,8 +44,8 @@ Player :: struct {
     axis               : v2,
     fire               : bool,
     minions            : [MAX_AMMO]Player_Minion,
-    axis_history       : [MAX_AMMO]v2,
-    saved_axis         : u8
+    axis_history       : [POSITION_HISTORY_AMOUNT]v2,
+    current_axis       : u16
 }
 
 player_initialized :: proc(player : ^Player) -> bool {
@@ -82,13 +83,13 @@ player_init :: proc(player : ^Player) {
         minions[i].movement.speed = MINION_SPEED;
         
         //random := v3{ (rand.float32() - 0.5) * 2, (rand.float32() - 0.5) * 2, 0 } 
-        minion_data.position = {data.position.x, data.position.y - (f32)(i) * 0.2, data.position.z}; 
+        minion_data.position = {data.position.x, data.position.y, data.position.z}; 
         minion_data.scale    = {0.2, 0.2, 0.2};
         minion_data.sprite   = DEFAULT_SPRITE_ATLAS_ITEM;
         minion_data.item     = .Player;
 
         //entity_set_parent(minion_handle, entity_handle);
-        //entity_remove_flags(minion_handle, { .ENABLED });
+        entity_remove_flags(minion_handle, { .ENABLED });
     }
     /*
     flipbook_create(&data.flipbook, duration = 1, loop = true, items = {
@@ -101,6 +102,8 @@ player_init :: proc(player : ^Player) {
     data.flipbook.playing = true
 
     initialized = true
+
+    player_set_ammo(player, MAX_AMMO);
 }
 
 player_finish :: proc(player : ^Player) {
@@ -112,7 +115,7 @@ player_update :: proc(player : ^Player) {
     assert(player_initialized(player));
     input_update(player);
     movement_update(player);
-    //minions_movement_update(player);
+    minions_movement_update(player);
     weapons_update(player);
 }
 
@@ -187,7 +190,10 @@ movement_update :: proc(player : ^Player) {
     entity := entity_data(player.entity)
     entity.position.xy += player.axis * player.speed * delta_seconds() 
     
-    player.axis_history[player.saved_axis] = player.axis;
+    if(player.axis.x != 0 || player.axis.y != 0) {
+        player.current_axis = (player.current_axis + 1) % (POSITION_HISTORY_AMOUNT);
+        player.axis_history[player.current_axis] = player.axis;
+    }
     if emitter_exists(entity.particle_emitter) {
         emitter_data := emitter_data(entity.particle_emitter);
         emitter_data.velocity = (-entity.position + emitter_data.position) / delta_seconds();
@@ -216,7 +222,7 @@ weapons_update :: proc(player : ^Player) {
 
         for i in 0..< ammo { 
             minion := entity_data(minions[i].entity);
-            fire_projectile(player_pos +
+            fire_projectile(//player_pos +
                 minion.position, MINION_BULLET_LV1_DAMAGE, MINION_BULLET_LV1_SPEED, MINION_BULLET_LV1_RADIUS);
         }
     }
@@ -251,11 +257,37 @@ fire_projectile :: proc(position : v3, damage : u32, speed : f32, radius : f32) 
 @(private = "file")
 minions_movement_update :: proc(player : ^Player) {
     player_entity := entity_data(player.entity);
+
+    if(player.axis.x == 0 && player.axis.y == 0) {
+        return;
+    }
     for i in 0..< player.ammo { 
         minion := entity_data(player.minions[i].entity);
         using player.minions[i].movement;
         using minion;
 
+        delay : f32 = MINION_MOVEMENT_DELAY / (1.0 / 60.0);
+
+        current_axis : i32 = ((i32)(player.current_axis) - (i32)(delay) * (i32)(i + 1)) % POSITION_HISTORY_AMOUNT;
+        current_axis = current_axis < 0 ? current_axis + POSITION_HISTORY_AMOUNT : current_axis;
+        minion.position.xy += player.axis_history[current_axis] * player.speed * delta_seconds() 
+        // this is trash
+        /*
+        // assume stable framerate i guess
+        delay : f32 = MINION_MOVEMENT_DELAY / delta_seconds();
+
+        current_pos : f32 = ((f32)(player.current_pos) - delay * (f32)(i + 1));
+        pos_int : i32 = i32(current_pos);
+        decimals := current_pos - (f32)(pos_int);
+        decimals = decimals < 0 ? -decimals : decimals;
+        pos_int = pos_int % POSITION_HISTORY_AMOUNT;
+        pos_int = pos_int < 0 ? pos_int + POSITION_HISTORY_AMOUNT: pos_int;
+        next_pos_int :  = (pos_int + 1) % POSITION_HISTORY_AMOUNT
+
+        minion.position.x = interpolate.linear_f32(decimals, player.pos_history[next_pos_int].x, player.pos_history[pos_int].x);
+        minion.position.y = interpolate.linear_f32(decimals, player.pos_history[next_pos_int].y, player.pos_history[pos_int].y);
+        minion.position.z = interpolate.linear_f32(decimals, player.pos_history[next_pos_int].z, player.pos_history[pos_int].z);
+        */
         /*
         alignment  = ZERO_2D;
         cohesion   = ZERO_2D;
