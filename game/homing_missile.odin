@@ -106,7 +106,7 @@ homing_missile_init :: proc() {
     entity_set_parent(line_handle, homing_missile_prefab);
 
     spawner_init(&homing_missile_spawner, homing_missile_prefab, UP_3D * 3);
-    spawn(&homing_missile_spawner);
+    //spawn(&homing_missile_spawner);
 } 
 
 homing_missile_finish :: proc() {

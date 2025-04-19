@@ -91,7 +91,7 @@ kamikaze_manager_init :: proc(instance : ^KamikazeManager) {
 
     entity_set_parent(saw_prefab, skull_prefab);
     spawner_init(&spawner, skull_prefab, UP_3D * 3)
-    spawn(&spawner)
+    //spawn(&spawner)
 }
 
 kamikaze_finish :: proc() {

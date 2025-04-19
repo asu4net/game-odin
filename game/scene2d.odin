@@ -54,12 +54,12 @@ transform_to_m4 :: proc(transform : Transform, entity : Entity_Handle = { NIL_EN
 
 Sprite_Atlas_Item :: struct {
     enabled   : bool,
-    item      : Texture_Name           ,
-    tiling    : v2                     ,
-    flip_x    : bool                   ,
-    flip_y    : bool                   ,
-    autosize  : bool                   ,
-    blending  : Blending_Mode ,
+    item      : Texture_Name,
+    tiling    : v2,
+    flip_x    : bool,
+    flip_y    : bool,
+    autosize  : bool,
+    blending  : Blending_Mode,
 }
 
 DEFAULT_SPRITE_ATLAS_ITEM : Sprite_Atlas_Item : {

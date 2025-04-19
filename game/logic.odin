@@ -124,7 +124,7 @@ WaveManager :: struct {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DamageSource :: struct {
-    damage  : f32    
+    damage  : u32    
 }
 
 is_damage_source :: proc(entity : ^Entity) -> bool {
@@ -137,8 +137,8 @@ DEFAULT_DAMAGE_SOURCE : DamageSource : {
 }
 
 DamageTarget :: struct {
-    max_life : f32,
-    life     : f32,
+    max_life : u32,
+    life     : u32,
 }
 
 is_damage_target :: proc(entity : ^Entity) -> bool {
@@ -154,17 +154,19 @@ DEFAULT_DAMAGE_TARGET : DamageTarget : {
 
 damage_collision :: proc(source, target : ^Entity) {
     using source.damage_source, target.damage_target
+
+    if target.id == game.player.entity.id {
+        player_damage_collision(&game.player, source);
+        return;
+    }
+
     life = clamp(life - damage, 0, max_life)
     if DEBUG_PRINT_DAMAGE do fmt.printf("%v did %v of damage to %v. %v life is %v \n", source.name, damage, target.name, target.name, life)
+
     if life == 0 {
         //TODO: this a placeholder, should send dead event
         if DEBUG_PRINT_DAMAGE do fmt.printf("%v killed %v\n", source.name, target.name)
         
-        if target.id == game.player.entity.id {
-            game_quit()
-            return
-        }
-
         spawn_ammo({target.position.x + 0.1, target.position.y - 0.05, target.position.z});
         spawn_ammo({target.position.x - 0.1, target.position.y - 0.05, target.position.z});
         spawn_ammo({target.position.x,       target.position.y + 0.05, target.position.z});
@@ -179,7 +181,7 @@ PickUpType :: enum {
 PickUp :: struct {
     magnet_radius : f32,
     type          : PickUpType,
-    amount        : u16,
+    amount        : u32,
 
     entity_target : Entity_Handle,
 }

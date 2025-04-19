@@ -14,13 +14,23 @@ WINDOW_HEIGHT               :: 1280
 // Player
 PLAYER_SPEED                :: 4.0
 PLAYER_FIRERATE             :: 0.1
-PLAYER_DAMAGE               :: 10
+PLAYER_BULLET_LV1_DAMAGE    :: 10
 
 PLAYER_BULLET_LV1_SPEED     :: 8.0
+PLAYER_BULLET_LV1_RADIUS    :: 0.1
 
 AMMO_LV1                    :: 0
 AMMO_LV2                    :: 30
 AMMO_LV3                    :: 100
+MAX_AMMO                    :: 100
+
+// Player Minion
+MINION_MOVEMENT_DELAY       :: 5 // Units is 1/60 of a second (my fg rotted brain can only count in frames)
+MINION_SPEED                :: 3
+MINION_BULLET_LV1_DAMAGE    :: 4
+
+MINION_BULLET_LV1_SPEED     :: 7.0
+MINION_BULLET_LV1_RADIUS    :: 0.05
 
 // Ammo pickup
 AMMO_RADIUS                 :: 0.05
@@ -74,6 +84,7 @@ HOMING_MISSILE_LINE_END_COLOR     :: color.WHITE
 /////////////////////////////
 
 NAME_PLAYER          :: "Player"
+NAME_PLAYER_MINION   :: "PlayerMinion"
 NAME_KAMIKAZE        :: "KamikazePrefab"
 NAME_KAMIKAZE_SAW    :: "KamikazeSawPrefab"
 NAME_HOMING_MISSILE  :: "HomingMissilePrefab"

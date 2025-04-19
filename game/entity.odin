@@ -16,6 +16,7 @@ Entity_Flag :: enum {
     GLOBAL_ENABLED,
     VISIBLE,
     CIRCLE,
+    PENDING_DESTROY,
     
     // Gameplay stuff
     PLAYER,
@@ -273,7 +274,7 @@ entity_destroy :: proc(entity : Entity_Handle) {
     assert(entity_exists(entity))
 
     data := entity_data(entity)
-    entity_remove_flags(entity, { .VALID })
+    entity_add_flags(entity, { .PENDING_DESTROY })
 
     if(emitter_exists(data.particle_emitter)) {
         emitter := emitter_data(data.particle_emitter)
@@ -332,6 +333,7 @@ clean_destroyed_entities :: proc() {
     clear(&pending_destroy)
 }
 
+@(private = "file")
 entity_add_child :: proc(entity : Entity_Handle, child : Entity_Handle) {
     using state;
     assert(entity_registry_initialized());
