@@ -9,7 +9,10 @@ import "core:math/rand"
 import "engine:global/interpolate"
 
 Player_Movement :: struct {
-    speed : f32,
+    speed              : f32,
+    pos_history        : [POSITION_HISTORY_AMOUNT]v3,
+    current_pos        : u16,
+    pos_history_update : f32,
 }
 
 Player_Weapons :: struct { 
@@ -20,11 +23,13 @@ Player_Weapons :: struct {
 }
 
 Minion_Movement :: struct { 
-    direction  : v2,
-    speed      : f32,
-    alignment  : v2,
-    cohesion   : v2,
-    separation : v2,
+    direction        : v2,
+    speed            : f32,
+    alignment        : v2,
+    cohesion         : v2,
+    separation       : v2,
+    last_pos_ckecked : v3,
+    time_last_pos    : f32,
 }
 
 minion_alignment  : f32 = 0;
@@ -44,8 +49,6 @@ Player :: struct {
     axis               : v2,
     fire               : bool,
     minions            : [MAX_AMMO]Player_Minion,
-    axis_history       : [POSITION_HISTORY_AMOUNT]v2,
-    current_axis       : u16
 }
 
 player_initialized :: proc(player : ^Player) -> bool {
@@ -191,8 +194,12 @@ movement_update :: proc(player : ^Player) {
     entity.position.xy += player.axis * player.speed * delta_seconds() 
     
     if(player.axis.x != 0 || player.axis.y != 0) {
-        player.current_axis = (player.current_axis + 1) % (POSITION_HISTORY_AMOUNT);
-        player.axis_history[player.current_axis] = player.axis;
+        player.pos_history_update += delta_seconds();
+        for (player.pos_history_update >= POSITION_HISTORY_UPDATE) {
+            player.current_pos = (player.current_pos + 1) % (POSITION_HISTORY_AMOUNT);
+            player.pos_history[player.current_pos] = entity.position;
+            player.pos_history_update -= POSITION_HISTORY_UPDATE;
+        }
     }
     if emitter_exists(entity.particle_emitter) {
         emitter_data := emitter_data(entity.particle_emitter);
@@ -265,29 +272,36 @@ minions_movement_update :: proc(player : ^Player) {
         minion := entity_data(player.minions[i].entity);
         using player.minions[i].movement;
         using minion;
-
-        delay : f32 = MINION_MOVEMENT_DELAY / (1.0 / 60.0);
-
-        current_axis : i32 = ((i32)(player.current_axis) - (i32)(delay) * (i32)(i + 1)) % POSITION_HISTORY_AMOUNT;
-        current_axis = current_axis < 0 ? current_axis + POSITION_HISTORY_AMOUNT : current_axis;
-        minion.position.xy += player.axis_history[current_axis] * player.speed * delta_seconds() 
-        // this is trash
-        /*
-        // assume stable framerate i guess
-        delay : f32 = MINION_MOVEMENT_DELAY / delta_seconds();
+        
+        delay : f32 = MINION_MOVEMENT_DELAY / POSITION_HISTORY_UPDATE;
 
         current_pos : f32 = ((f32)(player.current_pos) - delay * (f32)(i + 1));
-        pos_int : i32 = i32(current_pos);
+        pos_int : u16 = u16(current_pos);
         decimals := current_pos - (f32)(pos_int);
         decimals = decimals < 0 ? -decimals : decimals;
         pos_int = pos_int % POSITION_HISTORY_AMOUNT;
         pos_int = pos_int < 0 ? pos_int + POSITION_HISTORY_AMOUNT: pos_int;
-        next_pos_int :  = (pos_int + 1) % POSITION_HISTORY_AMOUNT
 
-        minion.position.x = interpolate.linear_f32(decimals, player.pos_history[next_pos_int].x, player.pos_history[pos_int].x);
-        minion.position.y = interpolate.linear_f32(decimals, player.pos_history[next_pos_int].y, player.pos_history[pos_int].y);
-        minion.position.z = interpolate.linear_f32(decimals, player.pos_history[next_pos_int].z, player.pos_history[pos_int].z);
-        */
+        next_pos_int := pos_int;
+        iterations := 0;
+        for (player.pos_history[pos_int] == player.pos_history[next_pos_int] && iterations < 5) {
+            next_pos_int = (next_pos_int + 1) % POSITION_HISTORY_AMOUNT;
+            iterations += 1;
+        }
+        
+        alpha := time_last_pos / POSITION_HISTORY_UPDATE + decimals;
+        if (alpha > 1) {
+            alpha       -= 1;
+            pos_int      = (pos_int + 1) % POSITION_HISTORY_AMOUNT;
+            next_pos_int = (next_pos_int + 1) % POSITION_HISTORY_AMOUNT;
+        }
+
+        minion.position.x = interpolate.linear_f32(alpha, player.pos_history[pos_int].x, player.pos_history[next_pos_int].x);
+        minion.position.y = interpolate.linear_f32(alpha, player.pos_history[pos_int].y, player.pos_history[next_pos_int].y);
+        minion.position.z = interpolate.linear_f32(alpha, player.pos_history[pos_int].z, player.pos_history[next_pos_int].z);
+        
+        time_last_pos = player.pos_history[pos_int] == last_pos_ckecked ? time_last_pos + delta_seconds() : 0;
+        last_pos_ckecked = player.pos_history[pos_int];
         /*
         alignment  = ZERO_2D;
         cohesion   = ZERO_2D;

@@ -174,6 +174,7 @@ entity_create :: proc(name : string = "", flags : Entity_Flag_Set = {}) -> (hand
     entity.transform = DEFAULT_TRANSFORM;
     entity.id = handle.id
     entity.name = len(name) == 0 ? "Entity" : name
+    entity.particle_emitter = {NIL_EMITTER_ID};
     
     /*if len(data.name) == 0 {
         builder : strings.Builder

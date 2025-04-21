@@ -48,3 +48,8 @@ delta_seconds :: proc() -> f32 {
     assert(instance.handle != nil)
     return instance.time.delta_seconds
 }
+
+frame_count :: proc() -> u32 {
+    assert(instance.handle != nil);
+    return instance.time.frame_count;
+}

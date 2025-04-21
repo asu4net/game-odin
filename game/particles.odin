@@ -32,12 +32,12 @@ Particle :: struct {
 
 DEFAULT_PARTICLE : Particle : {
     id          = NIL_PARTICLE_ID,
-    transform    = DEFAULT_TRANSFORM,
+    transform   = DEFAULT_TRANSFORM,
     sprite      = DEFAULT_SPRITE_ATLAS_ITEM,
     velocity    = PARTICLE_VELOCITY,
     color       = PARTICLE_COLOR,    
     life        = PARTICLE_LIFETIME,
-    total_life  = PARTICLE_LIFETIME
+    total_life  = PARTICLE_LIFETIME,
 }
 
 /////////////////////////////

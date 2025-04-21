@@ -110,6 +110,10 @@ delta_seconds :: proc() -> f32 {
     return window.delta_seconds()
 }
 
+frame_count :: proc() -> u32 {
+    return window.frame_count()
+}
+
 game_quit :: proc() {
     window.close()
 }

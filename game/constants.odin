@@ -22,12 +22,13 @@ PLAYER_BULLET_LV1_RADIUS    :: 0.1
 AMMO_LV1                    :: 0
 AMMO_LV2                    :: 30
 AMMO_LV3                    :: 100
-MAX_AMMO                    :: 10
+MAX_AMMO                    :: 100
 
 POSITION_HISTORY_AMOUNT     :: 1000
+POSITION_HISTORY_UPDATE     :: 0.1
 
 // Player Minion
-MINION_MOVEMENT_DELAY       :: 0.2
+MINION_MOVEMENT_DELAY       :: 0.1
 MINION_SPEED                :: 3
 MINION_BULLET_LV1_DAMAGE    :: 4
 
