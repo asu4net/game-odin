@@ -8,20 +8,6 @@ import "engine:input"
 import "core:math/rand"
 import "engine:global/interpolate"
 
-Player_Movement :: struct {
-    speed              : f32,
-    pos_history        : [POSITION_HISTORY_AMOUNT]v3,
-    current_pos        : u16,
-    pos_history_update : f32,
-}
-
-Player_Weapons :: struct { 
-    firerate         : f32,
-    time_since_fired : f32,
-    level            : u8,
-    ammo             : u32,
-}
-
 Minion_Movement :: struct { 
     direction        : v2,
     speed            : f32,
@@ -36,18 +22,53 @@ minion_alignment  : f32 = 0;
 minion_cohesion   : f32 = 0.7;
 minion_separation : f32 = 0.6;
 
+// 1 2 3
+// 4 5 6
+// 7 8 9
+minion_dir_to_rotation : [10]f32 = { 0,
+                                    -135, -180, 135, 
+                                     -90,    0,  90,
+                                     -45,    0,  45 };
+minion_dir_to_v3_dir   : [10]v3 = { 0,
+                                    {-1, -1, 0},  -UP_3D, {1, -1, 0},
+                                     -RIGHT_3D, ZERO_3D,   RIGHT_3D,
+                                    {-1, 1, 0},   UP_3D,  {1, 1, 0} };
+
 Player_Minion :: struct {
     movement      : Minion_Movement,
     entity        : Entity_Handle,
+    current_dir   : u8, /*  7 8 9    i think this should be clear
+                            4 5 6    0 means not placed
+                            1 2 3 */
+}
+
+Player_Movement :: struct {
+    speed              : f32,
+    pos_history        : [POSITION_HISTORY_AMOUNT]v3,
+    current_pos        : u16,
+    pos_history_update : f32,
+}
+
+Player_Weapons :: struct { 
+    firerate         : f32,
+    time_since_fired : f32,
+    level            : u8,
+    ammo             : u32,
+}
+
+Player_Input :: struct {
+    axis               : v2,
+    fire               : bool,
+    minion_dir         : u8,
+    last_minion_dir    : u8,
 }
 
 Player :: struct {
     using movement     : Player_Movement,
     using weapons      : Player_Weapons,
+    using player_input : Player_Input,
     entity             : Entity_Handle,
     initialized        : bool,
-    axis               : v2,
-    fire               : bool,
     minions            : [MAX_AMMO]Player_Minion,
 }
 
@@ -91,7 +112,7 @@ player_init :: proc(player : ^Player) {
         minion_data.sprite   = DEFAULT_SPRITE_ATLAS_ITEM;
         minion_data.item     = .Player;
 
-        //entity_set_parent(minion_handle, entity_handle);
+        entity_set_parent(minion_handle, entity_handle);
         entity_remove_flags(minion_handle, { .ENABLED });
     }
     /*
@@ -117,6 +138,7 @@ player_finish :: proc(player : ^Player) {
 player_update :: proc(player : ^Player) {
     assert(player_initialized(player));
     input_update(player);
+    set_minion_update(player);
     movement_update(player);
     minions_movement_update(player);
     weapons_update(player);
@@ -185,6 +207,56 @@ input_update :: proc(player : ^Player) {
     }
 
     fire = input.is_key_pressed(input.KEY_SPACE)
+
+    if (input.is_key_pressed(input.KEY_7)) { 
+        minion_dir = 7;
+    } else if (input.is_key_pressed(input.KEY_8)) { 
+        minion_dir = 8;
+    } else if (input.is_key_pressed(input.KEY_9)) { 
+        minion_dir = 9;
+    } else if (input.is_key_pressed(input.KEY_4)) { 
+        minion_dir = 4;
+    } else if (input.is_key_pressed(input.KEY_6)) { 
+        minion_dir = 6;
+    } else if (input.is_key_pressed(input.KEY_1)) { 
+        minion_dir = 1;
+    } else if (input.is_key_pressed(input.KEY_2)) { 
+        minion_dir = 2;
+    } else if (input.is_key_pressed(input.KEY_3)) { 
+        minion_dir = 3;
+    } else {
+        minion_dir = 0;
+    }
+}
+
+@(private = "file")
+set_minion_update :: proc(player : ^Player) {
+    assert(player_initialized(player));
+    
+    for i in 0..< player.ammo { 
+        minion := entity_data(player.minions[i].entity);
+
+        if (player.minions[i].current_dir != 0) { continue; }
+
+        player.minions[i].current_dir = player.minion_dir;
+        minion.position = ZERO_3D;
+        minion.rotation = ZERO_3D;
+        
+        if(player.minions[i].current_dir == 7 || player.minions[i].current_dir == 8 || player.minions[i].current_dir == 9) {
+            minion.position.y = SET_MINION_DISTANCE;
+        }
+        if(player.minions[i].current_dir == 1 || player.minions[i].current_dir == 4 || player.minions[i].current_dir == 7) {
+            minion.position.x = -SET_MINION_DISTANCE;
+        }
+        if(player.minions[i].current_dir == 1 || player.minions[i].current_dir == 2 || player.minions[i].current_dir == 3) {
+            minion.position.y = -SET_MINION_DISTANCE;
+        }
+        if(player.minions[i].current_dir == 9 || player.minions[i].current_dir == 6 || player.minions[i].current_dir == 3) {
+            minion.position.x = SET_MINION_DISTANCE;
+        }
+        minion.rotation.z = minion_dir_to_rotation[player.minions[i].current_dir];
+        return;
+    }
 }
 
 @(private = "file")
@@ -218,19 +290,21 @@ weapons_update :: proc(player : ^Player) {
         player_pos := entity_data(player.entity).position;
         switch(player.level) {
             case 1:
-                fire_projectile(player_pos, PLAYER_BULLET_LV1_DAMAGE, PLAYER_BULLET_LV1_SPEED, PLAYER_BULLET_LV1_RADIUS);
+                fire_projectile(player_pos, UP_3D, PLAYER_BULLET_LV1_DAMAGE, PLAYER_BULLET_LV1_SPEED, PLAYER_BULLET_LV1_RADIUS);
                 break;
             case 2, 3:
-                fire_projectile({ player_pos.x - 0.1, player_pos.y, player_pos.z }, PLAYER_BULLET_LV1_DAMAGE, PLAYER_BULLET_LV1_SPEED, PLAYER_BULLET_LV1_RADIUS);
-                fire_projectile({ player_pos.x + 0.1, player_pos.y, player_pos.z }, PLAYER_BULLET_LV1_DAMAGE, PLAYER_BULLET_LV1_SPEED, PLAYER_BULLET_LV1_RADIUS);
+                fire_projectile({ player_pos.x - 0.1, player_pos.y, player_pos.z }, UP_3D, PLAYER_BULLET_LV1_DAMAGE, PLAYER_BULLET_LV1_SPEED, PLAYER_BULLET_LV1_RADIUS);
+                fire_projectile({ player_pos.x + 0.1, player_pos.y, player_pos.z }, UP_3D, PLAYER_BULLET_LV1_DAMAGE, PLAYER_BULLET_LV1_SPEED, PLAYER_BULLET_LV1_RADIUS);
                 break;
         }
         player.weapons.time_since_fired = 0
 
         for i in 0..< ammo { 
             minion := entity_data(minions[i].entity);
-            fire_projectile(//player_pos +
-                minion.position, MINION_BULLET_LV1_DAMAGE, MINION_BULLET_LV1_SPEED, MINION_BULLET_LV1_RADIUS);
+            if(player.minions[i].current_dir == 0) { continue; }
+            rotation_radians := linalg.to_radians(minion.rotation.z);
+            fire_projectile(player_pos +
+                minion.position, minion_dir_to_v3_dir[minions[i].current_dir], MINION_BULLET_LV1_DAMAGE, MINION_BULLET_LV1_SPEED, MINION_BULLET_LV1_RADIUS);
         }
     }
 }
@@ -238,7 +312,7 @@ weapons_update :: proc(player : ^Player) {
 projectiles := 0
 
 @(private = "file")
-fire_projectile :: proc(position : v3, damage : u32, speed : f32, radius : f32) {
+fire_projectile :: proc(position : v3, dir : v3, damage : u32, speed : f32, radius : f32) {
     // placeholder projectile
 
     // ok its now urgent to use a bullet pool
@@ -259,6 +333,7 @@ fire_projectile :: proc(position : v3, damage : u32, speed : f32, radius : f32) 
     entity.collides_with        = { .enemy };
     entity.damage_source.damage = damage;
     entity.projectile.speed     = speed;
+    entity.projectile.dir       = dir;
 }
 
 @(private = "file")
@@ -268,14 +343,18 @@ minions_movement_update :: proc(player : ^Player) {
     if(player.axis.x == 0 && player.axis.y == 0) {
         return;
     }
+    available_minions := 0;
     for i in 0..< player.ammo { 
         minion := entity_data(player.minions[i].entity);
         using player.minions[i].movement;
         using minion;
         
+        // snake movement
+        if(player.minions[i].current_dir != 0) { continue; }
+        
         delay : f32 = MINION_MOVEMENT_DELAY / POSITION_HISTORY_UPDATE;
 
-        current_pos : f32 = ((f32)(player.current_pos) - delay * (f32)(i + 1));
+        current_pos : f32 = ((f32)(player.current_pos) - delay * (f32)(available_minions + 1));
         pos_int : u16 = u16(current_pos);
         decimals := current_pos - (f32)(pos_int);
         decimals = decimals < 0 ? -decimals : decimals;
@@ -300,8 +379,13 @@ minions_movement_update :: proc(player : ^Player) {
         minion.position.y = interpolate.linear_f32(alpha, player.pos_history[pos_int].y, player.pos_history[next_pos_int].y);
         minion.position.z = interpolate.linear_f32(alpha, player.pos_history[pos_int].z, player.pos_history[next_pos_int].z);
         
+        minion.position -= player_entity.position;
+
         time_last_pos = player.pos_history[pos_int] == last_pos_ckecked ? time_last_pos + delta_seconds() : 0;
         last_pos_ckecked = player.pos_history[pos_int];
+
+        available_minions += 1;
+        // swarm movement
         /*
         alignment  = ZERO_2D;
         cohesion   = ZERO_2D;
